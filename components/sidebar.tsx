@@ -1,12 +1,15 @@
 "use client"
 
-import { Users, BookOpen, FileText, Calendar, CreditCard, Package, BarChart3, GraduationCap } from "lucide-react"
+import { Users, BookOpen, FileText, Calendar, CreditCard, Package, BarChart3, GraduationCap, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { confirmAlert } from 'react-confirm-alert'; // Import
+import 'react-confirm-alert/src/react-confirm-alert.css';
 
 interface SidebarProps {
   activeTab: string
   setActiveTab: (tab: string) => void
+  onLogout: () => void
 }
 
 const menuItems = [
@@ -17,9 +20,30 @@ const menuItems = [
   { id: "fees", label: "Fee Management", icon: CreditCard },
   { id: "kits", label: "Kit Management", icon: Package },
   { id: "marks", label: "Marks Comparison", icon: BarChart3 },
+  { id: "logout", label: "Logout", icon: LogOut },
 ]
 
-export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
+export function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarProps) {
+  const handleItemClick = (itemId: string) => {
+    if (itemId === "logout") {
+      confirmAlert({
+        title: 'Confirm Logout',
+        message: 'Are you sure you want to logout?',
+        buttons: [
+          {
+            label: 'Yes',
+            onClick: () => onLogout()
+          },
+          {
+            label: 'No',
+            onClick: () => {}
+          }
+        ]
+      });
+    } else {
+      setActiveTab(itemId)
+    }
+  }
   return (
     <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
       <div className="p-6 border-b border-gray-200">
@@ -44,7 +68,7 @@ export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
                   "w-full justify-start gap-3 h-11",
                   activeTab === item.id && "bg-blue-50 text-blue-700 border-r-2 border-blue-600",
                 )}
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => handleItemClick(item.id)}
               >
                 <Icon className="h-5 w-5" />
                 {item.label}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -9,6 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Package, CheckCircle, XCircle, Settings } from "lucide-react"
+import { getAllKits, createKit } from "../server/server"
+import toast from "react-hot-toast"
 
 interface KitItem {
   id: string
@@ -29,14 +31,6 @@ interface StudentKit {
   completionPercentage: number
 }
 
-const defaultKitItems: KitItem[] = [
-  { id: "1", name: "Study Bag", description: "JEE branded study bag", required: true },
-  { id: "2", name: "Water Bottle", description: "Insulated water bottle", required: true },
-  { id: "3", name: "T-Shirt", description: "JEE institute t-shirt", required: true },
-  { id: "4", name: "Notebook Set", description: "Set of 5 notebooks", required: true },
-  { id: "5", name: "Pen Set", description: "Set of pens and pencils", required: true },
-  { id: "6", name: "Calculator", description: "Scientific calculator", required: false },
-]
 
 const mockStudentKits: StudentKit[] = [
   {
@@ -70,7 +64,19 @@ const mockStudentKits: StudentKit[] = [
 ]
 
 export function KitManagement() {
-  const [kitItems, setKitItems] = useState<KitItem[]>(defaultKitItems)
+  const [kitItems, setKitItems] = useState<KitItem[]>([])
+  useEffect(() => {
+    async function fetchKits() {
+      try {
+        const kits = await getAllKits();
+        setKitItems(Array.isArray(kits) ? kits : []);
+      } catch (err) {
+        toast.error("Failed to fetch kits");
+        setKitItems([]);
+      }
+    }
+    fetchKits();
+  }, []);
   const [studentKits, setStudentKits] = useState<StudentKit[]>(mockStudentKits)
   const [isAddItemDialogOpen, setIsAddItemDialogOpen] = useState(false)
   const [isUpdateKitDialogOpen, setIsUpdateKitDialogOpen] = useState(false)
@@ -78,25 +84,29 @@ export function KitManagement() {
   const [newItemData, setNewItemData] = useState({
     name: "",
     description: "",
-    required: true,
   })
 
-  const handleAddKitItem = () => {
-    const newItem: KitItem = {
-      id: Date.now().toString(),
-      ...newItemData,
+  const handleAddKitItem = async () => {
+    try {
+      const createdKit = await createKit(newItemData);
+      if (createdKit && (createdKit._id || createdKit.id)) {
+        setKitItems([...kitItems, { ...createdKit, id: createdKit._id || createdKit.id }]);
+        // Add this item to all existing student kits
+        const newKitId = createdKit._id || createdKit.id;
+        const updatedStudentKits = studentKits.map((studentKit) => ({
+          ...studentKit,
+          items: [...studentKit.items, { itemId: newKitId, received: false }],
+        }));
+        setStudentKits(updatedStudentKits);
+        toast.success("Kit item added successfully");
+      } else {
+        toast.error("Failed to add kit item");
+      }
+    } catch (error) {
+      toast.error("Error adding kit item");
     }
-    setKitItems([...kitItems, newItem])
-
-    // Add this item to all existing student kits
-    const updatedStudentKits = studentKits.map((studentKit) => ({
-      ...studentKit,
-      items: [...studentKit.items, { itemId: newItem.id, received: false }],
-    }))
-    setStudentKits(updatedStudentKits)
-
-    setNewItemData({ name: "", description: "", required: true })
-    setIsAddItemDialogOpen(false)
+    setNewItemData({ name: "", description: "" });
+    setIsAddItemDialogOpen(false);
   }
 
   const handleUpdateKitStatus = (studentId: string, itemId: string, received: boolean) => {
@@ -173,14 +183,6 @@ export function KitManagement() {
                     placeholder="Enter item description"
                   />
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="required"
-                    checked={newItemData.required}
-                    onCheckedChange={(checked) => setNewItemData({ ...newItemData, required: checked as boolean })}
-                  />
-                  <Label htmlFor="required">Required item</Label>
-                </div>
               </div>
               <div className="flex justify-end gap-2 mt-6">
                 <Button variant="outline" onClick={() => setIsAddItemDialogOpen(false)}>
@@ -204,9 +206,9 @@ export function KitManagement() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {kitItems.map((item) => (
-                <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
+            <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
+              {kitItems.map((item, i) => (
+                <div key={i} className="flex items-center justify-between p-3 border rounded-lg">
                   <div>
                     <div className="font-medium">{item.name}</div>
                     <div className="text-sm text-gray-600">{item.description}</div>
@@ -228,8 +230,8 @@ export function KitManagement() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {studentKits.map((studentKit) => (
-                <div key={studentKit.id} className="p-4 border rounded-lg">
+              {studentKits.map((studentKit, i) => (
+                <div key={i} className="p-4 border rounded-lg">
                   <div className="flex items-center justify-between mb-3">
                     <div>
                       <div className="font-medium">{studentKit.studentName}</div>
@@ -276,8 +278,8 @@ export function KitManagement() {
                 <TableRow>
                   <TableHead>Roll No.</TableHead>
                   <TableHead>Student Name</TableHead>
-                  {kitItems.map((item) => (
-                    <TableHead key={item.id} className="text-center">
+                  {kitItems.map((item, i) => (
+                    <TableHead key={i} className="text-center">
                       {item.name}
                       {item.required && <span className="text-red-500">*</span>}
                     </TableHead>
@@ -286,14 +288,14 @@ export function KitManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {studentKits.map((studentKit) => (
-                  <TableRow key={studentKit.id}>
+                {studentKits.map((studentKit, i) => (
+                  <TableRow key={i}>
                     <TableCell className="font-medium">{studentKit.rollNumber}</TableCell>
                     <TableCell>{studentKit.studentName}</TableCell>
-                    {kitItems.map((item) => {
+                    {kitItems.map((item, i) => {
                       const studentItem = studentKit.items.find((si) => si.itemId === item.id)
                       return (
-                        <TableCell key={item.id} className="text-center">
+                        <TableCell key={i} className="text-center">
                           {studentItem?.received ? (
                             <CheckCircle className="h-5 w-5 text-green-600 mx-auto" />
                           ) : (
@@ -327,12 +329,12 @@ export function KitManagement() {
                 <p className="text-sm text-gray-600">Roll: {selectedStudent.rollNumber}</p>
               </div>
               <div className="space-y-3">
-                {selectedStudent.items.map((item) => {
+                {selectedStudent.items.map((item, i) => {
                   const kitItem = kitItems.find((ki) => ki.id === item.itemId)
                   if (!kitItem) return null
 
                   return (
-                    <div key={item.itemId} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div key={i} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
                         <div className="font-medium">{kitItem.name}</div>
                         <div className="text-sm text-gray-600">{kitItem.description}</div>

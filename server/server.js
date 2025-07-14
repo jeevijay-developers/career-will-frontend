@@ -1,0 +1,30 @@
+import apiClient from "./config";
+
+export const getAllKits = async () => {
+  try {
+    const response = await apiClient.get("/api/kit/get-all-kits");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching kits:", error);
+    throw error;
+  }
+} 
+export const createKit = async (kitData) => {
+  try {
+    const response = await apiClient.post("/api/kit/create-kit", kitData);
+    return response.data;
+  } catch (error) {
+    console.error("Error creating kit:", error);
+    throw error;
+  }
+}
+
+export const loginUser = async (credentials) => {
+  try {
+    const response = await apiClient.post("/api/auth/login", credentials);
+    return response.data;
+  } catch (error) {
+    console.error("Error logging in:", error);
+    throw error;
+  }
+} 
