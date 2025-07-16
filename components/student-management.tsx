@@ -10,6 +10,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Plus, Search, Edit, Trash2 } from "lucide-react"
+import { confirmAlert } from 'react-confirm-alert';
+import 'react-confirm-alert/src/react-confirm-alert.css';
+import toast from "react-hot-toast"
+
 
 interface Student {
   id: string
@@ -86,10 +90,27 @@ const mockStudents: Student[] = [
 ]
 
 export function StudentManagement() {
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+
   const [students, setStudents] = useState<Student[]>(mockStudents)
   const [searchTerm, setSearchTerm] = useState("")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [selectedKits, setSelectedKits] = useState<Kit[]>([])
+
+  // Validation errors state
+  const [errors, setErrors] = useState({
+    name: "",
+    rollNo: "",
+    class: "",
+    parentName: "",
+    parentUsername: "",
+    parentRole: "",
+    parentEmail: "",
+    parentPhone: "",
+    parentPassword: "",
+  });
+
   const [formData, setFormData] = useState({
     // Student info
     name: "",
@@ -111,7 +132,7 @@ export function StudentManagement() {
   )
 
   const handleKitToggle = (kit: Kit) => {
-    setSelectedKits(prev => 
+    setSelectedKits(prev =>
       prev.find(k => k.id === kit.id)
         ? prev.filter(k => k.id !== kit.id)
         : [...prev, kit]
@@ -131,9 +152,44 @@ export function StudentManagement() {
       parentPhone: "",
     })
     setSelectedKits([])
+    setErrors({
+      name: "",
+      rollNo: "",
+      class: "",
+      parentName: "",
+      parentUsername: "",
+      parentRole: "",
+      parentEmail: "",
+      parentPhone: "",
+      parentPassword: "",
+    })
   }
 
+  const validateForm = () => {
+    const newErrors: any = {};
+
+    // Student validation
+    if (!formData.name.trim()) newErrors.name = "Student name is required";
+    if (!formData.rollNo.trim()) newErrors.rollNo = "Roll number is required";
+    if (!formData.class.trim()) newErrors.class = "Class/Batch is required";
+
+    // Parent validation
+    if (!formData.parentName.trim()) newErrors.parentName = "Parent name is required";
+    if (!formData.parentUsername.trim()) newErrors.parentUsername = "Username is required";
+    if (!formData.parentEmail.trim()) {
+      newErrors.parentEmail = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.parentEmail)) {
+      newErrors.parentEmail = "Email is invalid";
+    }
+    if (!formData.parentPhone.trim()) newErrors.parentPhone = "Phone number is required";
+    if (!formData.parentPassword.trim()) newErrors.parentPassword = "Password is required";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleAddStudent = () => {
+    if (!validateForm()) return;
     const newStudent: Student = {
       id: Date.now().toString(),
       studentId: Math.max(...students.map(s => s.studentId), 1000) + 1,
@@ -155,7 +211,77 @@ export function StudentManagement() {
     setStudents([...students, newStudent])
     resetForm()
     setIsAddDialogOpen(false)
+    toast.success(`Student added successfully!`);
   }
+
+  const handleDelete = () => {
+    confirmAlert({
+      title: 'Confirm Delete',
+      message: 'Are you sure you want to delete this item?',
+      buttons: [
+        {
+          label: 'Yes',
+          onClick: () => {
+            // Call your delete function here
+            alert('Item deleted!');
+          }
+        },
+        {
+          label: 'No',
+          onClick: () => {
+            // Optional: handle cancel
+            console.log('Deletion cancelled');
+          }
+        }
+      ]
+    });
+  };
+  const handleEditClick = (student: Student) => {
+    setEditingStudent(student);
+    setFormData({
+      name: student.name,
+      rollNo: student.rollNo,
+      class: student.class,
+      parentUsername: student.parent.username,
+      parentPassword: student.parent.password,
+      parentRole: student.parent.role,
+      parentName: student.parent.name,
+      parentEmail: student.parent.email,
+      parentPhone: student.parent.phone,
+    });
+    setSelectedKits(student.kit);
+    setIsEditDialogOpen(true);
+  };
+  const handleUpdateStudent = () => {
+    if (!editingStudent) return;
+
+    const updatedStudent: Student = {
+      ...editingStudent,
+      name: formData.name,
+      rollNo: formData.rollNo,
+      class: formData.class,
+      kit: selectedKits,
+      parent: {
+        ...editingStudent.parent,
+        username: formData.parentUsername,
+        password: formData.parentPassword,
+        role: formData.parentRole,
+        name: formData.parentName,
+        email: formData.parentEmail,
+        phone: formData.parentPhone,
+      },
+    };
+
+    setStudents(prev =>
+      prev.map(s => (s.id === editingStudent.id ? updatedStudent : s))
+    );
+
+    resetForm();
+    setEditingStudent(null);
+    setIsEditDialogOpen(false);
+    toast.success(`Student updated successfully!`);
+  };
+
 
   return (
     <div className="space-y-6">
@@ -187,7 +313,9 @@ export function StudentManagement() {
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder="Enter student name"
+                      className={errors.name ? "border-red-500" : ""}
                     />
+                    {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="rollNo">Roll Number</Label>
@@ -196,12 +324,14 @@ export function StudentManagement() {
                       value={formData.rollNo}
                       onChange={(e) => setFormData({ ...formData, rollNo: e.target.value })}
                       placeholder="Enter roll number"
+                      className={errors.rollNo ? "border-red-500" : ""}
                     />
+                    {errors.rollNo && <p className="text-red-500 text-sm">{errors.rollNo}</p>}
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="class">Class/Batch</Label>
                     <Select value={formData.class} onValueChange={(value) => setFormData({ ...formData, class: value })}>
-                      <SelectTrigger>
+                      <SelectTrigger className={errors.class ? "border-red-500" : ""}>
                         <SelectValue placeholder="Select class/batch" />
                       </SelectTrigger>
                       <SelectContent>
@@ -212,6 +342,7 @@ export function StudentManagement() {
                         <SelectItem value="JEE-2025-B">JEE-2025-B</SelectItem>
                       </SelectContent>
                     </Select>
+                    {errors.class && <p className="text-red-500 text-sm">{errors.class}</p>}
                   </div>
                 </div>
               </div>
@@ -228,8 +359,8 @@ export function StudentManagement() {
                         onCheckedChange={() => handleKitToggle(kit)}
                       />
                       <div className="flex-1">
-                        <Label 
-                          htmlFor={`kit-${kit.id}`} 
+                        <Label
+                          htmlFor={`kit-${kit.id}`}
                           className="text-sm font-medium capitalize cursor-pointer"
                         >
                           {kit.name}
@@ -252,7 +383,9 @@ export function StudentManagement() {
                       value={formData.parentName}
                       onChange={(e) => setFormData({ ...formData, parentName: e.target.value })}
                       placeholder="Enter parent name"
+                      className={errors.parentName ? "border-red-500" : ""}
                     />
+                    {errors.parentName && <p className="text-red-500 text-sm">{errors.parentName}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="parentUsername">Username</Label>
@@ -261,7 +394,9 @@ export function StudentManagement() {
                       value={formData.parentUsername}
                       onChange={(e) => setFormData({ ...formData, parentUsername: e.target.value })}
                       placeholder="Enter username"
+                      className={errors.parentUsername ? "border-red-500" : ""}
                     />
+                    {errors.parentUsername && <p className="text-red-500 text-sm">{errors.parentUsername}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="parentEmail">Email</Label>
@@ -271,7 +406,9 @@ export function StudentManagement() {
                       value={formData.parentEmail}
                       onChange={(e) => setFormData({ ...formData, parentEmail: e.target.value })}
                       placeholder="Enter email"
+                      className={errors.parentEmail ? "border-red-500" : ""}
                     />
+                    {errors.parentEmail && <p className="text-red-500 text-sm">{errors.parentEmail}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="parentPhone">Phone Number</Label>
@@ -280,7 +417,9 @@ export function StudentManagement() {
                       value={formData.parentPhone}
                       onChange={(e) => setFormData({ ...formData, parentPhone: e.target.value })}
                       placeholder="Enter phone number"
+                      className={errors.parentPhone ? "border-red-500" : ""}
                     />
+                    {errors.parentPhone && <p className="text-red-500 text-sm">{errors.parentPhone}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="parentPassword">Password</Label>
@@ -290,12 +429,14 @@ export function StudentManagement() {
                       value={formData.parentPassword}
                       onChange={(e) => setFormData({ ...formData, parentPassword: e.target.value })}
                       placeholder="Enter password"
+                      className={errors.parentPassword ? "border-red-500" : ""}
                     />
+                    {errors.parentPassword && <p className="text-red-500 text-sm">{errors.parentPassword}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="parentRole">Role</Label>
                     <Select value={formData.parentRole} onValueChange={(value: "ADMIN" | "TEACHER" | "PARENT") => setFormData({ ...formData, parentRole: value })}>
-                      <SelectTrigger>
+                      <SelectTrigger className={errors.parentRole ? "border-red-500" : ""}>
                         <SelectValue placeholder="Select role" />
                       </SelectTrigger>
                       <SelectContent>
@@ -304,12 +445,13 @@ export function StudentManagement() {
                         <SelectItem value="ADMIN">Admin</SelectItem>
                       </SelectContent>
                     </Select>
+                    {errors.parentRole && <p className="text-red-500 text-sm">{errors.parentRole}</p>}
                   </div>
                 </div>
               </div>
             </div>
             <div className="flex justify-end gap-2 mt-6">
-              <Button variant="outline" onClick={() => {setIsAddDialogOpen(false); resetForm();}}>
+              <Button variant="outline" onClick={() => { setIsAddDialogOpen(false); resetForm(); }}>
                 Cancel
               </Button>
               <Button onClick={handleAddStudent} className="bg-blue-600 hover:bg-blue-700">
@@ -369,10 +511,21 @@ export function StudentManagement() {
                     <TableCell>{student.joinDate}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditClick(student)} // ← Add this line
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700 bg-transparent">
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700 bg-transparent"
+                          onClick={handleDelete}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -384,6 +537,156 @@ export function StudentManagement() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit Student Dialog - Separate from Add Student */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Student</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6">
+            {/* Student Information */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">Student Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-name">Student Name</Label>
+                  <Input
+                    id="edit-name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Enter student name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-rollNo">Roll Number</Label>
+                  <Input
+                    id="edit-rollNo"
+                    value={formData.rollNo}
+                    onChange={(e) => setFormData({ ...formData, rollNo: e.target.value })}
+                    placeholder="Enter roll number"
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="edit-class">Class/Batch</Label>
+                  <Select value={formData.class} onValueChange={(value) => setFormData({ ...formData, class: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select class/batch" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="JEE-2024-A">JEE-2024-A</SelectItem>
+                      <SelectItem value="JEE-2024-B">JEE-2024-B</SelectItem>
+                      <SelectItem value="JEE-2024-C">JEE-2024-C</SelectItem>
+                      <SelectItem value="JEE-2025-A">JEE-2025-A</SelectItem>
+                      <SelectItem value="JEE-2025-B">JEE-2025-B</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* Kit Selection */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">Student Kits</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {mockKits.map((kit) => (
+                  <div key={kit.id} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
+                    <Checkbox
+                      id={`edit-kit-${kit.id}`}
+                      checked={selectedKits.some(k => k.id === kit.id)}
+                      onCheckedChange={() => handleKitToggle(kit)}
+                    />
+                    <div className="flex-1">
+                      <Label
+                        htmlFor={`edit-kit-${kit.id}`}
+                        className="text-sm font-medium capitalize cursor-pointer"
+                      >
+                        {kit.name}
+                      </Label>
+                      <p className="text-xs text-gray-500 capitalize">{kit.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Parent Information */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">Parent Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-parentName">Parent Name</Label>
+                  <Input
+                    id="edit-parentName"
+                    value={formData.parentName}
+                    onChange={(e) => setFormData({ ...formData, parentName: e.target.value })}
+                    placeholder="Enter parent name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-parentUsername">Username</Label>
+                  <Input
+                    id="edit-parentUsername"
+                    value={formData.parentUsername}
+                    onChange={(e) => setFormData({ ...formData, parentUsername: e.target.value })}
+                    placeholder="Enter username"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-parentEmail">Email</Label>
+                  <Input
+                    id="edit-parentEmail"
+                    type="email"
+                    value={formData.parentEmail}
+                    onChange={(e) => setFormData({ ...formData, parentEmail: e.target.value })}
+                    placeholder="Enter email"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-parentPhone">Phone Number</Label>
+                  <Input
+                    id="edit-parentPhone"
+                    value={formData.parentPhone}
+                    onChange={(e) => setFormData({ ...formData, parentPhone: e.target.value })}
+                    placeholder="Enter phone number"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-parentPassword">Password</Label>
+                  <Input
+                    id="edit-parentPassword"
+                    type="password"
+                    value={formData.parentPassword}
+                    onChange={(e) => setFormData({ ...formData, parentPassword: e.target.value })}
+                    placeholder="Enter password"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-parentRole">Role</Label>
+                  <Select value={formData.parentRole} onValueChange={(value: "ADMIN" | "TEACHER" | "PARENT") => setFormData({ ...formData, parentRole: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PARENT">Parent</SelectItem>
+                      <SelectItem value="TEACHER">Teacher</SelectItem>
+                      <SelectItem value="ADMIN">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 mt-6">
+            <Button variant="outline" onClick={() => { setIsEditDialogOpen(false); resetForm(); setEditingStudent(null); }}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateStudent} className="bg-blue-600 hover:bg-blue-700">
+              Update Student
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
