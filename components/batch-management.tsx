@@ -225,7 +225,7 @@ export function BatchManagement() {
   const fetchBatches = async () => {
     try {
       const data = await getAllBatches();
-      // console.log("Fetched batches:", data);
+      console.log("Fetched batches:", data);
       
       // If data is an array, use it directly; if it's an object with batches property, use that
       const batchesArray = Array.isArray(data) ? data : data.batches || [];
