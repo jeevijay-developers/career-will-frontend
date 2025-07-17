@@ -290,9 +290,24 @@ export function StudentManagement() {
           <h1 className="text-3xl font-bold text-gray-900">Student Management</h1>
           <p className="text-gray-600">Manage JEE students and their information</p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <Dialog 
+          open={isAddDialogOpen} 
+          onOpenChange={(open) => {
+            setIsAddDialogOpen(open);
+            if (open) {
+              setEditingStudent(null);
+              resetForm();
+            }
+          }}
+        >
           <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
+            <Button 
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={() => {
+                setEditingStudent(null);
+                resetForm();
+              }}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Add Student
             </Button>
