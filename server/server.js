@@ -28,3 +28,15 @@ export const loginUser = async (credentials) => {
     throw error;
   }
 } 
+
+export const getAllBatches = async () => {
+  try {
+    const response = await apiClient.get("/api/batch/get-all-batches");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching batches:", error);
+    throw error;
+  }
+};
+
+

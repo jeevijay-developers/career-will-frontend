@@ -1,18 +1,21 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Plus, Users, Calendar, Clock ,SquarePen,Trash2} from "lucide-react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Plus, Users, Calendar, Clock, SquarePen, Trash2 } from "lucide-react"
 import { confirmAlert } from 'react-confirm-alert';
 import 'react-confirm-alert/src/react-confirm-alert.css';
 import toast from "react-hot-toast"
+import { getAllBatches } from "@/server/server"
 
 interface Batch {
   id: string
+  _id?: string // Backend ID
   name: string
   startDate: string
   endDate: string
@@ -20,6 +23,11 @@ interface Batch {
   capacity: number
   enrolled: number
   instructor: string
+  class?: string // Backend has class field
+  duration?: number // Backend has duration field
+  createdAt?: string // Backend timestamps
+  updatedAt?: string
+  __v?: number // MongoDB version field
 }
 
 const mockBatches: Batch[] = [
@@ -46,7 +54,7 @@ const mockBatches: Batch[] = [
 ]
 
 export function BatchManagement() {
-  const [batches, setBatches] = useState<Batch[]>(mockBatches)
+  const [batches, setBatches] = useState<Batch[]>([])
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editingBatch, setEditingBatch] = useState<Batch | null>(null)
@@ -54,15 +62,15 @@ export function BatchManagement() {
 
   //validation errors
   const [errors, setErrors] = useState({
-  name: "",
-  startDate: "",
-  endDate: "",
-  timing: "",
-  capacity: "",
-  instructor: "",
-});
+    name: "",
+    startDate: "",
+    endDate: "",
+    timing: "",
+    capacity: "",
+    instructor: "",
+  });
 
-  
+
   // Separate state for Create Batch form
   const [formData, setFormData] = useState({
     name: "",
@@ -84,7 +92,7 @@ export function BatchManagement() {
   })
 
   const handleAddBatch = () => {
-      if (!validateForm()) return;
+    if (!validateForm()) return;
     const newBatch: Batch = {
       id: Date.now().toString(),
       ...formData,
@@ -102,14 +110,14 @@ export function BatchManagement() {
     })
     setIsAddDialogOpen(false)
     setFormData({ name: "", startDate: "", endDate: "", timing: "", capacity: "", instructor: "" });
-setErrors({
-  name: "",
-  startDate: "",
-  endDate: "",
-  timing: "",
-  capacity: "",
-  instructor: "",
-});
+    setErrors({
+      name: "",
+      startDate: "",
+      endDate: "",
+      timing: "",
+      capacity: "",
+      instructor: "",
+    });
 
     toast.success(`Batch added successfully!`);
   }
@@ -129,7 +137,7 @@ setErrors({
 
   const handleUpdateBatch = () => {
     if (!editingBatch) return;
-    
+
 
     const updatedBatch: Batch = {
       ...editingBatch,
@@ -158,7 +166,7 @@ setErrors({
     toast.success(`Batch updated successfully!`);
   };
 
-   const handleDelete = () => {
+  const handleDelete = () => {
     confirmAlert({
       title: 'Confirm Delete',
       message: 'Are you sure you want to delete this Batch?',
@@ -181,19 +189,54 @@ setErrors({
     });
   };
   const validateForm = () => {
-  const newErrors: any = {};
+    const newErrors: any = {};
 
-  if (!formData.name.trim()) newErrors.name = "Batch name is required";
-  if (!formData.startDate) newErrors.startDate = "Start date is required";
-  if (!formData.endDate) newErrors.endDate = "End date is required";
-  if (!formData.timing.trim()) newErrors.timing = "Timing is required";
-  if (!formData.capacity || Number(formData.capacity) <= 0) newErrors.capacity = "Capacity must be greater than 0";
-  // if (!formData.instructor.trim()) newErrors.instructor = "Instructor name is required";
+    if (!formData.name.trim()) newErrors.name = "Batch name is required";
+    if (!formData.startDate) newErrors.startDate = "Start date is required";
+    if (!formData.endDate) newErrors.endDate = "End date is required";
+    if (!formData.timing.trim()) newErrors.timing = "Timing is required";
+    if (!formData.capacity || Number(formData.capacity) <= 0) newErrors.capacity = "Capacity must be greater than 0";
+    // if (!formData.instructor.trim()) newErrors.instructor = "Instructor name is required";
 
-  setErrors(newErrors);
+    setErrors(newErrors);
 
-  return Object.keys(newErrors).length === 0; // return true if no errors
-};
+    return Object.keys(newErrors).length === 0; // return true if no errors
+  };
+
+  // Fetch batches from API
+  const fetchBatches = async () => {
+    try {
+      const data = await getAllBatches();
+      console.log("Fetched batches:", data);
+      
+      // If data is an array, use it directly; if it's an object with batches property, use that
+      const batchesArray = Array.isArray(data) ? data : data.batches || [];
+      
+      // Map the data to match our Batch interface based on backend structure
+      const mappedBatches = batchesArray.map((batch: any) => ({
+        id: batch._id || batch.id,
+        name: batch.name,
+        startDate: batch.startDate ? new Date(batch.startDate).toISOString().split('T')[0] : "",
+        endDate: batch.endDate ? new Date(batch.endDate).toISOString().split('T')[0] : "",
+        timing: batch.timing || "09:00 AM to 04:00 PM", // Backend doesn't have timing field
+        capacity: batch.capacity || 0,
+        enrolled: batch.enrolled || 0,
+        instructor: batch.instructor || "Not assigned", // Backend doesn't have instructor field
+      }));
+      
+      setBatches(mappedBatches);
+    } catch (error) {
+      console.error("Failed to fetch batches:", error);
+      toast.error("Failed to load batches");
+      // Keep mock data as fallback
+    }
+  };
+
+  // Fetch batches when component mounts
+  useEffect(() => {
+    fetchBatches();
+  }, []);
+
 
 
   return (
@@ -280,9 +323,9 @@ setErrors({
                   value={formData.instructor}
                   onChange={(e) => setFormData({ ...formData, instructor: e.target.value })}
                   placeholder="Instructor name"
-               
+
                 />
-                
+
               </div>
             </div>
             <div className="flex justify-end gap-2 mt-6">
@@ -301,54 +344,68 @@ setErrors({
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {batches.map((batch) => (
-          <Card key={batch.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>{batch.name}</span>
-                <span className="text-sm font-normal text-gray-500">
-                  {batch.enrolled}/{batch.capacity}
-                </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Calendar className="h-4 w-4" />
-                <span>
-                  {batch.startDate} to {batch.endDate}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Clock className="h-4 w-4" />
-                <span>{batch.timing}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Users className="h-4 w-4" />
-                <span>Instructor: {batch.instructor}</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-blue-600 h-2 rounded-full"
-                  style={{ width: `${(batch.enrolled / batch.capacity) * 100}%` }}
-                ></div>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Enrolled: {batch.enrolled}</span>
-                <span className="text-gray-600">Available: {batch.capacity - batch.enrolled}</span>
-              </div>
-              <div className="flex justify-end gap-2 mt-4">
-                <Button  onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
-                  <Trash2 /> Delete
-                </Button>
-                <Button onClick={() => handleEditClick(batch)} className="bg-blue-600 hover:bg-blue-700">
-                  <SquarePen /> Edit
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Batches List</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Batch Name</TableHead>
+                  <TableHead>Start Date</TableHead>
+                  <TableHead>End Date</TableHead>
+                  {/* <TableHead>Duration (Days)</TableHead> */}
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {batches.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                      No batches found. Create your first batch!
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  batches.map((batch) => (
+                    <TableRow key={batch.id} className="hover:bg-gray-50">
+                      <TableCell className="font-medium">{batch.name}</TableCell>
+                      <TableCell>{batch.startDate}</TableCell>
+                      <TableCell>{batch.endDate}</TableCell>
+                      {/* <TableCell>
+                        {batch.duration ? `${batch.duration} days` : 'N/A'}
+                      </TableCell> */}
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button 
+                            onClick={() => handleEditClick(batch)} 
+                            size="sm"
+                            variant="outline"
+                            className="text-blue-600 hover:text-blue-700"
+                          >
+                            <SquarePen className="h-4 w-4 mr-1" />
+                            Edit
+                          </Button>
+                          <Button 
+                            onClick={handleDelete} 
+                            size="sm"
+                            variant="outline"
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Delete
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Edit Batch Dialog - Completely Separate from Create Batch */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
