@@ -138,12 +138,33 @@ export function BatchManagement() {
     }
   }
 
+  // Helper function to format date to DD/MM/YYYY
+  const formatDateToDDMMYYYY = (dateString: string) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  // Helper function to convert DD/MM/YYYY back to YYYY-MM-DD (for input fields)
+  const convertDDMMYYYYToInputFormat = (dateString: string) => {
+    if (!dateString) return "";
+    const parts = dateString.split('/');
+    if (parts.length === 3) {
+      const [day, month, year] = parts;
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+    return "";
+  };
+
   const handleEditClick = (batch: Batch) => {
     setEditingBatch(batch);
     setEditFormData({
       name: batch.name,
-      startDate: batch.startDate,
-      endDate: batch.endDate,
+      startDate: convertDDMMYYYYToInputFormat(batch.startDate), // Convert DD/MM/YYYY to YYYY-MM-DD for input
+      endDate: convertDDMMYYYYToInputFormat(batch.endDate), // Convert DD/MM/YYYY to YYYY-MM-DD for input
       // timing: batch.timing,
       // capacity: batch.capacity.toString(),
       // instructor: batch.instructor,
@@ -234,8 +255,8 @@ export function BatchManagement() {
       const mappedBatches = batchesArray.map((batch: any) => ({
         id: batch._id || batch.id,
         name: batch.name,
-        startDate: batch.startDate ? new Date(batch.startDate).toISOString().split('T')[0] : "",
-        endDate: batch.endDate ? new Date(batch.endDate).toISOString().split('T')[0] : "",
+        startDate: formatDateToDDMMYYYY(batch.startDate), // Format to DD/MM/YYYY for display
+        endDate: formatDateToDDMMYYYY(batch.endDate), // Format to DD/MM/YYYY for display
         timing: batch.timing || "09:00 AM to 04:00 PM", // Backend doesn't have timing field
         capacity: batch.capacity || 0,
         enrolled: batch.enrolled || 0,
@@ -399,11 +420,11 @@ export function BatchManagement() {
                 ) : (
                   batches.map((batch) => (
                     <TableRow key={batch.id} className="hover:bg-gray-50">
-                      <TableCell className="font-medium">{batch.name}</TableCell>
+                      <TableCell className="font-medium">  {batch.name ? batch.name.charAt(0).toUpperCase() + batch.name.slice(1) : ""}</TableCell>
                       <TableCell>{batch.startDate}</TableCell>
                       <TableCell>{batch.endDate}</TableCell>
                       <TableCell>
-                        {batch.class}
+                        {batch.class ? batch.class.charAt(0).toUpperCase() + batch.class.slice(1) : ""}
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
