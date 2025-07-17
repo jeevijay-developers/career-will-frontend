@@ -9,12 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Plus, Search, Edit, Trash2 } from "lucide-react"
+import { Plus, Search, Edit, Trash2, Eye, EyeOff } from "lucide-react"
 import { confirmAlert } from 'react-confirm-alert';
 import 'react-confirm-alert/src/react-confirm-alert.css';
 import toast from "react-hot-toast"
-import { getAllKits, createStudent } from "../server/server.js"
-
+import { getAllKits, createStudent, getAllBatches, uploadStudentImage, findParentByEmail, getAllStudents, getBatchById } from "../server/server.js"
 
 interface Student {
   id: string
@@ -45,63 +44,27 @@ interface Parent {
   phone: string
 }
 
-const mockStudents: Student[] = [
-  {
-    id: "1",
-    studentId: 1001,
-    name: "Rahul Sharma",
-    rollNo: "JEE001",
-    class: "JEE-2024-A",
-    kit: [],
-    parent: {
-      id: "p1",
-      username: "suresh_sharma",
-      password: "password123",
-      role: "PARENT",
-      name: "Suresh Sharma",
-      email: "suresh@example.com",
-      phone: "9876543211",
-    },
-    joinDate: "2024-01-15",
-  },
-  {
-    id: "2",
-    studentId: 1002,
-    name: "Priya Patel",
-    rollNo: "JEE002",
-    class: "JEE-2024-B",
-    kit: [],
-    parent: {
-      id: "p2",
-      username: "amit_patel",
-      password: "password123",
-      role: "PARENT",
-      name: "Amit Patel",
-      email: "amit@example.com",
-      phone: "9876543213",
-    },
-    joinDate: "2024-01-20",
-  },
-]
-
 export function StudentManagement() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
 
-  const [students, setStudents] = useState<Student[]>(mockStudents)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [students, setStudents] = useState<Student[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [pageSize] = useState(5); // You can adjust page size as needed
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedKits, setSelectedKits] = useState<Kit[]>([])
   const [kits, setKits] = useState<Kit[]>([]);
+  const [batches, setBatches] = useState<any[]>([]);
 
   // Validation errors state
   const [errors, setErrors] = useState({
     name: "",
-    rollNo: "",
-    class: "",
-    parentName: "",
+    phone: "",
+    address: "",
+    batch: "",
     parentUsername: "",
-    parentRole: "",
     parentEmail: "",
     parentPhone: "",
     parentPassword: "",
@@ -110,36 +73,101 @@ export function StudentManagement() {
   const [formData, setFormData] = useState({
     // Student info
     name: "",
-    rollNo: "",
-    class: "",
+    phone: "",
+    address: "",
+    batch: "", // Will store batch ObjectId
     // Parent info
     parentUsername: "",
     parentPassword: "",
-    parentRole: "PARENT" as "ADMIN" | "TEACHER" | "PARENT",
-    parentName: "",
     parentEmail: "",
     parentPhone: "",
   })
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [uploadedImage, setUploadedImage] = useState<any>(null); // { public_id, url }
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [batchNames, setBatchNames] = useState<{[key: string]: string}>({}); // Cache for batch names
 
   useEffect(() => {
-    async function fetchKits() {
+    async function fetchKitsAndBatches() {
       try {
-        const response = await getAllKits();
-        // console.log("Fetched kits:", response);        
-        setKits(response);
+        const kitsResponse = await getAllKits();
+        setKits(kitsResponse);
+        const batchesResponse = await getAllBatches();
+        setBatches(batchesResponse);
       } catch (error) {
         setKits([]);
-        console.error("Error fetching kits:", error);
+        setBatches([]);
+        toast.error("Error fetching kits or batches");
       }
     }
-    fetchKits();
-  }, []);
 
-  const filteredStudents = students.filter(
+    async function fetchStudents(page: number) {
+      try {
+        // Pass page and pageSize as query params
+        let studentsResponse = await getAllStudents({ page, limit: pageSize });
+        let studentsArr: any[] = [];
+        let total = 1;
+        if (Array.isArray(studentsResponse)) {
+          studentsArr = studentsResponse;
+        } else if (studentsResponse && Array.isArray(studentsResponse.students)) {
+          studentsArr = studentsResponse.students;
+          total = studentsResponse.totalPages || studentsResponse.total || 1;
+        }
+        // Sort ascending by rollNo or createdAt if available
+        studentsArr.sort((a: any, b: any) => {
+          if (a.rollNo && b.rollNo) {
+            return String(a.rollNo).localeCompare(String(b.rollNo), undefined, { numeric: true });
+          }
+          if (a.createdAt && b.createdAt) {
+            return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          }
+          return 0;
+        });
+        setStudents(studentsArr);
+        setTotalPages(total);
+        // Fetch batch names for all students
+        if (studentsArr && studentsArr.length > 0) {
+          const batchIds = [...new Set(studentsArr.map((student: any) => student.batch).filter(Boolean))] as string[];
+          const batchNamesMap: {[key: string]: string} = {};
+          await Promise.all(
+            batchIds.map(async (batchId: string) => {
+              try {
+                const batchResponse = await getBatchById(batchId);
+                if (batchResponse && batchResponse.name) {
+                  batchNamesMap[batchId] = batchResponse.name;
+                }
+              } catch (error) {
+                console.error(`Error fetching batch ${batchId}:`, error);
+                batchNamesMap[batchId] = "Unknown Batch";
+              }
+            })
+          );
+          setBatchNames(batchNamesMap);
+        }
+      } catch (error) {
+        console.error("Error fetching students:", error);
+        setStudents([]);
+        toast.error("Error fetching students");
+      }
+    }
+
+    fetchKitsAndBatches();
+    fetchStudents(currentPage);
+  }, [currentPage, pageSize]);
+
+  // Sort students in ascending order by name before filtering
+  const sortedStudents = [...students].sort((a, b) => {
+    const nameA = (a.name || '').toLowerCase();
+    const nameB = (b.name || '').toLowerCase();
+    return nameA.localeCompare(nameB);
+  });
+  const filteredStudents = sortedStudents.filter(
     (student) =>
-      student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.rollNo.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+      (student.name?.toLowerCase() ?? "").includes(searchTerm.toLowerCase()) ||
+      (student.rollNo?.toString()?.toLowerCase() ?? "").includes(searchTerm.toLowerCase())
+  );
 
   const handleKitToggle = (kit: Kit) => {
     setSelectedKits(prev =>
@@ -152,23 +180,26 @@ export function StudentManagement() {
   const resetForm = () => {
     setFormData({
       name: "",
-      rollNo: "",
-      class: "",
+      phone: "",
+      address: "",
+      batch: "",
       parentUsername: "",
       parentPassword: "",
-      parentRole: "PARENT",
-      parentName: "",
       parentEmail: "",
       parentPhone: "",
     })
     setSelectedKits([])
+    setSelectedImage(null)
+    setUploadedImage(null)
+    setShowPassword(false)
+    setIsCheckingEmail(false)
+    setBatchNames({}) // Clear batch names cache
     setErrors({
       name: "",
-      rollNo: "",
-      class: "",
-      parentName: "",
+      phone: "",
+      address: "",
+      batch: "",
       parentUsername: "",
-      parentRole: "",
       parentEmail: "",
       parentPhone: "",
       parentPassword: "",
@@ -180,18 +211,18 @@ export function StudentManagement() {
 
     // Student validation
     if (!formData.name.trim()) newErrors.name = "Student name is required";
-    if (!formData.rollNo.trim()) newErrors.rollNo = "Roll number is required";
-    if (!formData.class.trim()) newErrors.class = "Class/Batch is required";
+    if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
+    if (!formData.address.trim()) newErrors.address = "Address is required";
+    if (!formData.batch.trim()) newErrors.batch = "Batch is required";
 
     // Parent validation
-    if (!formData.parentName.trim()) newErrors.parentName = "Parent name is required";
     if (!formData.parentUsername.trim()) newErrors.parentUsername = "Username is required";
     if (!formData.parentEmail.trim()) {
       newErrors.parentEmail = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.parentEmail)) {
       newErrors.parentEmail = "Email is invalid";
     }
-    if (!formData.parentPhone.trim()) newErrors.parentPhone = "Phone number is required";
+    if (!formData.parentPhone.trim()) newErrors.parentPhone = "Parent phone number is required";
     if (!formData.parentPassword.trim()) newErrors.parentPassword = "Password is required";
 
     setErrors(newErrors);
@@ -200,35 +231,86 @@ export function StudentManagement() {
 
   const handleAddStudent = async () => {
     if (!validateForm()) return;
+    
+    setIsLoading(true);
     const kitNames = selectedKits.map(k => k.name);
-    const newStudent: Student = {
-      id: Date.now().toString(),
-      studentId: Math.max(...students.map(s => s.studentId), 1000) + 1,
+    
+    // Find the selected batch ObjectId
+    const selectedBatch = batches.find(batch => batch.name === formData.batch);
+    
+    const newStudent = {
       name: formData.name,
-      rollNo: formData.rollNo,
-      class: formData.class,
-      kit: kitNames, // send array of kit names
+      batch: selectedBatch?._id || selectedBatch?.id, // Use ObjectId
+      phone: formData.phone,
+      image: uploadedImage ? uploadedImage : undefined,
       parent: {
-        id: `p${Date.now()}`,
         username: formData.parentUsername,
         password: formData.parentPassword,
-        role: formData.parentRole,
-        name: formData.parentName,
         email: formData.parentEmail,
         phone: formData.parentPhone,
       },
-      joinDate: new Date().toISOString().split("T")[0],
+      kit: kitNames,
+      address: formData.address,
     }
+    
     try {
-      await createStudent(newStudent);
-      setStudents([...students, newStudent]);
+      console.log("New student added:", newStudent);
+      const response = await createStudent(newStudent);
+      
+      // Refresh the students list after adding a new student
+      const updatedStudents = await getAllStudents({ page: currentPage, limit: pageSize });
+      let studentsArr: any[] = [];
+      if (Array.isArray(updatedStudents)) {
+        studentsArr = updatedStudents;
+      } else if (updatedStudents && Array.isArray(updatedStudents.students)) {
+        studentsArr = updatedStudents.students;
+      }
+      setStudents(studentsArr);
+      
       resetForm();
       setIsAddDialogOpen(false);
-    toast.success(`Student added successfully!`);
+      toast.success("Student added successfully!");
     } catch (error) {
-      toast.error("Failed to add student");
+      toast.error("Error adding student:");
+      toast.error("Failed to add student. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   }
+
+  const handleCheckParentEmail = async () => {
+    if (!formData.parentEmail.trim()) {
+      toast.error("Please enter an email address first");
+      return;
+    }
+
+    if (!/\S+@\S+\.\S+/.test(formData.parentEmail)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    setIsCheckingEmail(true);
+    try {
+      const response = await findParentByEmail(formData.parentEmail);
+      
+      if (response && response.username) {
+        // Auto-fill parent details (response contains parent info directly)
+        setFormData(prev => ({
+          ...prev,
+          parentUsername: response.username || "",
+          parentPhone: response.phone || "",
+          // Note: We don't auto-fill password for security reasons
+        }));
+        toast.success("Parent found! Details auto-filled.");
+      } else {
+        toast.error("This email doesn't exist");
+      }
+    } catch (error) {
+      toast.error("This email doesn't exist");
+    } finally {
+      setIsCheckingEmail(false);
+    }
+  };
 
   const handleDelete = () => {
     confirmAlert({
@@ -252,51 +334,15 @@ export function StudentManagement() {
       ]
     });
   };
-  const handleEditClick = (student: Student) => {
-    setEditingStudent(student);
-    setFormData({
-      name: student.name,
-      rollNo: student.rollNo,
-      class: student.class,
-      parentUsername: student.parent.username,
-      parentPassword: student.parent.password,
-      parentRole: student.parent.role,
-      parentName: student.parent.name,
-      parentEmail: student.parent.email,
-      parentPhone: student.parent.phone,
-    });
-    setSelectedKits(student.kit);
-    setIsEditDialogOpen(true);
-  };
-  const handleUpdateStudent = () => {
-    if (!editingStudent) return;
-
-    const updatedStudent: Student = {
-      ...editingStudent,
-      name: formData.name,
-      rollNo: formData.rollNo,
-      class: formData.class,
-      kit: selectedKits,
-      parent: {
-        ...editingStudent.parent,
-        username: formData.parentUsername,
-        password: formData.parentPassword,
-        role: formData.parentRole,
-        name: formData.parentName,
-        email: formData.parentEmail,
-        phone: formData.parentPhone,
-      },
-    };
-
-    setStudents(prev =>
-      prev.map(s => (s.id === editingStudent.id ? updatedStudent : s))
-    );
-
-    resetForm();
-    setEditingStudent(null);
-    setIsEditDialogOpen(false);
-    toast.success(`Student updated successfully!`);
-  };
+  // const handleEditClick = (student: Student) => {
+  //   // TODO: Implement edit functionality
+  //   toast.info("Edit functionality coming soon!");
+  // };
+  
+  // const handleUpdateStudent = () => {
+  //   // TODO: Implement update functionality
+  //   toast.info("Update functionality coming soon!");
+  // };
 
 
   return (
@@ -341,9 +387,17 @@ export function StudentManagement() {
                 <div className="flex flex-col items-center mb-6">
                   <div className="relative">
                     <div className="w-24 h-24 rounded-full border-2 border-gray-300 bg-gray-100 flex items-center justify-center overflow-hidden">
-                      <svg className="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                      </svg>
+                      {selectedImage ? (
+                        <img 
+                          src={selectedImage} 
+                          alt="Student Profile" 
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <svg className="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                        </svg>
+                      )}
                     </div>
                     <Label 
                       htmlFor="studentImage" 
@@ -359,9 +413,33 @@ export function StudentManagement() {
                     type="file"
                     accept="image/*"
                     className="hidden"
-                    onChange={(e) => {
-                      // You can handle the image file here, e.g., set to state or upload
-                      // Example: setFormData({ ...formData, image: e.target.files?.[0] });
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        // Show preview
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          setSelectedImage(event.target?.result as string);
+                        };
+                        reader.readAsDataURL(file);
+
+                        // Upload to server
+                        const formData = new FormData();
+                        formData.append("image", file);
+                        try {
+                          const res = await uploadStudentImage(formData);
+                          if (res && res.image) {
+                            setUploadedImage(res.image);
+                            toast.success("Image uploaded successfully");
+                          } else {
+                            setUploadedImage(null);
+                            toast.error("Image upload failed");
+                          }
+                        } catch (err) {
+                          setUploadedImage(null);
+                          toast.error("Image upload failed");
+                        }
+                      }
                     }}
                   />
                   <p className="text-sm text-gray-500 mt-2">Profile Picture</p>
@@ -380,31 +458,40 @@ export function StudentManagement() {
                     {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="rollNo">Roll Number</Label>
+                    <Label htmlFor="phone">Phone Number</Label>
                     <Input
-                      id="rollNo"
-                      value={formData.rollNo}
-                      onChange={(e) => setFormData({ ...formData, rollNo: e.target.value })}
-                      placeholder="Enter roll number"
-                      className={errors.rollNo ? "border-red-500" : ""}
+                      id="phone"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      placeholder="Enter phone number"
+                      className={errors.phone ? "border-red-500" : ""}
                     />
-                    {errors.rollNo && <p className="text-red-500 text-sm">{errors.rollNo}</p>}
+                    {errors.phone && <p className="text-red-500 text-sm">{errors.phone}</p>}
                   </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="class">Class/Batch</Label>
-                    <Select value={formData.class} onValueChange={(value) => setFormData({ ...formData, class: value })}>
-                      <SelectTrigger className={errors.class ? "border-red-500" : ""}>
-                        <SelectValue placeholder="Select class/batch" />
+                  <div className="space-y-2">
+                    <Label htmlFor="batch">Batch</Label>
+                    <Select value={formData.batch} onValueChange={(value) => setFormData({ ...formData, batch: value })}>
+                      <SelectTrigger className={errors.batch ? "border-red-500" : ""}>
+                        <SelectValue placeholder="Select batch" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="JEE-2024-A">JEE-2024-A</SelectItem>
-                        <SelectItem value="JEE-2024-B">JEE-2024-B</SelectItem>
-                        <SelectItem value="JEE-2024-C">JEE-2024-C</SelectItem>
-                        <SelectItem value="JEE-2025-A">JEE-2025-A</SelectItem>
-                        <SelectItem value="JEE-2025-B">JEE-2025-B</SelectItem>
+                        {(batches ?? []).map((batch) => (
+                          <SelectItem key={batch._id || batch.id} value={batch.name}>{batch.name}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
-                    {errors.class && <p className="text-red-500 text-sm">{errors.class}</p>}
+                    {errors.batch && <p className="text-red-500 text-sm">{errors.batch}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Address</Label>
+                    <Input
+                      id="address"
+                      value={formData.address}
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      placeholder="Enter address"
+                      className={errors.address ? "border-red-500" : ""}
+                    />
+                    {errors.address && <p className="text-red-500 text-sm">{errors.address}</p>}
                   </div>
                 </div>
               </div>
@@ -424,10 +511,10 @@ export function StudentManagement() {
                         <Label
                           htmlFor={`kit-${kit._id}`}
                           className="text-sm font-medium capitalize cursor-pointer"
+                          onClick={() => handleKitToggle(kit)}
                         >
                           {kit.name}
                         </Label>
-                        <p className="text-xs text-gray-500 capitalize">{kit.description}</p>
                       </div>
                     </div>
                   ))}
@@ -438,17 +525,6 @@ export function StudentManagement() {
               <div>
                 <h3 className="text-lg font-semibold mb-4 text-gray-800">Parent Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="parentName">Parent Name</Label>
-                    <Input
-                      id="parentName"
-                      value={formData.parentName}
-                      onChange={(e) => setFormData({ ...formData, parentName: e.target.value })}
-                      placeholder="Enter parent name"
-                      className={errors.parentName ? "border-red-500" : ""}
-                    />
-                    {errors.parentName && <p className="text-red-500 text-sm">{errors.parentName}</p>}
-                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="parentUsername">Username</Label>
                     <Input
@@ -461,7 +537,19 @@ export function StudentManagement() {
                     {errors.parentUsername && <p className="text-red-500 text-sm">{errors.parentUsername}</p>}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="parentEmail">Email</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="parentEmail">Email</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCheckParentEmail}
+                        disabled={isCheckingEmail || !formData.parentEmail.trim()}
+                        className="h-6 px-2 text-xs"
+                      >
+                        {isCheckingEmail ? "Checking..." : "Check mail"}
+                      </Button>
+                    </div>
                     <Input
                       id="parentEmail"
                       type="email"
@@ -473,51 +561,58 @@ export function StudentManagement() {
                     {errors.parentEmail && <p className="text-red-500 text-sm">{errors.parentEmail}</p>}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="parentPhone">Phone Number</Label>
+                    <Label htmlFor="parentPhone">Parent Phone Number</Label>
                     <Input
                       id="parentPhone"
                       value={formData.parentPhone}
                       onChange={(e) => setFormData({ ...formData, parentPhone: e.target.value })}
-                      placeholder="Enter phone number"
+                      placeholder="Enter parent phone number"
                       className={errors.parentPhone ? "border-red-500" : ""}
                     />
                     {errors.parentPhone && <p className="text-red-500 text-sm">{errors.parentPhone}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="parentPassword">Password</Label>
-                    <Input
-                      id="parentPassword"
-                      type="password"
-                      value={formData.parentPassword}
-                      onChange={(e) => setFormData({ ...formData, parentPassword: e.target.value })}
-                      placeholder="Enter password"
-                      className={errors.parentPassword ? "border-red-500" : ""}
-                    />
+                    <div className="relative">
+                      <Input
+                        id="parentPassword"
+                        type={showPassword ? "text" : "password"}
+                        value={formData.parentPassword}
+                        onChange={(e) => setFormData({ ...formData, parentPassword: e.target.value })}
+                        placeholder="Enter password"
+                        className={errors.parentPassword ? "border-red-500 pr-10" : "pr-10"}
+                      />
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                        )}
+                      </button>
+                    </div>
                     {errors.parentPassword && <p className="text-red-500 text-sm">{errors.parentPassword}</p>}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="parentRole">Role</Label>
-                    <Select value={formData.parentRole} onValueChange={(value: "ADMIN" | "TEACHER" | "PARENT") => setFormData({ ...formData, parentRole: value })}>
-                      <SelectTrigger className={errors.parentRole ? "border-red-500" : ""}>
-                        <SelectValue placeholder="Select role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="PARENT">Parent</SelectItem>
-                        {/* <SelectItem value="TEACHER">Teacher</SelectItem>
-                        <SelectItem value="ADMIN">Admin</SelectItem> */}
-                      </SelectContent>
-                    </Select>
-                    {errors.parentRole && <p className="text-red-500 text-sm">{errors.parentRole}</p>}
                   </div>
                 </div>
               </div>
             </div>
             <div className="flex justify-end gap-2 mt-6">
-              <Button variant="outline" onClick={() => { setIsAddDialogOpen(false); resetForm(); }}>
+              <Button 
+                variant="outline" 
+                onClick={() => { setIsAddDialogOpen(false); resetForm(); }}
+                disabled={isLoading}
+              >
                 Cancel
               </Button>
-              <Button onClick={handleAddStudent} className="bg-blue-600 hover:bg-blue-700">
-                Add Student
+              <Button 
+                onClick={handleAddStudent} 
+                className="bg-blue-600 hover:bg-blue-700"
+                disabled={isLoading}
+              >
+                {isLoading ? "Adding..." : "Add Student"}
               </Button>
             </div>
           </DialogContent>
@@ -544,6 +639,7 @@ export function StudentManagement() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>S No.</TableHead>
                   <TableHead>Roll No.</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Class</TableHead>
@@ -551,235 +647,87 @@ export function StudentManagement() {
                   <TableHead>Parent Email</TableHead>
                   <TableHead>Parent Phone</TableHead>
                   <TableHead>Kits</TableHead>
-                  <TableHead>Join Date</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredStudents.map((student) => (
-                  <TableRow key={student.id}>
-                    <TableCell className="font-medium">{student.rollNo}</TableCell>
-                    <TableCell>{student.name}</TableCell>
-                    <TableCell>
-                      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">{student.class}</span>
-                    </TableCell>
-                    <TableCell>{student.parent.name}</TableCell>
-                    <TableCell>{student.parent.email}</TableCell>
-                    <TableCell>{student.parent.phone}</TableCell>
-                    <TableCell>
-                      {/* Show x/y format for kits allotted */}
-                      <span className=" text-sm text-gray-700">{student.kit.length} / {(kits ?? []).length}</span>
-                    </TableCell>
-                    <TableCell>{student.joinDate}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEditClick(student)} // ← Add this line
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-red-600 hover:text-red-700 bg-transparent"
-                          onClick={handleDelete}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                {filteredStudents.length > 0 ? (
+                  filteredStudents.map((student, i) => (
+                    <TableRow key={student.id || i}>
+                      <TableCell className="font-medium">{(currentPage - 1) * pageSize + i + 1}</TableCell>
+                      <TableCell className="font-medium">{student.rollNo ?? "-"}</TableCell>
+                      <TableCell>{student.name}</TableCell>
+                      <TableCell>
+                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                          {typeof student.class === "string" && student.class
+                            ? student.class
+                            : (student as any).batch && batchNames[(student as any).batch]
+                              ? batchNames[(student as any).batch]
+                              : (student as any).batch || "-"}
+                        </span>
+                      </TableCell>
+                      <TableCell>{student.parent?.name ?? student.parent?.username ?? "-"}</TableCell>
+                      <TableCell>{student.parent?.email ?? "-"}</TableCell>
+                      <TableCell>{student.parent?.phone ?? "-"}</TableCell>
+                      <TableCell>
+                        {/* Show x/y format for kits allotted */}
+                        <span className=" text-sm text-gray-700">{student.kit?.length ?? 0} / {(kits ?? []).length}</span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            // onClick={() => handleEditClick(student)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700 bg-transparent"
+                            onClick={handleDelete}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+                      No students found
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
+            {/* Pagination Controls */}
+            <div className="flex justify-end items-center gap-2 mt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              >
+                Previous
+              </Button>
+              <span className="text-sm">Page {currentPage} of {totalPages}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              >
+                Next
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Edit Student Dialog - Separate from Add Student */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Student</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-6">
-            {/* Student Information */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4 text-gray-800">Student Information</h3>
-              
-              {/* Profile Picture - Centered at top */}
-              <div className="flex flex-col items-center mb-6">
-                <div className="relative">
-                  <div className="w-24 h-24 rounded-full border-2 border-gray-300 bg-gray-100 flex items-center justify-center overflow-hidden">
-                    <svg className="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <Label 
-                    htmlFor="editStudentImage" 
-                    className="absolute bottom-0 right-0 bg-blue-600 text-white rounded-full p-1 cursor-pointer hover:bg-blue-700 transition-colors"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                  </Label>
-                </div>
-                <Input
-                  id="editStudentImage"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    // You can handle the image file here, e.g., set to state or upload
-                    // Example: setFormData({ ...formData, image: e.target.files?.[0] });
-                  }}
-                />
-                <p className="text-sm text-gray-500 mt-2">Profile Picture</p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-name">Student Name</Label>
-                  <Input
-                    id="edit-name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Enter student name"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-rollNo">Roll Number</Label>
-                  <Input
-                    id="edit-rollNo"
-                    value={formData.rollNo}
-                    onChange={(e) => setFormData({ ...formData, rollNo: e.target.value })}
-                    placeholder="Enter roll number"
-                  />
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="edit-class">Class/Batch</Label>
-                  <Select value={formData.class} onValueChange={(value) => setFormData({ ...formData, class: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select class/batch" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="JEE-2024-A">JEE-2024-A</SelectItem>
-                      <SelectItem value="JEE-2024-B">JEE-2024-B</SelectItem>
-                      <SelectItem value="JEE-2024-C">JEE-2024-C</SelectItem>
-                      <SelectItem value="JEE-2025-A">JEE-2025-A</SelectItem>
-                      <SelectItem value="JEE-2025-B">JEE-2025-B</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-
-            {/* Kit Selection */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4 text-gray-800">Student Kits</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {(kits ?? []).map((kit) => (
-                  <div key={kit._id} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
-                    <Checkbox
-                      id={`edit-kit-${kit._id}`}
-                      checked={selectedKits.some(k => k._id === kit._id)}
-                      onCheckedChange={() => handleKitToggle(kit)}
-                    />
-                    <div className="flex-1">
-                      <Label
-                        htmlFor={`edit-kit-${kit._id}`}
-                        className="text-sm font-medium capitalize cursor-pointer"
-                      >
-                        {kit.name}
-                      </Label>
-                      <p className="text-xs text-gray-500 capitalize">{kit.description}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Parent Information */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4 text-gray-800">Parent Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-parentName">Parent Name</Label>
-                  <Input
-                    id="edit-parentName"
-                    value={formData.parentName}
-                    onChange={(e) => setFormData({ ...formData, parentName: e.target.value })}
-                    placeholder="Enter parent name"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-parentUsername">Username</Label>
-                  <Input
-                    id="edit-parentUsername"
-                    value={formData.parentUsername}
-                    onChange={(e) => setFormData({ ...formData, parentUsername: e.target.value })}
-                    placeholder="Enter username"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-parentEmail">Email</Label>
-                  <Input
-                    id="edit-parentEmail"
-                    type="email"
-                    value={formData.parentEmail}
-                    onChange={(e) => setFormData({ ...formData, parentEmail: e.target.value })}
-                    placeholder="Enter email"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-parentPhone">Phone Number</Label>
-                  <Input
-                    id="edit-parentPhone"
-                    value={formData.parentPhone}
-                    onChange={(e) => setFormData({ ...formData, parentPhone: e.target.value })}
-                    placeholder="Enter phone number"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-parentPassword">Password</Label>
-                  <Input
-                    id="edit-parentPassword"
-                    type="password"
-                    value={formData.parentPassword}
-                    onChange={(e) => setFormData({ ...formData, parentPassword: e.target.value })}
-                    placeholder="Enter password"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-parentRole">Role</Label>
-                  <Select value={formData.parentRole} onValueChange={(value: "ADMIN" | "TEACHER" | "PARENT") => setFormData({ ...formData, parentRole: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="PARENT">Parent</SelectItem>
-                      <SelectItem value="TEACHER">Teacher</SelectItem>
-                      <SelectItem value="ADMIN">Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="flex justify-end gap-2 mt-6">
-            <Button variant="outline" onClick={() => { setIsEditDialogOpen(false); resetForm(); setEditingStudent(null); }}>
-              Cancel
-            </Button>
-            <Button onClick={handleUpdateStudent} className="bg-blue-600 hover:bg-blue-700">
-              Update Student
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* TODO: Edit Student Dialog will be implemented later */}
     </div>
   )
 }

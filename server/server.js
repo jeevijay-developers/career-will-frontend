@@ -10,6 +10,7 @@ export const getAllKits = async () => {
     throw error;
   }
 } 
+
 export const createKit = async (kitData) => {
   try {
     const response = await apiClient.post("/api/kit/create-kit", kitData);
@@ -41,13 +42,16 @@ export const createStudent = async (studentData) => {
     throw error;
   }
 }
+
  export const uploadStudentImage = async (formData) => {
   try {
+    console.log("Image data:", formData);
     const response = await apiClient.post("/api/student/upload-image", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
     });
+    
     return response.data;
   } catch (error) {
     console.error("Error uploading student image:", error);
@@ -55,6 +59,34 @@ export const createStudent = async (studentData) => {
   }
 }
 
+export const getAllStudents = async (params) => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.limit) queryParams.append('limit', params.limit.toString());
+    
+    const url = `/api/student/get-all-sutdents${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    console.log("Fetching students with URL:", url);
+    
+    const response = await apiClient.get(url);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching students:", error);
+    throw error;
+  }
+}
+
+export const findParentByEmail = async (email) => {
+  try {
+    const response = await apiClient.get(`/api/student/find-parent-by-email/${email}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error finding parent by email:", error);
+    throw error;
+  }
+}
+
+// Batch APIs
 export const getAllBatches = async () => {
   try {
     const response = await apiClient.get("/api/batch/get-all-batches");
@@ -74,5 +106,15 @@ export const createBatch = async (batchData) => {
     throw error;
   }
 };
+
+export const getBatchById = async (batchId) => {
+  try {
+    const response = await apiClient.get(`/api/batch/get-batch-by-id/${batchId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching batch by ID:", error);
+    throw error;
+  }
+}
 
 
