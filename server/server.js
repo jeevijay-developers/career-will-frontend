@@ -1,8 +1,9 @@
 import apiClient from "./config";
 
+// Kits api
 export const getAllKits = async () => {
   try {
-    const response = await apiClient.get("/api/kit/get-all-kits");
+    const response = await apiClient.get("/api/kit/get-all-kits");    
     return response.data;
   } catch (error) {
     console.error("Error fetching kits:", error);
@@ -19,6 +20,7 @@ export const createKit = async (kitData) => {
   }
 }
 
+// User authentication APIs
 export const loginUser = async (credentials) => {
   try {
     const response = await apiClient.post("/api/auth/login", credentials);
@@ -28,3 +30,27 @@ export const loginUser = async (credentials) => {
     throw error;
   }
 } 
+
+// Student APIs
+export const createStudent = async (studentData) => {
+  try {
+    const response = await apiClient.post("/api/student/create-student", studentData);
+    return response.data;
+  } catch (error) {
+    console.error("Error creating student:", error);
+    throw error;
+  }
+}
+ export const uploadStudentImage = async (formData) => {
+  try {
+    const response = await apiClient.post("/api/student/upload-image", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error uploading student image:", error);
+    throw error;
+  }
+}
