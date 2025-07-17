@@ -39,4 +39,14 @@ export const getAllBatches = async () => {
   }
 };
 
+export const createBatch = async (batchData) => {
+  try {
+    const response = await apiClient.post("/api/batch/create-batch", batchData);
+    return response.data;
+  } catch (error) {
+    console.error("Error creating batch:", error);
+    throw error;
+  }
+};
+
 

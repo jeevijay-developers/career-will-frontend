@@ -11,7 +11,7 @@ import { Plus, Users, Calendar, Clock, SquarePen, Trash2 } from "lucide-react"
 import { confirmAlert } from 'react-confirm-alert';
 import 'react-confirm-alert/src/react-confirm-alert.css';
 import toast from "react-hot-toast"
-import { getAllBatches } from "@/server/server"
+import { getAllBatches,createBatch } from "@/server/server"
 
 interface Batch {
   id: string
@@ -65,9 +65,10 @@ export function BatchManagement() {
     name: "",
     startDate: "",
     endDate: "",
-    timing: "",
-    capacity: "",
-    instructor: "",
+    // timing: "",
+    // capacity: "",
+    // instructor: "",
+    class: "",
   });
 
 
@@ -76,9 +77,10 @@ export function BatchManagement() {
     name: "",
     startDate: "",
     endDate: "",
-    timing: "",
-    capacity: "",
-    instructor: "",
+    // timing: "",
+    // capacity: "",
+    // instructor: "",
+    class: "",
   })
 
   // Separate state for Edit Batch form
@@ -86,40 +88,54 @@ export function BatchManagement() {
     name: "",
     startDate: "",
     endDate: "",
-    timing: "",
-    capacity: "",
-    instructor: "",
+    // timing: "",
+    // capacity: "",
+    // instructor: "",
+    class: "",
   })
 
-  const handleAddBatch = () => {
+  const handleAddBatch = async () => {
     if (!validateForm()) return;
-    const newBatch: Batch = {
-      id: Date.now().toString(),
-      ...formData,
-      capacity: Number.parseInt(formData.capacity),
-      enrolled: 0,
-    }
-    setBatches([...batches, newBatch])
-    setFormData({
-      name: "",
-      startDate: "",
-      endDate: "",
-      timing: "",
-      capacity: "",
-      instructor: "",
-    })
-    setIsAddDialogOpen(false)
-    setFormData({ name: "", startDate: "", endDate: "", timing: "", capacity: "", instructor: "" });
-    setErrors({
-      name: "",
-      startDate: "",
-      endDate: "",
-      timing: "",
-      capacity: "",
-      instructor: "",
-    });
+    
+    try {
+      const batchData = {
+        name: formData.name,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        class: formData.class,
+      };
+      
+      const newBatch = await createBatch(batchData);
+      console.log("Batch created:", newBatch);
+      
+      // Refresh the batches list
+      await fetchBatches();
+      
+      setFormData({
+        name: "",
+        startDate: "",
+        endDate: "",
+        // timing: "",
+        // capacity: "",
+        // instructor: "",
+        class: "",
+      })
+      setIsAddDialogOpen(false)
+      setErrors({
+        name: "",
+        startDate: "",
+        endDate: "",
+        // timing: "",
+        // capacity: "",
+        // instructor: "",
+        class: "",
+      });
 
-    toast.success(`Batch added successfully!`);
+      toast.success(`Batch added successfully!`);
+    } catch (error) {
+      console.error("Failed to create batch:", error);
+      toast.error("Failed to create batch");
+    }
   }
 
   const handleEditClick = (batch: Batch) => {
@@ -128,9 +144,10 @@ export function BatchManagement() {
       name: batch.name,
       startDate: batch.startDate,
       endDate: batch.endDate,
-      timing: batch.timing,
-      capacity: batch.capacity.toString(),
-      instructor: batch.instructor,
+      // timing: batch.timing,
+      // capacity: batch.capacity.toString(),
+      // instructor: batch.instructor,
+      class: batch.class || "",
     });
     setIsEditDialogOpen(true);
   };
@@ -138,15 +155,15 @@ export function BatchManagement() {
   const handleUpdateBatch = () => {
     if (!editingBatch) return;
 
-
     const updatedBatch: Batch = {
       ...editingBatch,
       name: editFormData.name,
       startDate: editFormData.startDate,
       endDate: editFormData.endDate,
-      timing: editFormData.timing,
-      capacity: Number.parseInt(editFormData.capacity),
-      instructor: editFormData.instructor,
+      // timing: editFormData.timing,
+      // capacity: Number.parseInt(editFormData.capacity),
+      // instructor: editFormData.instructor,
+      class: editFormData.class,
     };
 
     setBatches(prev =>
@@ -157,9 +174,10 @@ export function BatchManagement() {
       name: "",
       startDate: "",
       endDate: "",
-      timing: "",
-      capacity: "",
-      instructor: "",
+      // timing: "",
+      // capacity: "",
+      // instructor: "",
+      class: "",
     });
     setEditingBatch(null);
     setIsEditDialogOpen(false);
@@ -194,8 +212,8 @@ export function BatchManagement() {
     if (!formData.name.trim()) newErrors.name = "Batch name is required";
     if (!formData.startDate) newErrors.startDate = "Start date is required";
     if (!formData.endDate) newErrors.endDate = "End date is required";
-    if (!formData.timing.trim()) newErrors.timing = "Timing is required";
-    if (!formData.capacity || Number(formData.capacity) <= 0) newErrors.capacity = "Capacity must be greater than 0";
+    // if (!formData.timing.trim()) newErrors.timing = "Timing is required";
+    // if (!formData.capacity || Number(formData.capacity) <= 0) newErrors.capacity = "Capacity must be greater than 0";
     // if (!formData.instructor.trim()) newErrors.instructor = "Instructor name is required";
 
     setErrors(newErrors);
@@ -207,7 +225,7 @@ export function BatchManagement() {
   const fetchBatches = async () => {
     try {
       const data = await getAllBatches();
-      console.log("Fetched batches:", data);
+      // console.log("Fetched batches:", data);
       
       // If data is an array, use it directly; if it's an object with batches property, use that
       const batchesArray = Array.isArray(data) ? data : data.batches || [];
@@ -222,6 +240,8 @@ export function BatchManagement() {
         capacity: batch.capacity || 0,
         enrolled: batch.enrolled || 0,
         instructor: batch.instructor || "Not assigned", // Backend doesn't have instructor field
+        class: batch.class || "Not specified", // Backend class field
+        duration: batch.duration || 0, // Backend duration field
       }));
       
       setBatches(mappedBatches);
@@ -293,7 +313,7 @@ export function BatchManagement() {
                   {errors.endDate && <p className="text-red-500 text-sm">{errors.endDate}</p>}
                 </div>
               </div>
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label htmlFor="timing">Timing</Label>
                 <Input
                   id="timing"
@@ -303,8 +323,8 @@ export function BatchManagement() {
                   className={errors.timing ? "border-red-500" : ""}
                 />
                 {errors.timing && <p className="text-red-500 text-sm">{errors.timing}</p>}
-              </div>
-              <div className="space-y-2">
+              </div> */}
+              {/* <div className="space-y-2">
                 <Label htmlFor="capacity">Capacity</Label>
                 <Input
                   id="capacity"
@@ -315,8 +335,8 @@ export function BatchManagement() {
                   className={errors.capacity ? "border-red-500" : ""}
                 />
                 {errors.capacity && <p className="text-red-500 text-sm">{errors.capacity}</p>}
-              </div>
-              <div className="space-y-2">
+              </div> */}
+              {/* <div className="space-y-2">
                 <Label htmlFor="instructor">Instructor</Label>
                 <Input
                   id="instructor"
@@ -326,13 +346,22 @@ export function BatchManagement() {
 
                 />
 
+              </div> */}
+              <div className="space-y-2">
+                <Label htmlFor="class">Class</Label>
+                <Input
+                  id="class"
+                  value={formData.class}
+                  onChange={(e) => setFormData({ ...formData, class: e.target.value })}
+                  placeholder="Enter class (e.g., 11, 12)"
+                />
               </div>
             </div>
             <div className="flex justify-end gap-2 mt-6">
               <Button variant="outline" onClick={() => {
                 setIsAddDialogOpen(false);
-                setFormData({ name: "", startDate: "", endDate: "", timing: "", capacity: "", instructor: "" });
-                setErrors({ name: "", startDate: "", endDate: "", timing: "", capacity: "", instructor: "" });
+                setFormData({ name: "", startDate: "", endDate: "", class: "" });
+                setErrors({ name: "", startDate: "", endDate: "", class: "" });
               }}>
                 Cancel
               </Button>
@@ -356,7 +385,7 @@ export function BatchManagement() {
                   <TableHead>Batch Name</TableHead>
                   <TableHead>Start Date</TableHead>
                   <TableHead>End Date</TableHead>
-                  {/* <TableHead>Duration (Days)</TableHead> */}
+                  <TableHead>Class</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -373,9 +402,9 @@ export function BatchManagement() {
                       <TableCell className="font-medium">{batch.name}</TableCell>
                       <TableCell>{batch.startDate}</TableCell>
                       <TableCell>{batch.endDate}</TableCell>
-                      {/* <TableCell>
-                        {batch.duration ? `${batch.duration} days` : 'N/A'}
-                      </TableCell> */}
+                      <TableCell>
+                        {batch.class}
+                      </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
                           <Button 
@@ -443,7 +472,7 @@ export function BatchManagement() {
                 />
               </div>
             </div>
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <Label htmlFor="edit-timing">Timing</Label>
               <Input
                 id="edit-timing"
@@ -451,8 +480,8 @@ export function BatchManagement() {
                 onChange={(e) => setEditFormData({ ...editFormData, timing: e.target.value })}
                 placeholder="e.g., 9:00 AM - 12:00 PM"
               />
-            </div>
-            <div className="space-y-2">
+            </div> */}
+            {/* <div className="space-y-2">
               <Label htmlFor="edit-capacity">Capacity</Label>
               <Input
                 id="edit-capacity"
@@ -461,14 +490,23 @@ export function BatchManagement() {
                 onChange={(e) => setEditFormData({ ...editFormData, capacity: e.target.value })}
                 placeholder="Maximum students"
               />
-            </div>
-            <div className="space-y-2">
+            </div> */}
+            {/* <div className="space-y-2">
               <Label htmlFor="edit-instructor">Instructor</Label>
               <Input
                 id="edit-instructor"
                 value={editFormData.instructor}
                 onChange={(e) => setEditFormData({ ...editFormData, instructor: e.target.value })}
                 placeholder="Instructor name"
+              />
+            </div> */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-class">Class</Label>
+              <Input
+                id="edit-class"
+                value={editFormData.class}
+                onChange={(e) => setEditFormData({ ...editFormData, class: e.target.value })}
+                placeholder="Enter class (e.g., 11, 12)"
               />
             </div>
           </div>
