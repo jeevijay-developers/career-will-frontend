@@ -54,3 +54,25 @@ export const createStudent = async (studentData) => {
     throw error;
   }
 }
+
+export const getAllBatches = async () => {
+  try {
+    const response = await apiClient.get("/api/batch/get-all-batches");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching batches:", error);
+    throw error;
+  }
+};
+
+export const createBatch = async (batchData) => {
+  try {
+    const response = await apiClient.post("/api/batch/create-batch", batchData);
+    return response.data;
+  } catch (error) {
+    console.error("Error creating batch:", error);
+    throw error;
+  }
+};
+
+
