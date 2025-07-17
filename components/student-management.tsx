@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -13,6 +13,7 @@ import { Plus, Search, Edit, Trash2 } from "lucide-react"
 import { confirmAlert } from 'react-confirm-alert';
 import 'react-confirm-alert/src/react-confirm-alert.css';
 import toast from "react-hot-toast"
+import { getAllKits, createStudent } from "../server/server.js"
 
 
 interface Student {
@@ -21,15 +22,17 @@ interface Student {
   name: string
   rollNo: string
   class: string
-  kit: Kit[]
+  kit: string[] // kit names
   parent: Parent
   joinDate: string
 }
 
 interface Kit {
-  id: string
-  name: string
-  description: string
+  _id: string; // MongoDB ObjectId as string
+  name: string;
+  description: string;
+  createdAt: string; // ISO timestamp
+  updatedAt: string; // ISO timestamp
 }
 
 interface Parent {
@@ -42,14 +45,6 @@ interface Parent {
   phone: string
 }
 
-const mockKits: Kit[] = [
-  { id: "1", name: "water bottle", description: "insulated water bottle for students" },
-  { id: "2", name: "t-shirt", description: "school uniform t-shirt" },
-  { id: "3", name: "bag", description: "school backpack for books and supplies" },
-  { id: "4", name: "umbrella", description: "compact umbrella for rainy days" },
-  { id: "5", name: "notebook", description: "spiral notebook for taking notes" },
-]
-
 const mockStudents: Student[] = [
   {
     id: "1",
@@ -57,7 +52,7 @@ const mockStudents: Student[] = [
     name: "Rahul Sharma",
     rollNo: "JEE001",
     class: "JEE-2024-A",
-    kit: [mockKits[0], mockKits[1], mockKits[2]],
+    kit: [],
     parent: {
       id: "p1",
       username: "suresh_sharma",
@@ -75,7 +70,7 @@ const mockStudents: Student[] = [
     name: "Priya Patel",
     rollNo: "JEE002",
     class: "JEE-2024-B",
-    kit: [mockKits[0], mockKits[1], mockKits[3]],
+    kit: [],
     parent: {
       id: "p2",
       username: "amit_patel",
@@ -97,6 +92,7 @@ export function StudentManagement() {
   const [searchTerm, setSearchTerm] = useState("")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [selectedKits, setSelectedKits] = useState<Kit[]>([])
+  const [kits, setKits] = useState<Kit[]>([]);
 
   // Validation errors state
   const [errors, setErrors] = useState({
@@ -125,6 +121,20 @@ export function StudentManagement() {
     parentPhone: "",
   })
 
+  useEffect(() => {
+    async function fetchKits() {
+      try {
+        const response = await getAllKits();
+        // console.log("Fetched kits:", response);        
+        setKits(response);
+      } catch (error) {
+        setKits([]);
+        console.error("Error fetching kits:", error);
+      }
+    }
+    fetchKits();
+  }, []);
+
   const filteredStudents = students.filter(
     (student) =>
       student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -133,8 +143,8 @@ export function StudentManagement() {
 
   const handleKitToggle = (kit: Kit) => {
     setSelectedKits(prev =>
-      prev.find(k => k.id === kit.id)
-        ? prev.filter(k => k.id !== kit.id)
+      prev.find(k => k._id === kit._id)
+        ? prev.filter(k => k._id !== kit._id)
         : [...prev, kit]
     )
   }
@@ -188,15 +198,16 @@ export function StudentManagement() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleAddStudent = () => {
+  const handleAddStudent = async () => {
     if (!validateForm()) return;
+    const kitNames = selectedKits.map(k => k.name);
     const newStudent: Student = {
       id: Date.now().toString(),
       studentId: Math.max(...students.map(s => s.studentId), 1000) + 1,
       name: formData.name,
       rollNo: formData.rollNo,
       class: formData.class,
-      kit: selectedKits,
+      kit: kitNames, // send array of kit names
       parent: {
         id: `p${Date.now()}`,
         username: formData.parentUsername,
@@ -208,10 +219,15 @@ export function StudentManagement() {
       },
       joinDate: new Date().toISOString().split("T")[0],
     }
-    setStudents([...students, newStudent])
-    resetForm()
-    setIsAddDialogOpen(false)
+    try {
+      await createStudent(newStudent);
+      setStudents([...students, newStudent]);
+      resetForm();
+      setIsAddDialogOpen(false);
     toast.success(`Student added successfully!`);
+    } catch (error) {
+      toast.error("Failed to add student");
+    }
   }
 
   const handleDelete = () => {
@@ -305,6 +321,37 @@ export function StudentManagement() {
               {/* Student Information */}
               <div>
                 <h3 className="text-lg font-semibold mb-4 text-gray-800">Student Information</h3>
+                
+                {/* Profile Picture - Centered at top */}
+                <div className="flex flex-col items-center mb-6">
+                  <div className="relative">
+                    <div className="w-24 h-24 rounded-full border-2 border-gray-300 bg-gray-100 flex items-center justify-center overflow-hidden">
+                      <svg className="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <Label 
+                      htmlFor="studentImage" 
+                      className="absolute bottom-0 right-0 bg-blue-600 text-white rounded-full p-1 cursor-pointer hover:bg-blue-700 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                    </Label>
+                  </div>
+                  <Input
+                    id="studentImage"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      // You can handle the image file here, e.g., set to state or upload
+                      // Example: setFormData({ ...formData, image: e.target.files?.[0] });
+                    }}
+                  />
+                  <p className="text-sm text-gray-500 mt-2">Profile Picture</p>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Student Name</Label>
@@ -351,16 +398,16 @@ export function StudentManagement() {
               <div>
                 <h3 className="text-lg font-semibold mb-4 text-gray-800">Student Kits</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {mockKits.map((kit) => (
-                    <div key={kit.id} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
+                  {(kits ?? []).map((kit) => (
+                    <div key={kit._id} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
                       <Checkbox
-                        id={`kit-${kit.id}`}
-                        checked={selectedKits.some(k => k.id === kit.id)}
+                        id={`kit-${kit._id}`}
+                        checked={selectedKits.some(k => k._id === kit._id)}
                         onCheckedChange={() => handleKitToggle(kit)}
                       />
                       <div className="flex-1">
                         <Label
-                          htmlFor={`kit-${kit.id}`}
+                          htmlFor={`kit-${kit._id}`}
                           className="text-sm font-medium capitalize cursor-pointer"
                         >
                           {kit.name}
@@ -441,8 +488,8 @@ export function StudentManagement() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="PARENT">Parent</SelectItem>
-                        <SelectItem value="TEACHER">Teacher</SelectItem>
-                        <SelectItem value="ADMIN">Admin</SelectItem>
+                        {/* <SelectItem value="TEACHER">Teacher</SelectItem>
+                        <SelectItem value="ADMIN">Admin</SelectItem> */}
                       </SelectContent>
                     </Select>
                     {errors.parentRole && <p className="text-red-500 text-sm">{errors.parentRole}</p>}
@@ -506,7 +553,7 @@ export function StudentManagement() {
                     <TableCell>{student.parent.phone}</TableCell>
                     <TableCell>
                       {/* Show x/y format for kits allotted */}
-                      <span className=" text-sm text-gray-700">{student.kit.length} / {mockKits.length}</span>
+                      <span className=" text-sm text-gray-700">{student.kit.length} / {(kits ?? []).length}</span>
                     </TableCell>
                     <TableCell>{student.joinDate}</TableCell>
                     <TableCell>
@@ -548,6 +595,37 @@ export function StudentManagement() {
             {/* Student Information */}
             <div>
               <h3 className="text-lg font-semibold mb-4 text-gray-800">Student Information</h3>
+              
+              {/* Profile Picture - Centered at top */}
+              <div className="flex flex-col items-center mb-6">
+                <div className="relative">
+                  <div className="w-24 h-24 rounded-full border-2 border-gray-300 bg-gray-100 flex items-center justify-center overflow-hidden">
+                    <svg className="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <Label 
+                    htmlFor="editStudentImage" 
+                    className="absolute bottom-0 right-0 bg-blue-600 text-white rounded-full p-1 cursor-pointer hover:bg-blue-700 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                  </Label>
+                </div>
+                <Input
+                  id="editStudentImage"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    // You can handle the image file here, e.g., set to state or upload
+                    // Example: setFormData({ ...formData, image: e.target.files?.[0] });
+                  }}
+                />
+                <p className="text-sm text-gray-500 mt-2">Profile Picture</p>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-name">Student Name</Label>
@@ -589,16 +667,16 @@ export function StudentManagement() {
             <div>
               <h3 className="text-lg font-semibold mb-4 text-gray-800">Student Kits</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {mockKits.map((kit) => (
-                  <div key={kit.id} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
+                {(kits ?? []).map((kit) => (
+                  <div key={kit._id} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
                     <Checkbox
-                      id={`edit-kit-${kit.id}`}
-                      checked={selectedKits.some(k => k.id === kit.id)}
+                      id={`edit-kit-${kit._id}`}
+                      checked={selectedKits.some(k => k._id === kit._id)}
                       onCheckedChange={() => handleKitToggle(kit)}
                     />
                     <div className="flex-1">
                       <Label
-                        htmlFor={`edit-kit-${kit.id}`}
+                        htmlFor={`edit-kit-${kit._id}`}
                         className="text-sm font-medium capitalize cursor-pointer"
                       >
                         {kit.name}
