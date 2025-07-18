@@ -2,22 +2,20 @@
 
 import React, { useState } from 'react'
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Upload, FileSpreadsheet, AlertCircle, CheckCircle, X } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import toast from "react-hot-toast"
-import { bulkUploadStudents } from "../../server/server.js"
+import { bulkUploadTestReports } from "../../server/server.js"
 
 type Props = {
-    viewModal: boolean;
-    setModal: React.Dispatch<React.SetStateAction<boolean>>;
     onUploadSuccess?: () => void;
 }
 
-const BulkUploadButton: React.FC<Props> = ({ viewModal, setModal, onUploadSuccess }) => {
+const TestReportBulkUpload: React.FC<Props> = ({ onUploadSuccess }) => {
+  const [isOpen, setIsOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<{
@@ -61,32 +59,32 @@ const BulkUploadButton: React.FC<Props> = ({ viewModal, setModal, onUploadSucces
       const formData = new FormData();
       formData.append("file", selectedFile);
 
-      const response = await bulkUploadStudents(formData);
+      const response = await bulkUploadTestReports(formData);
       
       setUploadResult({
         success: true,
-        message: response.message || "Students uploaded successfully",
+        message: response.message || "Test reports uploaded successfully",
         successCount: response.successCount,
         errorCount: response.errorCount,
         errors: response.errors
       });
 
       if (response.successCount > 0) {
-        toast.success(`Successfully uploaded ${response.successCount} students`);
+        toast.success(`Successfully uploaded ${response.successCount} test reports`);
         if (onUploadSuccess) {
           onUploadSuccess();
         }
       }
 
       if (response.errorCount > 0) {
-        toast.error(`${response.errorCount} students failed to upload`);
+        toast.error(`${response.errorCount} records failed to upload`);
       }
 
     } catch (error: any) {
       console.error("Upload error:", error);
       setUploadResult({
         success: false,
-        message: error.response?.data?.message || "Failed to upload students. Please try again.",
+        message: error.response?.data?.message || "Failed to upload test reports. Please try again.",
         errors: error.response?.data?.errors || []
       });
       toast.error("Upload failed. Please check the file format and try again.");
@@ -95,38 +93,24 @@ const BulkUploadButton: React.FC<Props> = ({ viewModal, setModal, onUploadSucces
     }
   };
 
-  const handleDownloadTemplate = () => {
-    // Create a sample template CSV content
-    const csvContent = `Name,Phone,Address,Batch,Parent Username,Parent Email,Parent Phone,Parent Password,Kit Names (comma separated)
-John Doe,1234567890,123 Main St,Batch A,parent1,parent1@example.com,9876543210,password123,"Kit 1,Kit 2"
-Jane Smith,0987654321,456 Oak Ave,Batch B,parent2,parent2@example.com,8765432109,password456,"Kit 1,Kit 3"`;
-    
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'student_upload_template.csv';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-    
-    toast.success("Template downloaded successfully");
-  };
-
   const resetForm = () => {
     setSelectedFile(null);
     setUploadResult(null);
     setIsUploading(false);
   };
 
+  const handleClose = () => {
+    setIsOpen(false);
+    resetForm();
+  };
+
   return (
-    <Dialog open={viewModal} onOpenChange={setModal}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button 
           variant="outline" 
           className="bg-transparent text-black border-blue-600"
-          onClick={() => setModal(true)}
+          onClick={() => setIsOpen(true)}
         >
           <Upload className="h-4 w-4 mr-2" />
           Bulk Upload
@@ -136,11 +120,14 @@ Jane Smith,0987654321,456 Oak Ave,Batch B,parent2,parent2@example.com,8765432109
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileSpreadsheet className="h-5 w-5" />
-            Bulk Upload Students
+            Bulk Upload Test Reports
           </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-6">
+          <div className="text-sm text-gray-600">
+            <p className="mt-1">Upload Excel (.xls, .xlsx) or CSV file with test report records.</p>
+          </div>
 
           {/* File Upload Section */}
           <div className="space-y-4">
@@ -189,12 +176,12 @@ Jane Smith,0987654321,456 Oak Ave,Batch B,parent2,parent2@example.com,8765432109
                   </p>
                   {uploadResult.successCount !== undefined && (
                     <p className="text-sm text-green-700">
-                      ✓ Successfully uploaded: {uploadResult.successCount} students
+                      ✓ Successfully uploaded: {uploadResult.successCount} records
                     </p>
                   )}
                   {uploadResult.errorCount !== undefined && uploadResult.errorCount > 0 && (
                     <p className="text-sm text-red-700">
-                      ✗ Failed to upload: {uploadResult.errorCount} students
+                      ✗ Failed to upload: {uploadResult.errorCount} records
                     </p>
                   )}
                   {uploadResult.errors && uploadResult.errors.length > 0 && (
@@ -219,10 +206,7 @@ Jane Smith,0987654321,456 Oak Ave,Batch B,parent2,parent2@example.com,8765432109
           <div className="flex justify-end gap-3">
             <Button 
               variant="outline" 
-              onClick={() => {
-                setModal(false);
-                resetForm();
-              }}
+              onClick={handleClose}
               disabled={isUploading}
             >
               Cancel
@@ -230,7 +214,7 @@ Jane Smith,0987654321,456 Oak Ave,Batch B,parent2,parent2@example.com,8765432109
             <Button 
               onClick={handleUpload}
               disabled={!selectedFile || isUploading}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-blue-600 hover:bg-blue-700"
             >
               {isUploading ? (
                 <>
@@ -240,7 +224,7 @@ Jane Smith,0987654321,456 Oak Ave,Batch B,parent2,parent2@example.com,8765432109
               ) : (
                 <>
                   <Upload className="h-4 w-4 mr-2" />
-                  Upload Students
+                  Upload Test Reports
                 </>
               )}
             </Button>
@@ -251,4 +235,4 @@ Jane Smith,0987654321,456 Oak Ave,Batch B,parent2,parent2@example.com,8765432109
   )
 }
 
-export default BulkUploadButton
+export default TestReportBulkUpload

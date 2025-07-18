@@ -85,6 +85,7 @@ export const findParentByEmail = async (email) => {
   }
 }
 
+// Bulk upload APIs
 export const bulkUploadStudents = async (formData) => {
   try {
     const response = await apiClient.post("/api/student/bulk-upload", formData, {
@@ -96,6 +97,14 @@ export const bulkUploadStudents = async (formData) => {
   } catch (error) {
     console.error("Error uploading students file:", error);
   }
+}
+
+export async function bulkUploadTestReports(formData) {
+  // TODO: Implement API call to backend for bulk uploading test reports
+  // Example:
+  // return fetch('/api/test-reports/bulk-upload', { method: 'POST', body: formData })
+  //   .then(res => res.json());
+  return { message: 'Stub: Implement backend', successCount: 0, errorCount: 0, errors: [] };
 }
 
 export const bulkUploadAttendance = async (formData) => {

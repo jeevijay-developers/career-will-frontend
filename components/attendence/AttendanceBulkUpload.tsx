@@ -109,7 +109,7 @@ const AttendanceBulkUpload: React.FC<Props> = ({ onUploadSuccess }) => {
       <DialogTrigger asChild>
         <Button 
           variant="outline" 
-          className="bg-green-600 hover:bg-green-700 text-white border-green-600"
+          className="bg-transparent text-black border-blue-600"
           onClick={() => setIsOpen(true)}
         >
           <Upload className="h-4 w-4 mr-2" />

@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Plus, FileText, TrendingUp, TrendingDown } from "lucide-react"
+import TestReportBulkUpload from "./TestReportBulkUpload"
 
 interface TestReport {
   id: string
@@ -108,111 +109,114 @@ export function TestReports() {
           <h1 className="text-3xl font-bold text-gray-900">Test Reports</h1>
           <p className="text-gray-600">Manage and track student test performance</p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Test Report
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Add Test Report</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="studentName">Student Name</Label>
-                  <Input
-                    id="studentName"
-                    value={formData.studentName}
-                    onChange={(e) => setFormData({ ...formData, studentName: e.target.value })}
-                    placeholder="Student name"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="rollNumber">Roll Number</Label>
-                  <Input
-                    id="rollNumber"
-                    value={formData.rollNumber}
-                    onChange={(e) => setFormData({ ...formData, rollNumber: e.target.value })}
-                    placeholder="Roll number"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="testName">Test Name</Label>
-                  <Input
-                    id="testName"
-                    value={formData.testName}
-                    onChange={(e) => setFormData({ ...formData, testName: e.target.value })}
-                    placeholder="e.g., Mock Test 1"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="testDate">Test Date</Label>
-                  <Input
-                    id="testDate"
-                    type="date"
-                    value={formData.testDate}
-                    onChange={(e) => setFormData({ ...formData, testDate: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="physicsMarks">Physics</Label>
-                  <Input
-                    id="physicsMarks"
-                    type="number"
-                    value={formData.physicsMarks}
-                    onChange={(e) => setFormData({ ...formData, physicsMarks: e.target.value })}
-                    placeholder="Marks"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="chemistryMarks">Chemistry</Label>
-                  <Input
-                    id="chemistryMarks"
-                    type="number"
-                    value={formData.chemistryMarks}
-                    onChange={(e) => setFormData({ ...formData, chemistryMarks: e.target.value })}
-                    placeholder="Marks"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="mathsMarks">Mathematics</Label>
-                  <Input
-                    id="mathsMarks"
-                    type="number"
-                    value={formData.mathsMarks}
-                    onChange={(e) => setFormData({ ...formData, mathsMarks: e.target.value })}
-                    placeholder="Marks"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="maxMarks">Maximum Marks</Label>
-                <Input
-                  id="maxMarks"
-                  type="number"
-                  value={formData.maxMarks}
-                  onChange={(e) => setFormData({ ...formData, maxMarks: e.target.value })}
-                  placeholder="Total marks"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-2 mt-6">
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                Cancel
+        <div className="flex gap-2">
+          <TestReportBulkUpload onUploadSuccess={() => {}} />
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Test Report
               </Button>
-              <Button onClick={handleAddReport} className="bg-blue-600 hover:bg-blue-700">
-                Add Report
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Add Test Report</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="studentName">Student Name</Label>
+                    <Input
+                      id="studentName"
+                      value={formData.studentName}
+                      onChange={(e) => setFormData({ ...formData, studentName: e.target.value })}
+                      placeholder="Student name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="rollNumber">Roll Number</Label>
+                    <Input
+                      id="rollNumber"
+                      value={formData.rollNumber}
+                      onChange={(e) => setFormData({ ...formData, rollNumber: e.target.value })}
+                      placeholder="Roll number"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="testName">Test Name</Label>
+                    <Input
+                      id="testName"
+                      value={formData.testName}
+                      onChange={(e) => setFormData({ ...formData, testName: e.target.value })}
+                      placeholder="e.g., Mock Test 1"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="testDate">Test Date</Label>
+                    <Input
+                      id="testDate"
+                      type="date"
+                      value={formData.testDate}
+                      onChange={(e) => setFormData({ ...formData, testDate: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="physicsMarks">Physics</Label>
+                    <Input
+                      id="physicsMarks"
+                      type="number"
+                      value={formData.physicsMarks}
+                      onChange={(e) => setFormData({ ...formData, physicsMarks: e.target.value })}
+                      placeholder="Marks"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="chemistryMarks">Chemistry</Label>
+                    <Input
+                      id="chemistryMarks"
+                      type="number"
+                      value={formData.chemistryMarks}
+                      onChange={(e) => setFormData({ ...formData, chemistryMarks: e.target.value })}
+                      placeholder="Marks"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="mathsMarks">Mathematics</Label>
+                    <Input
+                      id="mathsMarks"
+                      type="number"
+                      value={formData.mathsMarks}
+                      onChange={(e) => setFormData({ ...formData, mathsMarks: e.target.value })}
+                      placeholder="Marks"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="maxMarks">Maximum Marks</Label>
+                  <Input
+                    id="maxMarks"
+                    type="number"
+                    value={formData.maxMarks}
+                    onChange={(e) => setFormData({ ...formData, maxMarks: e.target.value })}
+                    placeholder="Total marks"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 mt-6">
+                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleAddReport} className="bg-blue-600 hover:bg-blue-700">
+                  Add Report
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <Card>
