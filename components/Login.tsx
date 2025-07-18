@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { GraduationCap, Eye, EyeOff } from "lucide-react"
 import { loginUser } from "../server/server"
 import toast from "react-hot-toast"
+import Image from "next/image"
 
 interface LoginProps {
   onLoginSuccess: () => void
@@ -51,10 +52,10 @@ export function Login({ onLoginSuccess }: LoginProps) {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <GraduationCap className="h-10 w-10 text-blue-600" />
+          <div className="flex items-center flex-col justify-center gap-2 mb-4">
+            <Image src="/logo/logo.svg" alt="Logo" width={100} height={100} />
             <div>
-              <CardTitle className="text-2xl font-bold text-gray-900">JEE Admin</CardTitle>
+              <CardTitle className="text-2xl font-bold text-gray-900">Career Will</CardTitle>
               <p className="text-sm text-gray-500">Student Management System</p>
             </div>
           </div>
