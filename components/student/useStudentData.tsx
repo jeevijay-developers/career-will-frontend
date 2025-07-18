@@ -70,7 +70,7 @@ export function useStudentData() {
               }
             } catch (error) {
               console.error(`Error fetching batch ${batchId}:`, error);
-              batchNamesMap[batchId] = "Unknown Batch";
+              batchNamesMap[batchId] = "No batch allotted";
             }
           })
         );

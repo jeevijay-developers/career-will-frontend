@@ -7,7 +7,7 @@ export const getAllKits = async () => {
     return response.data;
   } catch (error) {
     console.error("Error fetching kits:", error);
-   
+    throw new Error("Error fetching kits");
   }
 } 
 
@@ -17,7 +17,7 @@ export const createKit = async (kitData) => {
     return response.data;
   } catch (error) {
     console.error("Error creating kit:", error);
-   
+    throw new Error("Error creating kit");
   }
 }
 
@@ -28,7 +28,7 @@ export const loginUser = async (credentials) => {
     return response.data;
   } catch (error) {
     console.error("Error logging in:", error);
-   
+    throw new Error("Error logging in");
   }
 } 
 
@@ -39,7 +39,7 @@ export const createStudent = async (studentData) => {
     return response.data;
   } catch (error) {
     console.error("Error creating student:", error);
-   
+    throw new Error("Error creating student");
   }
 }
 
@@ -51,11 +51,10 @@ export const createStudent = async (studentData) => {
         "Content-Type": "multipart/form-data",
       },
     });
-    
     return response.data;
   } catch (error) {
     console.error("Error uploading student image:", error);
-   
+    throw new Error("Error uploading student image");
   }
 }
 
@@ -64,15 +63,13 @@ export const getAllStudents = async (params) => {
     const queryParams = new URLSearchParams();
     if (params.page) queryParams.append('page', params.page.toString());
     if (params.limit) queryParams.append('limit', params.limit.toString());
-    
     const url = `/api/student/get-all-sutdents${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     console.log("Fetching students with URL:", url);
-    
     const response = await apiClient.get(url);
     return response.data;
   } catch (error) {
     console.error("Error fetching students:", error);
-   
+    throw new Error("Error fetching students");
   }
 }
 
@@ -82,6 +79,7 @@ export const findParentByEmail = async (email) => {
     return response.data;
   } catch (error) {
     console.error("Error finding parent by email:", error);
+    throw new Error("Error finding parent by email");
   }
 }
 
@@ -91,7 +89,7 @@ export const updateStudent = async (studentData) => {
     return response.data;
   } catch (error) {
     console.error("Error updating student:", error);
-    throw error;
+    throw new Error("Error updating student");
   }
 }
 
@@ -106,6 +104,7 @@ export const bulkUploadStudents = async (formData) => {
     return response.data;
   } catch (error) {
     console.error("Error uploading students file:", error);
+    throw new Error("Error uploading students file");
   }
 }
 
@@ -127,7 +126,7 @@ export const bulkUploadAttendance = async (formData) => {
     return response.data;
   } catch (error) {
     console.error("Error uploading attendance file:", error);
-   
+    throw new Error("Error uploading attendance file");
   }
 }
 
@@ -138,7 +137,7 @@ export const getAllBatches = async () => {
     return response.data;
   } catch (error) {
     console.error("Error fetching batches:", error);
-   
+    throw new Error("Error fetching batches");
   }
 };
 
@@ -148,7 +147,7 @@ export const createBatch = async (batchData) => {
     return response.data;
   } catch (error) {
     console.error("Error creating batch:", error);
-   
+    throw new Error("Error creating batch");
   }
 };
 
@@ -157,8 +156,11 @@ export const getBatchById = async (batchId) => {
     const response = await apiClient.get(`/api/batch/get-batch-by-id/${batchId}`);
     return response.data;
   } catch (error) {
+    if (error.response && error.response.status === 404) {
+      return null;
+    }
     console.error("Error fetching batch by ID:", error);
-   
+    throw new Error("Error fetching batch by ID");
   }
 }
 
@@ -168,8 +170,16 @@ export const updateBatch = async (batchId, batchData) => {
     return response.data;
   } catch (error) {
     console.error("Error updating batch:", error);
-    throw error;
+    throw new Error("Error updating batch");
   }
 }
 
-
+export const deleteBatch = async (batchId) => {
+  try {
+    const response = await apiClient.delete(`/api/batch/delete-batch-by-id/${batchId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting batch:", error);
+    throw new Error("Error deleting batch");
+  }
+}

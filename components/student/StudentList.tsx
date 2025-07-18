@@ -78,6 +78,9 @@ export function StudentList({
       (student.rollNo?.toString()?.toLowerCase() ?? "").includes(searchTerm.toLowerCase())
   );
 
+  console.log("Filtered Students:", filteredStudents);
+  
+
   const handleDelete = () => {
     confirmAlert({
       title: 'Confirm Delete',
@@ -154,7 +157,7 @@ export function StudentList({
                           ? student.class
                           : (student as any).batch && batchNames[(student as any).batch]
                             ? batchNames[(student as any).batch]
-                            : (student as any).batch || "-"}
+                            : "No batch allotted"}
                       </span>
                     </TableCell>
                     <TableCell>{student.parent?.name ?? student.parent?.username ?? "-"}</TableCell>

@@ -11,7 +11,7 @@ import { Plus, SquarePen, Trash2 } from "lucide-react"
 import { confirmAlert } from 'react-confirm-alert';
 import 'react-confirm-alert/src/react-confirm-alert.css';
 import toast from "react-hot-toast"
-import { getAllBatches,createBatch, updateBatch } from "@/server/server"
+import { getAllBatches,createBatch, updateBatch, deleteBatch } from "@/server/server"
 
 interface Batch {
   id: string
@@ -29,29 +29,6 @@ interface Batch {
   updatedAt?: string
   __v?: number // MongoDB version field
 }
-
-const mockBatches: Batch[] = [
-  {
-    id: "1",
-    name: "JEE-2024-A",
-    startDate: "2024-01-15",
-    endDate: "2024-12-15",
-    timing: "9:00 AM - 12:00 PM",
-    capacity: 30,
-    enrolled: 25,
-    instructor: "Dr. Rajesh Kumar",
-  },
-  {
-    id: "2",
-    name: "JEE-2024-B",
-    startDate: "2024-02-01",
-    endDate: "2024-12-31",
-    timing: "2:00 PM - 5:00 PM",
-    capacity: 25,
-    enrolled: 20,
-    instructor: "Prof. Sunita Sharma",
-  },
-]
 
 export function BatchManagement() {
   const [batches, setBatches] = useState<Batch[]>([])
@@ -77,9 +54,6 @@ export function BatchManagement() {
     name: "",
     startDate: "",
     endDate: "",
-    // timing: "",
-    // capacity: "",
-    // instructor: "",
     class: "",
   })
 
@@ -88,9 +62,6 @@ export function BatchManagement() {
     name: "",
     startDate: "",
     endDate: "",
-    // timing: "",
-    // capacity: "",
-    // instructor: "",
     class: "",
   })
 
@@ -115,9 +86,6 @@ export function BatchManagement() {
         name: "",
         startDate: "",
         endDate: "",
-        // timing: "",
-        // capacity: "",
-        // instructor: "",
         class: "",
       })
       setIsAddDialogOpen(false)
@@ -125,9 +93,6 @@ export function BatchManagement() {
         name: "",
         startDate: "",
         endDate: "",
-        // timing: "",
-        // capacity: "",
-        // instructor: "",
         class: "",
       });
 
@@ -163,11 +128,8 @@ export function BatchManagement() {
     setEditingBatch(batch);
     setEditFormData({
       name: batch.name,
-      startDate: convertDDMMYYYYToInputFormat(batch.startDate), // Convert DD/MM/YYYY to YYYY-MM-DD for input
-      endDate: convertDDMMYYYYToInputFormat(batch.endDate), // Convert DD/MM/YYYY to YYYY-MM-DD for input
-      // timing: batch.timing,
-      // capacity: batch.capacity.toString(),
-      // instructor: batch.instructor,
+      startDate: convertDDMMYYYYToInputFormat(batch.startDate),
+      endDate: convertDDMMYYYYToInputFormat(batch.endDate), 
       class: batch.class || "",
     });
     setIsEditDialogOpen(true);
@@ -208,16 +170,27 @@ export function BatchManagement() {
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = (batch: Batch) => {
     confirmAlert({
       title: 'Confirm Delete',
-      message: 'Are you sure you want to delete this Batch?',
+      message: `Are you sure you want to delete the batch "${batch.name}"?`,
       buttons: [
         {
           label: 'Yes',
-          onClick: () => {
-            // Call your delete function here
-            toast.success('Item deleted!');
+          onClick: async () => {
+            try {
+              const batchId = batch._id || batch.id;
+              await deleteBatch(batchId);
+              console.log("Batch deleted successfully");
+              
+              // Refresh the batches list
+              await fetchBatches();
+              
+              toast.success('Batch deleted successfully!');
+            } catch (error) {
+              console.error("Failed to delete batch:", error);
+              toast.error("Failed to delete batch");
+            }
           }
         },
         {
@@ -233,13 +206,8 @@ export function BatchManagement() {
     if (!formData.name.trim()) newErrors.name = "Batch name is required";
     if (!formData.startDate) newErrors.startDate = "Start date is required";
     if (!formData.endDate) newErrors.endDate = "End date is required";
-    // if (!formData.timing.trim()) newErrors.timing = "Timing is required";
-    // if (!formData.capacity || Number(formData.capacity) <= 0) newErrors.capacity = "Capacity must be greater than 0";
-    // if (!formData.instructor.trim()) newErrors.instructor = "Instructor name is required";
-
     setErrors(newErrors);
-
-    return Object.keys(newErrors).length === 0; // return true if no errors
+    return Object.keys(newErrors).length === 0;
   };
 
   // Fetch batches from API
@@ -255,21 +223,20 @@ export function BatchManagement() {
       const mappedBatches = batchesArray.map((batch: any) => ({
         id: batch._id || batch.id,
         name: batch.name,
-        startDate: formatDateToDDMMYYYY(batch.startDate), // Format to DD/MM/YYYY for display
-        endDate: formatDateToDDMMYYYY(batch.endDate), // Format to DD/MM/YYYY for display
-        timing: batch.timing || "09:00 AM to 04:00 PM", // Backend doesn't have timing field
+        startDate: formatDateToDDMMYYYY(batch.startDate),
+        endDate: formatDateToDDMMYYYY(batch.endDate),
+        timing: batch.timing || "09:00 AM to 04:00 PM",
         capacity: batch.capacity || 0,
         enrolled: batch.enrolled || 0,
-        instructor: batch.instructor || "Not assigned", // Backend doesn't have instructor field
-        class: batch.class || "Not specified", // Backend class field
-        duration: batch.duration || 0, // Backend duration field
+        instructor: batch.instructor || "Not assigned",
+        class: batch.class || "Not specified",
+        duration: batch.duration || 0,
       }));
       
       setBatches(mappedBatches);
     } catch (error) {
       console.error("Failed to fetch batches:", error);
       toast.error("Failed to load batches");
-      // Keep mock data as fallback
     }
   };
 
@@ -334,40 +301,7 @@ export function BatchManagement() {
                   {errors.endDate && <p className="text-red-500 text-sm">{errors.endDate}</p>}
                 </div>
               </div>
-              {/* <div className="space-y-2">
-                <Label htmlFor="timing">Timing</Label>
-                <Input
-                  id="timing"
-                  value={formData.timing}
-                  onChange={(e) => setFormData({ ...formData, timing: e.target.value })}
-                  placeholder="e.g., 9:00 AM - 12:00 PM"
-                  className={errors.timing ? "border-red-500" : ""}
-                />
-                {errors.timing && <p className="text-red-500 text-sm">{errors.timing}</p>}
-              </div> */}
-              {/* <div className="space-y-2">
-                <Label htmlFor="capacity">Capacity</Label>
-                <Input
-                  id="capacity"
-                  type="number"
-                  value={formData.capacity}
-                  onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
-                  placeholder="Maximum students"
-                  className={errors.capacity ? "border-red-500" : ""}
-                />
-                {errors.capacity && <p className="text-red-500 text-sm">{errors.capacity}</p>}
-              </div> */}
-              {/* <div className="space-y-2">
-                <Label htmlFor="instructor">Instructor</Label>
-                <Input
-                  id="instructor"
-                  value={formData.instructor}
-                  onChange={(e) => setFormData({ ...formData, instructor: e.target.value })}
-                  placeholder="Instructor name"
-
-                />
-
-              </div> */}
+              
               <div className="space-y-2">
                 <Label htmlFor="class">Class</Label>
                 <Input
@@ -438,7 +372,7 @@ export function BatchManagement() {
                             Edit
                           </Button>
                           <Button 
-                            onClick={handleDelete} 
+                            onClick={() => handleDelete(batch)} 
                             size="sm"
                             variant="outline"
                             className="text-red-600 hover:text-red-700"
@@ -493,34 +427,7 @@ export function BatchManagement() {
                 />
               </div>
             </div>
-            {/* <div className="space-y-2">
-              <Label htmlFor="edit-timing">Timing</Label>
-              <Input
-                id="edit-timing"
-                value={editFormData.timing}
-                onChange={(e) => setEditFormData({ ...editFormData, timing: e.target.value })}
-                placeholder="e.g., 9:00 AM - 12:00 PM"
-              />
-            </div> */}
-            {/* <div className="space-y-2">
-              <Label htmlFor="edit-capacity">Capacity</Label>
-              <Input
-                id="edit-capacity"
-                type="number"
-                value={editFormData.capacity}
-                onChange={(e) => setEditFormData({ ...editFormData, capacity: e.target.value })}
-                placeholder="Maximum students"
-              />
-            </div> */}
-            {/* <div className="space-y-2">
-              <Label htmlFor="edit-instructor">Instructor</Label>
-              <Input
-                id="edit-instructor"
-                value={editFormData.instructor}
-                onChange={(e) => setEditFormData({ ...editFormData, instructor: e.target.value })}
-                placeholder="Instructor name"
-              />
-            </div> */}
+            
             <div className="space-y-2">
               <Label htmlFor="edit-class">Class</Label>
               <Input

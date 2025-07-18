@@ -179,7 +179,7 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
         const selectedBatch = batches.find(batch => batch.name === formData.batch);
 
         const updatedStudent = {
-            id: student.id,
+            id: (student as any)._id || student.id,
             name: formData.name,
             batch: selectedBatch?._id || selectedBatch?.id,
             phone: formData.phone,
