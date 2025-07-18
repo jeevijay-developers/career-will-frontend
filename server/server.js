@@ -85,6 +85,16 @@ export const findParentByEmail = async (email) => {
   }
 }
 
+export const updateStudent = async (studentData) => {
+  try {
+    const response = await apiClient.put(`/api/student/update-student/${studentData.id}`, studentData);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating student:", error);
+    throw error;
+  }
+}
+
 // Bulk upload APIs
 export const bulkUploadStudents = async (formData) => {
   try {

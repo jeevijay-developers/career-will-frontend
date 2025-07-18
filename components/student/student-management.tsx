@@ -73,6 +73,8 @@ export function StudentManagement() {
         onPageChange={handlePageChange}
         batchNames={batchNames}
         kits={kits}
+        batches={batches}
+        onStudentUpdated={handleStudentAdded}
       />
     </div>
   )

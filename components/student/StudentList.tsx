@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -7,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Search, Edit, Trash2 } from "lucide-react"
 import { confirmAlert } from 'react-confirm-alert';
 import 'react-confirm-alert/src/react-confirm-alert.css';
+import { EditStudentForm } from "./EditStudentForm"
 
 interface Student {
   id: string
@@ -43,6 +45,8 @@ interface StudentListProps {
   onPageChange: (page: number) => void;
   batchNames: {[key: string]: string};
   kits: Kit[];
+  batches: any[];
+  onStudentUpdated: () => void;
 }
 
 export function StudentList({ 
@@ -54,8 +58,13 @@ export function StudentList({
   pageSize, 
   onPageChange, 
   batchNames, 
-  kits 
+  kits,
+  batches,
+  onStudentUpdated
 }: StudentListProps) {
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+
   // Sort students in ascending order by name before filtering
   const sortedStudents = [...students].sort((a, b) => {
     const nameA = (a.name || '').toLowerCase();
@@ -88,6 +97,16 @@ export function StudentList({
         }
       ]
     });
+  };
+
+  const handleEdit = (student: Student) => {
+    setSelectedStudent(student);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleCloseEdit = () => {
+    setIsEditDialogOpen(false);
+    setSelectedStudent(null);
   };
 
   return (
@@ -146,7 +165,11 @@ export function StudentList({
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleEdit(student)}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button
@@ -192,6 +215,16 @@ export function StudentList({
           </div>
         </div>
       </CardContent>
+
+      {/* Edit Student Modal */}
+      <EditStudentForm
+        isOpen={isEditDialogOpen}
+        onClose={handleCloseEdit}
+        student={selectedStudent}
+        kits={kits}
+        batches={batches}
+        onStudentUpdated={onStudentUpdated}
+      />
     </Card>
   )
 }
