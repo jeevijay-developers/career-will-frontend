@@ -11,7 +11,7 @@ import { Plus, SquarePen, Trash2 } from "lucide-react"
 import { confirmAlert } from 'react-confirm-alert';
 import 'react-confirm-alert/src/react-confirm-alert.css';
 import toast from "react-hot-toast"
-import { getAllBatches,createBatch } from "@/server/server"
+import { getAllBatches,createBatch, updateBatch } from "@/server/server"
 
 interface Batch {
   id: string
@@ -173,36 +173,39 @@ export function BatchManagement() {
     setIsEditDialogOpen(true);
   };
 
-  const handleUpdateBatch = () => {
+  const handleUpdateBatch = async () => {
     if (!editingBatch) return;
 
-    const updatedBatch: Batch = {
-      ...editingBatch,
-      name: editFormData.name,
-      startDate: editFormData.startDate,
-      endDate: editFormData.endDate,
-      // timing: editFormData.timing,
-      // capacity: Number.parseInt(editFormData.capacity),
-      // instructor: editFormData.instructor,
-      class: editFormData.class,
-    };
+    try {
+      const batchData = {
+        name: editFormData.name,
+        startDate: editFormData.startDate,
+        endDate: editFormData.endDate,
+        class: editFormData.class,
+      };
 
-    setBatches(prev =>
-      prev.map(b => (b.id === editingBatch.id ? updatedBatch : b))
-    );
-
-    setEditFormData({
-      name: "",
-      startDate: "",
-      endDate: "",
-      // timing: "",
-      // capacity: "",
-      // instructor: "",
-      class: "",
-    });
-    setEditingBatch(null);
-    setIsEditDialogOpen(false);
-    toast.success(`Batch updated successfully!`);
+      // Use the batch ID from the editing batch
+      const batchId = editingBatch._id || editingBatch.id;
+      
+      await updateBatch(batchId, batchData);
+      console.log("Batch updated successfully");
+      
+      // Refresh the batches list
+      await fetchBatches();
+      
+      setEditFormData({
+        name: "",
+        startDate: "",
+        endDate: "",
+        class: "",
+      });
+      setEditingBatch(null);
+      setIsEditDialogOpen(false);
+      toast.success("Batch updated successfully!");
+    } catch (error) {
+      console.error("Failed to update batch:", error);
+      toast.error("Failed to update batch");
+    }
   };
 
   const handleDelete = () => {

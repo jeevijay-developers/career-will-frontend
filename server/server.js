@@ -162,4 +162,14 @@ export const getBatchById = async (batchId) => {
   }
 }
 
+export const updateBatch = async (batchId, batchData) => {
+  try {
+    const response = await apiClient.put(`/api/batch/update-batch-by-id/${batchId}`, batchData);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating batch:", error);
+    throw error;
+  }
+}
+
 
