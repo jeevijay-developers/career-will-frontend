@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Plus, Users, Calendar, Clock, SquarePen, Trash2 } from "lucide-react"
+import { Plus, SquarePen, Trash2 } from "lucide-react"
 import { confirmAlert } from 'react-confirm-alert';
 import 'react-confirm-alert/src/react-confirm-alert.css';
 import toast from "react-hot-toast"
@@ -214,15 +214,12 @@ export function BatchManagement() {
           label: 'Yes',
           onClick: () => {
             // Call your delete function here
-            alert('Item deleted!');
+            toast.success('Item deleted!');
           }
         },
         {
           label: 'No',
-          onClick: () => {
-            // Optional: handle cancel
-            console.log('Deletion cancelled');
-          }
+          onClick: () => {}
         }
       ]
     });
