@@ -1,14 +1,16 @@
 "use client"
 
 import { useState } from "react"
-import { StudentForm } from "./student/StudentForm"
-import { StudentList } from "./student/StudentList"
-import { useStudentData } from "./student/useStudentData"
+import { StudentForm } from "./StudentForm"
+import { StudentList } from "./StudentList"
+import { useStudentData } from "./useStudentData"
+import BulkUploadButton from "./BulkUpload"
 
 export function StudentManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+
   const {
     students,
     currentPage,
@@ -35,15 +37,30 @@ export function StudentManagement() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Student Management</h1>
-          <p className="text-gray-600">Manage JEE students and their information</p>
+          <p className="text-gray-600">Manage students and their information</p>
         </div>
-        <StudentForm
-          isOpen={isAddDialogOpen}
-          onClose={() => setIsAddDialogOpen(false)}
-          kits={kits}
-          batches={batches}
-          onStudentAdded={handleStudentAdded}
-        />
+
+        <div className="flex gap-3">
+          <BulkUploadButton 
+            viewModal={isBulkUploadOpen} 
+            setModal={setIsBulkUploadOpen}
+            onUploadSuccess={handleStudentAdded}
+          />
+          <button
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center"
+            onClick={() => setIsAddDialogOpen(true)}
+            type="button"
+          >
+            <span className="mr-2">+</span> Add Student
+          </button>
+          <StudentForm
+            isOpen={isAddDialogOpen}
+            onClose={() => setIsAddDialogOpen(false)}
+            kits={kits}
+            batches={batches}
+            onStudentAdded={handleStudentAdded}
+          />
+        </div>
       </div>
 
       <StudentList

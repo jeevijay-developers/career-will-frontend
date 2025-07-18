@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Plus, Calendar, CheckCircle, XCircle, Clock } from "lucide-react"
-import AttendanceBulkUpload from "./attendence/AttendanceBulkUpload"
+import AttendanceBulkUpload from "./AttendanceBulkUpload"
 
 interface AttendanceRecord {
   id: string

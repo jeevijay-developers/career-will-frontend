@@ -194,16 +194,11 @@ export function StudentForm({ isOpen, onClose, kits, batches, onStudentAdded }: 
         if (open) {
           resetForm();
         } else {
+          resetForm();
           onClose();
         }
       }}
     >
-      <DialogTrigger asChild>
-        <Button className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Student
-        </Button>
-      </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Student</DialogTitle>

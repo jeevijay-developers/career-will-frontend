@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { confirmAlert } from 'react-confirm-alert'; // Import
 import 'react-confirm-alert/src/react-confirm-alert.css';
+import Image from "next/image";
 
 interface SidebarProps {
   activeTab: string
@@ -47,13 +48,15 @@ export function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarProps) {
   return (
     <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
       <div className="p-6 border-b border-gray-200">
-        <div className="flex items-center gap-2">
-          <GraduationCap className="h-8 w-8 text-blue-600" />
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">JEE Admin</h1>
-            <p className="text-sm text-gray-500">Student Management</p>
+        <div className="flex items-center justify-center gap-2">
+            <Image
+              src="/logo/logo.svg"
+              alt="Logo"
+              width={100}
+              height={100}
+              className="rounded-full"
+            />
           </div>
-        </div>
       </div>
 
       <nav className="flex-1 p-4">

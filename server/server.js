@@ -7,7 +7,7 @@ export const getAllKits = async () => {
     return response.data;
   } catch (error) {
     console.error("Error fetching kits:", error);
-    throw error;
+   
   }
 } 
 
@@ -17,7 +17,7 @@ export const createKit = async (kitData) => {
     return response.data;
   } catch (error) {
     console.error("Error creating kit:", error);
-    throw error;
+   
   }
 }
 
@@ -28,7 +28,7 @@ export const loginUser = async (credentials) => {
     return response.data;
   } catch (error) {
     console.error("Error logging in:", error);
-    throw error;
+   
   }
 } 
 
@@ -39,7 +39,7 @@ export const createStudent = async (studentData) => {
     return response.data;
   } catch (error) {
     console.error("Error creating student:", error);
-    throw error;
+   
   }
 }
 
@@ -55,7 +55,7 @@ export const createStudent = async (studentData) => {
     return response.data;
   } catch (error) {
     console.error("Error uploading student image:", error);
-    throw error;
+   
   }
 }
 
@@ -72,7 +72,7 @@ export const getAllStudents = async (params) => {
     return response.data;
   } catch (error) {
     console.error("Error fetching students:", error);
-    throw error;
+   
   }
 }
 
@@ -82,7 +82,33 @@ export const findParentByEmail = async (email) => {
     return response.data;
   } catch (error) {
     console.error("Error finding parent by email:", error);
-    throw error;
+  }
+}
+
+export const bulkUploadStudents = async (formData) => {
+  try {
+    const response = await apiClient.post("/api/student/bulk-upload", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error uploading students file:", error);
+  }
+}
+
+export const bulkUploadAttendance = async (formData) => {
+  try {
+    const response = await apiClient.post("/api/attendance/bulk-upload", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error uploading attendance file:", error);
+   
   }
 }
 
@@ -93,7 +119,7 @@ export const getAllBatches = async () => {
     return response.data;
   } catch (error) {
     console.error("Error fetching batches:", error);
-    throw error;
+   
   }
 };
 
@@ -103,7 +129,7 @@ export const createBatch = async (batchData) => {
     return response.data;
   } catch (error) {
     console.error("Error creating batch:", error);
-    throw error;
+   
   }
 };
 
@@ -113,7 +139,7 @@ export const getBatchById = async (batchId) => {
     return response.data;
   } catch (error) {
     console.error("Error fetching batch by ID:", error);
-    throw error;
+   
   }
 }
 
