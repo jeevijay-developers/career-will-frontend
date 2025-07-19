@@ -43,21 +43,21 @@ interface StudentListProps {
   totalPages: number;
   pageSize: number;
   onPageChange: (page: number) => void;
-  batchNames: {[key: string]: string};
+  batchNames: { [key: string]: string };
   kits: Kit[];
   batches: any[];
   onStudentUpdated: () => void;
 }
 
-export function StudentList({ 
-  students, 
-  searchTerm, 
-  onSearchChange, 
-  currentPage, 
-  totalPages, 
-  pageSize, 
-  onPageChange, 
-  batchNames, 
+export function StudentList({
+  students,
+  searchTerm,
+  onSearchChange,
+  currentPage,
+  totalPages,
+  pageSize,
+  onPageChange,
+  batchNames,
   kits,
   batches,
   onStudentUpdated
@@ -72,14 +72,28 @@ export function StudentList({
     return nameA.localeCompare(nameB);
   });
 
-  const filteredStudents = sortedStudents.filter(
-    (student) =>
-      (student.name?.toLowerCase() ?? "").includes(searchTerm.toLowerCase()) ||
-      (student.rollNo?.toString()?.toLowerCase() ?? "").includes(searchTerm.toLowerCase())
-  );
+  const lowerSearch = searchTerm.toLowerCase();
 
-  console.log("Filtered Students:", filteredStudents);
-  
+  const filteredStudents = sortedStudents.filter((student: any) => {
+    const batchName =
+      typeof student.class === "string"
+        ? student.class
+        : batchNames[student.batch] || "No batch allotted";
+
+    const searchableFields = [
+      student.name,
+      student.rollNo?.toString(),
+      student.parent?.name,
+      student.parent?.email,
+      student.parent?.phone,
+      student.class,
+      batchName,
+    ];
+
+    return searchableFields.some(
+      (field) => field?.toLowerCase().includes(lowerSearch)
+    );
+  });
 
   const handleDelete = () => {
     confirmAlert({
@@ -168,8 +182,8 @@ export function StudentList({
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           onClick={() => handleEdit(student)}
                         >
