@@ -173,7 +173,7 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
         if (!validateForm() || !student) return;
 
         setIsLoading(true);
-        const kitNames = selectedKits.map(k => k.name);
+        const kitIds = selectedKits.map(k => k._id);
 
         // Find the selected batch ObjectId
         const selectedBatch = batches.find(batch => batch.name === formData.batch);
@@ -190,7 +190,7 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
                 phone: formData.parentPhone,
                 ...(formData.parentPassword.trim() && { password: formData.parentPassword })
             },
-            kit: kitNames,
+            kit: kitIds,
             address: formData.address,
         }
 

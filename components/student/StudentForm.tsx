@@ -120,7 +120,7 @@ export function StudentForm({ isOpen, onClose, kits, batches, onStudentAdded }: 
     if (!validateForm()) return;
     
     setIsLoading(true);
-    const kitNames = selectedKits.map(k => k.name);
+    const kitIds = selectedKits.map(k => k._id);
     
     // Find the selected batch ObjectId
     const selectedBatch = batches.find(batch => batch.name === formData.batch);
@@ -136,7 +136,7 @@ export function StudentForm({ isOpen, onClose, kits, batches, onStudentAdded }: 
         email: formData.parentEmail,
         phone: formData.parentPhone,
       },
-      kit: kitNames,
+      kit: kitIds,
       address: formData.address,
     }
     
