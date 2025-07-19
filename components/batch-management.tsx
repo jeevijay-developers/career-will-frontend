@@ -11,7 +11,7 @@ import { Plus, SquarePen, Trash2 } from "lucide-react"
 import { confirmAlert } from 'react-confirm-alert';
 import 'react-confirm-alert/src/react-confirm-alert.css';
 import toast from "react-hot-toast"
-import { getAllBatches,createBatch, updateBatch, deleteBatch } from "@/server/server"
+import { getAllBatches,createBatch, updateBatch, deleteBatch,  } from "@/server/server"
 
 interface Batch {
   id: string
@@ -244,7 +244,6 @@ export function BatchManagement() {
   useEffect(() => {
     fetchBatches();
   }, []);
-
 
 
   return (

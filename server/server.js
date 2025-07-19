@@ -21,6 +21,18 @@ export const createKit = async (kitData) => {
   }
 }
 
+export const deleteKit = async (kitId) => {
+  try {
+    // Standard REST pattern - DELETE /api/kit/:id
+    const response = await apiClient.delete(`/api/kit/delete-kit-by-id/${kitId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting kit:", error);
+    console.error("Attempted URL:", `/api/kit/delete-kit-by-id/${kitId}`);
+    throw new Error("Error deleting kit");
+  }
+}
+
 // User authentication APIs
 export const loginUser = async (credentials) => {
   try {
@@ -90,6 +102,19 @@ export const updateStudent = async (studentData) => {
   } catch (error) {
     console.error("Error updating student:", error);
     throw new Error("Error updating student");
+  }
+}
+
+export const getStudentsWithIncompleteKit = async (batchId) => {
+  try {
+    const response = await apiClient.get(`/api/student/incomplete-kit/${batchId}`);
+    if (response.status === 200)
+      return response.data;
+    else
+      throw new Error("Failed to fetch students with incomplete kit");
+  } catch (error) {
+    console.error("Error fetching students with incomplete kit:", error);
+    throw new Error("Error fetching students with incomplete kit");
   }
 }
 
