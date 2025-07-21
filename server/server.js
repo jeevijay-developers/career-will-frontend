@@ -217,3 +217,34 @@ export const deleteBatch = async (batchId) => {
     throw new Error("Error deleting batch");
   }
 }
+
+// Fee APIs
+export const createFeeSubmission = async (feeData)=> {
+  try {
+    const response = await apiClient.post("/api/fee/create-fee-submission", feeData);
+    return response.data;
+  } catch (error) {
+    console.error("Error creating fee submission:", error);
+    throw new Error("Error creating fee submission");
+  }
+}
+
+export const getAllFees = async () => {
+  try {
+    const response = await apiClient.get("/api/fee/get-all-fees");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching fees:", error);
+    throw new Error("Error fetching fees");
+  }
+}
+
+export const updateFeeOfStudent = async (feeId, feeData) => {
+  try {
+    const response = await apiClient.put(`/api/fee/update-fee/${feeId}`, feeData);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating fee of student:", error);
+    throw new Error("Error updating fee of student");
+  }
+}

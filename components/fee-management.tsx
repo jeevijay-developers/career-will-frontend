@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -8,55 +8,23 @@ import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Plus, CreditCard, AlertCircle, CheckCircle } from "lucide-react"
+import { createFeeSubmission, getAllFees, updateFeeOfStudent } from "../server/server"
+import toast from "react-hot-toast"
 
 interface FeeRecord {
-  id: string
+  _id: string
+  studentRollNo: number
   studentName: string
-  rollNumber: string
-  totalFee: number
-  paidAmount: number
-  remainingAmount: number
-  installments: Installment[]
-  status: "paid" | "partial" | "pending"
-}
-
-interface Installment {
-  id: string
   amount: number
+  paidAmount: number
   dueDate: string
-  paidDate?: string
-  status: "paid" | "pending" | "overdue"
+  status: string
+  createdAt?: string
+  updatedAt?: string
 }
-
-const mockFeeRecords: FeeRecord[] = [
-  {
-    id: "1",
-    studentName: "Rahul Sharma",
-    rollNumber: "JEE001",
-    totalFee: 50000,
-    paidAmount: 30000,
-    remainingAmount: 20000,
-    status: "partial",
-    installments: [
-      { id: "1", amount: 15000, dueDate: "2024-01-15", paidDate: "2024-01-10", status: "paid" },
-      { id: "2", amount: 15000, dueDate: "2024-02-15", paidDate: "2024-02-12", status: "paid" },
-      { id: "3", amount: 20000, dueDate: "2024-03-15", status: "pending" },
-    ],
-  },
-  {
-    id: "2",
-    studentName: "Priya Patel",
-    rollNumber: "JEE002",
-    totalFee: 50000,
-    paidAmount: 50000,
-    remainingAmount: 0,
-    status: "paid",
-    installments: [{ id: "1", amount: 50000, dueDate: "2024-01-15", paidDate: "2024-01-10", status: "paid" }],
-  },
-]
 
 export function FeeManagement() {
-  const [feeRecords, setFeeRecords] = useState<FeeRecord[]>(mockFeeRecords)
+  const [feeRecords, setFeeRecords] = useState<FeeRecord[]>([])
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false)
   const [selectedStudent, setSelectedStudent] = useState<FeeRecord | null>(null)
@@ -72,57 +40,92 @@ export function FeeManagement() {
     paymentDate: "",
   })
 
-  const handleAddFeeRecord = () => {
-    const newRecord: FeeRecord = {
-      id: Date.now().toString(),
-      studentName: formData.studentName,
-      rollNumber: formData.rollNumber,
-      totalFee: Number.parseInt(formData.totalFee),
-      paidAmount: 0,
-      remainingAmount: Number.parseInt(formData.totalFee),
-      status: "pending",
-      installments: [
-        {
-          id: Date.now().toString(),
-          amount: Number.parseInt(formData.installmentAmount),
-          dueDate: formData.dueDate,
-          status: "pending",
-        },
-      ],
+  // Fetch all fee records on component mount
+  useEffect(() => {
+    const fetchFeeRecords = async () => {
+      try {
+        const response = await getAllFees()
+        console.log("Fetched fee records:", response)
+        setFeeRecords(response)
+      } catch (error) {
+        console.error("Error fetching fee records:", error)
+        toast.error("Failed to fetch fee records")
+      }
     }
-    setFeeRecords([...feeRecords, newRecord])
-    setFormData({
-      studentName: "",
-      rollNumber: "",
-      totalFee: "",
-      installmentAmount: "",
-      dueDate: "",
-    })
-    setIsAddDialogOpen(false)
+
+    fetchFeeRecords()
+  }, [])
+
+  const handleAddFeeRecord = async () => {
+    try {
+      const feeData = {
+        studentRollNo: parseInt(formData.rollNumber),
+        amount: parseInt(formData.totalFee),
+        paidAmount: parseInt(formData.installmentAmount) || 0,
+        dueDate: formData.dueDate,
+      };
+
+      console.log("Creating fee submission with data:", feeData);
+      const response = await createFeeSubmission(feeData);
+      
+      // Refresh the data from server
+      const updatedRecords = await getAllFees();
+      setFeeRecords(updatedRecords);
+      
+      setFormData({
+        studentName: "",
+        rollNumber: "",
+        totalFee: "",
+        installmentAmount: "",
+        dueDate: "",
+      });
+      setIsAddDialogOpen(false);
+      toast.success("Fee record created successfully!");
+    } catch (error) {
+      console.error("Error creating fee record:", error);
+      toast.error("Failed to create fee record. Please try again.");
+    }
   }
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     if (!selectedStudent) return
 
-    const paymentAmount = Number.parseInt(paymentData.amount)
-    const updatedRecords = feeRecords.map((record) => {
-      if (record.id === selectedStudent.id) {
-        const newPaidAmount = record.paidAmount + paymentAmount
-        const newRemainingAmount = record.totalFee - newPaidAmount
-        return {
-          ...record,
-          paidAmount: newPaidAmount,
-          remainingAmount: newRemainingAmount,
-          status: newRemainingAmount === 0 ? ("paid" as const) : ("partial" as const),
-        }
+    try {
+      const paymentAmount = Number.parseInt(paymentData.amount)
+      const remainingAmount = selectedStudent.amount - selectedStudent.paidAmount
+      
+      // Validation
+      if (!paymentAmount || paymentAmount <= 0) {
+        toast.error("Please enter a valid payment amount");
+        return;
       }
-      return record
-    })
-
-    setFeeRecords(updatedRecords)
-    setPaymentData({ amount: "", paymentDate: "" })
-    setIsPaymentDialogOpen(false)
-    setSelectedStudent(null)
+      
+      if (paymentAmount > remainingAmount) {
+        toast.error("Payment amount cannot exceed remaining amount");
+        return;
+      }
+      
+      // Call the updateFeeOfStudent API
+      const updateData = {
+        paidAmount: paymentAmount,
+        date: paymentData.paymentDate || new Date().toISOString().split('T')[0]
+      };
+      
+      console.log("Updating fee with data:", updateData);
+      await updateFeeOfStudent(selectedStudent._id, updateData);
+      
+      // Refresh the data from server
+      const updatedRecords = await getAllFees();
+      setFeeRecords(updatedRecords);
+      
+      setPaymentData({ amount: "", paymentDate: "" })
+      setIsPaymentDialogOpen(false)
+      setSelectedStudent(null)
+      toast.success("Payment recorded successfully!");
+    } catch (error) {
+      console.error("Error recording payment:", error);
+      toast.error("Failed to record payment. Please try again.");
+    }
   }
 
   const getStatusBadge = (status: string) => {
@@ -256,37 +259,46 @@ export function FeeManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {feeRecords.map((record) => (
-                  <TableRow key={record.id}>
-                    <TableCell className="font-medium">{record.rollNumber}</TableCell>
-                    <TableCell>{record.studentName}</TableCell>
-                    <TableCell>₹{record.totalFee.toLocaleString()}</TableCell>
-                    <TableCell>₹{record.paidAmount.toLocaleString()}</TableCell>
-                    <TableCell>₹{record.remainingAmount.toLocaleString()}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(record.status)}
-                        <span className={getStatusBadge(record.status)}>
-                          {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {record.status !== "paid" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedStudent(record)
-                            setIsPaymentDialogOpen(true)
-                          }}
-                        >
-                          Add Payment
-                        </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {feeRecords.map((record) => {
+                  const remainingAmount = record.amount - record.paidAmount;
+                  const status = remainingAmount === 0 ? "paid" : (record.paidAmount > 0 ? "partial" : "pending");
+                  
+                  return (
+                    <TableRow key={record._id}>
+                      <TableCell className="font-medium">{record.studentRollNo}</TableCell>
+                      <TableCell>{record.studentName}</TableCell>
+                      <TableCell>₹{record.amount.toLocaleString()}</TableCell>
+                      <TableCell>₹{record.paidAmount.toLocaleString()}</TableCell>
+                      <TableCell>₹{remainingAmount.toLocaleString()}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {getStatusIcon(status)}
+                          <span className={getStatusBadge(status)}>
+                            {status.charAt(0).toUpperCase() + status.slice(1)}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {status !== "paid" && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedStudent(record)
+                              setPaymentData({ 
+                                amount: "", 
+                                paymentDate: new Date().toISOString().split('T')[0] 
+                              })
+                              setIsPaymentDialogOpen(true)
+                            }}
+                          >
+                            Add Payment
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           </div>
@@ -302,8 +314,8 @@ export function FeeManagement() {
             <div className="space-y-4">
               <div className="p-4 bg-gray-50 rounded-lg">
                 <p className="font-medium">{selectedStudent.studentName}</p>
-                <p className="text-sm text-gray-600">Roll: {selectedStudent.rollNumber}</p>
-                <p className="text-sm text-gray-600">Remaining: ₹{selectedStudent.remainingAmount.toLocaleString()}</p>
+                <p className="text-sm text-gray-600">Roll: {selectedStudent.studentRollNo}</p>
+                <p className="text-sm text-gray-600">Remaining: ₹{(selectedStudent.amount - selectedStudent.paidAmount).toLocaleString()}</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="paymentAmount">Payment Amount</Label>
@@ -313,7 +325,7 @@ export function FeeManagement() {
                   value={paymentData.amount}
                   onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
                   placeholder="Enter amount"
-                  max={selectedStudent.remainingAmount}
+                  max={selectedStudent.amount - selectedStudent.paidAmount}
                 />
               </div>
               <div className="space-y-2">
