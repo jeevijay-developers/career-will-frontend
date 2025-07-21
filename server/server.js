@@ -76,7 +76,6 @@ export const getAllStudents = async (params) => {
     if (params.page) queryParams.append('page', params.page.toString());
     if (params.limit) queryParams.append('limit', params.limit.toString());
     const url = `/api/student/get-all-students${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    console.log("Fetching students with URL:", url);
     const response = await apiClient.get(url);
     return response.data;
   } catch (error) {

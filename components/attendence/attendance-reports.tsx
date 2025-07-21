@@ -124,7 +124,7 @@ export function AttendanceReports() {
                 Mark Attendance
               </Button>
             </DialogTrigger>
-          <DialogContent className="max-w-lg">
+          <DialogContent aria-describedby={undefined} className="max-w-lg">
             <DialogHeader>
               <DialogTitle>Mark Attendance</DialogTitle>
             </DialogHeader>

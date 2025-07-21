@@ -118,7 +118,7 @@ export function TestReports() {
                 Add Test Report
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-lg">
+            <DialogContent aria-describedby={undefined} className="max-w-lg">
               <DialogHeader>
                 <DialogTitle>Add Test Report</DialogTitle>
               </DialogHeader>

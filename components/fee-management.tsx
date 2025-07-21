@@ -165,7 +165,7 @@ export function FeeManagement() {
               Add Fee Record
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg">
+          <DialogContent aria-describedby={undefined}  className="max-w-lg">
             <DialogHeader>
               <DialogTitle>Add Fee Record</DialogTitle>
             </DialogHeader>
@@ -294,7 +294,7 @@ export function FeeManagement() {
       </Card>
 
       <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent aria-describedby={undefined} className="max-w-md">
           <DialogHeader>
             <DialogTitle>Add Payment</DialogTitle>
           </DialogHeader>

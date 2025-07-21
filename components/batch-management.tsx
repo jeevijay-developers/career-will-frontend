@@ -214,8 +214,7 @@ export function BatchManagement() {
   const fetchBatches = async () => {
     try {
       const data = await getAllBatches();
-      console.log("Fetched batches:", data);
-      
+            
       // If data is an array, use it directly; if it's an object with batches property, use that
       const batchesArray = Array.isArray(data) ? data : data.batches || [];
       
@@ -261,7 +260,7 @@ export function BatchManagement() {
               Create Batch
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg">
+          <DialogContent aria-describedby={undefined} className="max-w-lg">
             <DialogHeader>
               <DialogTitle>Create New Batch</DialogTitle>
             </DialogHeader>
@@ -393,7 +392,7 @@ export function BatchManagement() {
 
       {/* Edit Batch Dialog - Completely Separate from Create Batch */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent aria-describedby={undefined} className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Edit Batch</DialogTitle>
           </DialogHeader>

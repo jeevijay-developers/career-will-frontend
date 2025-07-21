@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Package, CheckCircle, XCircle, Settings, Trash2 } from "lucide-react"
+import { Package, CheckCircle, XCircle, Settings, Trash2, Plus } from "lucide-react"
 import { getAllKits, createKit, deleteKit, getAllBatches, getStudentsWithIncompleteKit, updateStudentKit } from "../server/server"
 import toast from "react-hot-toast"
 import { confirmAlert } from 'react-confirm-alert';
@@ -118,12 +118,10 @@ export function KitManagement() {
     async function fetchBatches() {
       try {
         const batchesData = await getAllBatches();
-        console.log("Fetched batches:", batchesData);
         const mappedBatches = Array.isArray(batchesData) ? batchesData.map(batch => ({
           ...batch,
           id: batch._id || batch.id
         })) : [];
-        console.log("Mapped batches:", mappedBatches);
         
         setBatches(mappedBatches);
       } catch (err) {
@@ -149,7 +147,6 @@ export function KitManagement() {
       try {
         if (selectedBatch === "all") {
           // Fetch students from all batches
-          console.log("Fetching students from all batches");
           const allStudents: any[] = [];
           
           for (const batch of batches) {
@@ -169,7 +166,6 @@ export function KitManagement() {
             }
           }
           
-          console.log("Fetched all students with incomplete kit:", allStudents);
           if (allStudents.length > 0) {
             // Map backend students to StudentKit format
             const dynamicStudentKits = allStudents.map((student: any) =>
@@ -378,12 +374,12 @@ export function KitManagement() {
         <div className="flex gap-2">
           <Dialog open={isAddItemDialogOpen} onOpenChange={setIsAddItemDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline">
-                <Settings className="h-4 w-4 mr-2" />
+              <Button variant="outline" className="bg-blue-600 text-white hover:bg-blue-700 hover:text-white">
+                <Plus />
                 Add Kit Item
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent aria-describedby={undefined} className="max-w-md">
               <DialogHeader>
                 <DialogTitle>Add Kit Item</DialogTitle>
               </DialogHeader>
@@ -429,13 +425,13 @@ export function KitManagement() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
+            <div className="space-y-3 max-h-80 overflow-y-auto pr-2">
               {kitItems.map((item) => (
                 <div key={item._id || item.id} className="p-3 border rounded-lg">
                   <div className="flex justify-between">
                     <div className="">
                       <div className="font-medium">{item.name}</div>
-                      <div className="text-sm text-gray-600 truncate w-full max-w-[200px] md:max-w-[300px]">
+                      <div className="text-sm text-gray-600 truncate w-full max-w-[200px] sm:max-w-[450px] ">
                         {item.description}
                       </div>
                     </div>
@@ -579,7 +575,7 @@ export function KitManagement() {
       </Card> */}
 
       <Dialog open={isUpdateKitDialogOpen} onOpenChange={setIsUpdateKitDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent aria-describedby={undefined} className="max-w-md">
           <DialogHeader>
             <DialogTitle>Update Kit Status</DialogTitle>
           </DialogHeader>

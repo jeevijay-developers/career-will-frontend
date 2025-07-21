@@ -116,7 +116,7 @@ const TestReportBulkUpload: React.FC<Props> = ({ onUploadSuccess }) => {
           Bulk Upload
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent aria-describedby={undefined} className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileSpreadsheet className="h-5 w-5" />

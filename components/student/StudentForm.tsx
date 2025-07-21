@@ -199,7 +199,7 @@ export function StudentForm({ isOpen, onClose, kits, batches, onStudentAdded }: 
         }
       }}
     >
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+      <DialogContent aria-describedby={undefined} className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Student</DialogTitle>
         </DialogHeader>

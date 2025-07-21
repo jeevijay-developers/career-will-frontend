@@ -251,7 +251,7 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
                 }
             }}
         >
-            <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogContent aria-describedby={undefined} className="max-w-4xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Edit Student</DialogTitle>
                 </DialogHeader>
