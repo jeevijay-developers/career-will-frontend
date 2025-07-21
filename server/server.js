@@ -118,6 +118,16 @@ export const getStudentsWithIncompleteKit = async (batchId) => {
   }
 }
 
+export const updateStudentKit = async (studentId, kitItems) => {
+  try {
+    const response = await apiClient.put(`/api/student/update-student-kit/${studentId}`, kitItems);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating student kit:", error);
+    throw new Error("Error updating student kit");
+  }
+}
+
 // Bulk upload APIs
 export const bulkUploadStudents = async (formData) => {
   try {

@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Package, CheckCircle, XCircle, Settings, Trash2 } from "lucide-react"
-import { getAllKits, createKit, deleteKit, getAllBatches, getStudentsWithIncompleteKit, } from "../server/server"
+import { getAllKits, createKit, deleteKit, getAllBatches, getStudentsWithIncompleteKit, updateStudentKit } from "../server/server"
 import toast from "react-hot-toast"
 import { confirmAlert } from 'react-confirm-alert';
 import 'react-confirm-alert/src/react-confirm-alert.css';
@@ -190,9 +190,7 @@ export function KitManagement() {
             return;
           }
           
-          console.log("Fetching students for batch ID:", batch._id);
           const studentsWithIncompleteKit = await getStudentsWithIncompleteKit(batch._id);
-          console.log("Fetched students with incomplete kit:", studentsWithIncompleteKit);
           
           // Check if we have valid data
           if (Array.isArray(studentsWithIncompleteKit) && studentsWithIncompleteKit.length > 0) {
@@ -261,11 +259,18 @@ export function KitManagement() {
         })
         const completionPercentage = Math.round((receivedRequiredItems.length / requiredItems.length) * 100)
 
-        return {
+        const updatedKit = {
           ...kit,
           items: updatedItems,
           completionPercentage,
         }
+
+        // Update selectedStudent if it's the same student
+        if (selectedStudent && selectedStudent.id === studentId) {
+          setSelectedStudent(updatedKit)
+        }
+
+        return updatedKit
       }
       return kit
     })
@@ -300,7 +305,22 @@ export function KitManagement() {
     return true
   })
 
-    
+  const handleKitUpdate = async () => {
+    if (!selectedStudent) return;
+    const studentId = selectedStudent.id;
+    // Only send received kit item ids
+    const kitArray = selectedStudent.items
+      .filter(item => item.received)
+      .map(item => item.itemId);
+    try {
+      console.log("Updating kit for student:", studentId, "with items:", { kit: kitArray });
+      await updateStudentKit(studentId, { kit: kitArray });
+      toast.success("Kit status updated successfully!");
+      setIsUpdateKitDialogOpen(false);
+    } catch (error) {
+      toast.error("Failed to update kit status");
+    }
+  }
 
   const handleDeleteKit = async (kitId: string) => {
     if (!kitId) {
@@ -473,7 +493,7 @@ export function KitManagement() {
                       <div className="flex items-center justify-between mb-3">
                         <div>
                           <div className="font-medium">{studentKit.studentName}</div>
-                          <div className="text-sm text-gray-600">{studentKit.rollNumber}</div>
+                          <div className="text-sm text-gray-600">Roll No: {studentKit.rollNumber}</div>
                           <div className="text-xs text-gray-500">{getBatchName(studentKit.batch)}</div>
                         </div>
                         <div className="text-right">
@@ -595,6 +615,12 @@ export function KitManagement() {
           <div className="flex justify-end gap-2 mt-6">
             <Button variant="outline" onClick={() => setIsUpdateKitDialogOpen(false)}>
               Close
+            </Button>
+            <Button 
+              onClick={handleKitUpdate}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Confirm
             </Button>
           </div>
         </DialogContent>
