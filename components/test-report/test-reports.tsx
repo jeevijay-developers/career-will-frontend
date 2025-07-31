@@ -12,24 +12,45 @@ import TestReportBulkUpload from "./TestReportBulkUpload"
 import toast from "react-hot-toast"
 import { getAllTestScores } from "../../server/server"
 
+interface Subject {
+  name: string
+  marks: number
+  _id: string
+}
+
 interface TestReport {
   _id: string
-  studentName: string
-  studentRollNo: number
-  testName: string
-  testDate: string
-  physicsMarks: number
-  chemistryMarks: number
-  mathsMarks: number
+  student: string
+  studentName?: string
+  studentRollNo?: number
+  rollNumber?: number  // For compatibility with form data
+  batch?: string
+  date: string
+  subjects: Subject[]
+  total: number
+  rank?: number
+  percentile?: number
+  createdAt?: string
+  updatedAt?: string
+  // Calculated fields for display
   totalMarks?: number
-  maxMarks: number
+  maxMarks?: number
   percentage?: number
+  // Additional fields for table display
+  testName?: string
+  testDate?: string
+  physicsMarks?: number
+  chemistryMarks?: number
+  mathsMarks?: number
+  biologyMarks?: number
 }
 
 export function TestReports() {
   const [testReports, setTestReports] = useState<TestReport[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [selectedReport, setSelectedReport] = useState<TestReport | null>(null)
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false)
   const [formData, setFormData] = useState({
     studentName: "",
     rollNumber: "",
@@ -38,7 +59,8 @@ export function TestReports() {
     physicsMarks: "",
     chemistryMarks: "",
     mathsMarks: "",
-    maxMarks: "300",
+    biologyMarks: "",
+    maxMarks: "400",
   })
   
   // Function to fetch test scores
@@ -48,19 +70,37 @@ export function TestReports() {
       const data = await getAllTestScores();
       console.log("Fetched test scores:", data);
       
-      // Transform data if needed
-      const formattedData = data.map((score: any) => {
-        // Calculate total and percentage
-        const physics = score.physicsMarks || 0;
-        const chemistry = score.chemistryMarks || 0;
-        const maths = score.mathsMarks || 0;
-        const total = physics + chemistry + maths;
-        const percentage = score.maxMarks ? Math.round((total / score.maxMarks) * 100 * 10) / 10 : 0;
+      // Transform data to match our UI format
+      const formattedData = data.map((score: TestReport) => {
+        // Extract subject marks for easy display
+        const physicsSubject = score.subjects.find(s => s.name === 'physics');
+        const chemistrySubject = score.subjects.find(s => s.name === 'chemistry');
+        const biologySubject = score.subjects.find(s => s.name === 'biology');
+        const mathsSubject = score.subjects.find(s => s.name === 'maths' || s.name === 'mathematics');
         
+        // Calculate total marks from the sum of all subjects
+        const totalSubjectMarks = score.subjects.reduce((sum, subject) => sum + subject.marks, 0);
+        
+        // Assume max marks as 100 per subject
+        const maxMarks = score.subjects.length * 100;
+        
+        // Calculate percentage
+        const percentage = Math.round((totalSubjectMarks / maxMarks) * 100 * 10) / 10;
+        
+        // Return formatted data
         return {
           ...score,
-          totalMarks: total,
-          percentage: percentage
+          // Add subject marks as individual properties for easy table display
+          physicsMarks: physicsSubject ? physicsSubject.marks : 0,
+          chemistryMarks: chemistrySubject ? chemistrySubject.marks : 0,
+          mathsMarks: mathsSubject ? mathsSubject.marks : 0,
+          biologyMarks: biologySubject ? biologySubject.marks : 0,
+          testName: "Test Report", // Default test name if not available
+          testDate: score.date, // Use the date from the backend
+          totalMarks: score.total || totalSubjectMarks,
+          maxMarks: maxMarks,
+          percentage: percentage,
+          studentRollNo: score.rollNumber
         };
       });
       
@@ -91,7 +131,8 @@ export function TestReports() {
       physicsMarks: "",
       chemistryMarks: "",
       mathsMarks: "",
-      maxMarks: "300",
+      biologyMarks: "",
+      maxMarks: "400",
     });
     setIsAddDialogOpen(false);
     
@@ -160,7 +201,7 @@ export function TestReports() {
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-4 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="physicsMarks">Physics</Label>
                     <Input
@@ -188,6 +229,16 @@ export function TestReports() {
                       type="number"
                       value={formData.mathsMarks}
                       onChange={(e) => setFormData({ ...formData, mathsMarks: e.target.value })}
+                      placeholder="Marks"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="biologyMarks">Biology</Label>
+                    <Input
+                      id="biologyMarks"
+                      type="number"
+                      value={formData.biologyMarks}
+                      onChange={(e) => setFormData({ ...formData, biologyMarks: e.target.value })}
                       placeholder="Marks"
                     />
                   </div>
@@ -230,14 +281,16 @@ export function TestReports() {
                 <TableRow>
                   <TableHead>Roll No.</TableHead>
                   <TableHead>Student Name</TableHead>
-                  <TableHead>Test Name</TableHead>
+                  <TableHead>Test</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Physics</TableHead>
                   <TableHead>Chemistry</TableHead>
-                  <TableHead>Maths</TableHead>
+                  <TableHead>Mathematics</TableHead>
+                  <TableHead>Biology</TableHead>
                   <TableHead>Total</TableHead>
                   <TableHead>Percentage</TableHead>
                   <TableHead>Performance</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -262,15 +315,16 @@ export function TestReports() {
                     const percentage = report.percentage || 0;
                     return (
                       <TableRow key={report._id}>
-                        <TableCell className="font-medium">{report.studentRollNo}</TableCell>
-                        <TableCell>{report.studentName}</TableCell>
-                        <TableCell>{report.testName}</TableCell>
-                        <TableCell>{report.testDate}</TableCell>
-                        <TableCell>{report.physicsMarks}</TableCell>
-                        <TableCell>{report.chemistryMarks}</TableCell>
-                        <TableCell>{report.mathsMarks}</TableCell>
+                        <TableCell className="font-medium">{report.studentRollNo || report.rollNumber || 'N/A'}</TableCell>
+                        <TableCell>{report.studentName || 'N/A'}</TableCell>
+                        <TableCell>{report.testName || 'Test Report'}</TableCell>
+                        <TableCell>{new Date(report.date).toLocaleDateString()}</TableCell>
+                        <TableCell>{report.physicsMarks || 0}</TableCell>
+                        <TableCell>{report.chemistryMarks || 0}</TableCell>
+                        <TableCell>{report.mathsMarks || 'N/A'}</TableCell>
+                        <TableCell>{report.biologyMarks || 'N/A'}</TableCell>
                         <TableCell className="font-medium">
-                          {report.totalMarks || (report.physicsMarks + report.chemistryMarks + report.mathsMarks)}/{report.maxMarks}
+                          {report.totalMarks || report.total}/{report.maxMarks || 400}
                         </TableCell>
                         <TableCell>
                           <span
@@ -292,6 +346,18 @@ export function TestReports() {
                             <TrendingDown className="h-4 w-4 text-red-600" />
                           )}
                         </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedReport(report);
+                              setIsDetailsDialogOpen(true);
+                            }}
+                          >
+                            Details
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     );
                   })
@@ -301,6 +367,49 @@ export function TestReports() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Details Dialog */}
+      <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Test Report Details</DialogTitle>
+          </DialogHeader>
+          {selectedReport && (
+            <div className="space-y-4">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h3 className="font-medium text-lg">{selectedReport.studentName || 'Student'}</h3>
+                <p className="text-sm text-gray-600">Roll No: {selectedReport.studentRollNo || selectedReport.rollNumber || 'N/A'}</p>
+                <p className="text-sm text-gray-600">Date: {new Date(selectedReport.date).toLocaleDateString()}</p>
+                {selectedReport.batch && <p className="text-sm text-gray-600">Batch: {selectedReport.batch}</p>}
+                {selectedReport.rank && <p className="text-sm text-gray-600">Rank: {selectedReport.rank}</p>}
+                {selectedReport.percentile && <p className="text-sm text-gray-600">Percentile: {selectedReport.percentile}</p>}
+              </div>
+
+              <div>
+                <h4 className="font-medium mb-2">Subject Marks</h4>
+                <div className="space-y-2">
+                  {selectedReport.subjects.map((subject, index) => (
+                    <div key={subject._id || index} className="flex justify-between items-center">
+                      <span className="capitalize">{subject.name}</span>
+                      <span className="font-medium">{subject.marks}</span>
+                    </div>
+                  ))}
+                  <div className="border-t pt-2 mt-2 flex justify-between items-center">
+                    <span className="font-medium">Total</span>
+                    <span className="font-medium">{selectedReport.total}</span>
+                  </div>
+                </div>
+              </div>
+
+              {selectedReport.createdAt && (
+                <p className="text-xs text-gray-500 mt-4">
+                  Created: {new Date(selectedReport.createdAt).toLocaleString()}
+                </p>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
