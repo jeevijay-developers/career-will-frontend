@@ -288,7 +288,7 @@ export function TestReports() {
                   <TableHead>Mathematics</TableHead>
                   <TableHead>Biology</TableHead>
                   <TableHead>Total</TableHead>
-                  <TableHead>Percentage</TableHead>
+                  <TableHead>Percentile</TableHead>
                   <TableHead>Performance</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -312,7 +312,7 @@ export function TestReports() {
                   </TableRow>
                 ) : (
                   testReports.map((report) => {
-                    const percentage = report.percentage || 0;
+                    const percentage = report.percentile || 0;
                     return (
                       <TableRow key={report._id}>
                         <TableCell className="font-medium">{report.studentRollNo || report.rollNumber || 'N/A'}</TableCell>
@@ -324,7 +324,7 @@ export function TestReports() {
                         <TableCell>{report.mathsMarks || 'N/A'}</TableCell>
                         <TableCell>{report.biologyMarks || 'N/A'}</TableCell>
                         <TableCell className="font-medium">
-                          {report.totalMarks || report.total}/{report.maxMarks || 400}
+                          {report.totalMarks || report.total}
                         </TableCell>
                         <TableCell>
                           <span
