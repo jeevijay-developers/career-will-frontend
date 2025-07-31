@@ -41,8 +41,16 @@ const TestReportBulkUpload: React.FC<Props> = ({ onUploadSuccess }) => {
         return;
       }
       
+      // Validate file size (limit to 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        toast.error("File size exceeds the 5MB limit. Please upload a smaller file.");
+        return;
+      }
+      
       setSelectedFile(file);
       setUploadResult(null);
+      toast.success("File selected successfully. Click 'Upload Test Reports' to process the data.");
     }
   };
 
@@ -127,6 +135,21 @@ const TestReportBulkUpload: React.FC<Props> = ({ onUploadSuccess }) => {
         <div className="space-y-6">
           <div className="text-sm text-gray-600">
             <p className="mt-1">Upload Excel (.xls, .xlsx) or CSV file with test report records.</p>
+            <p className="mt-2">File should contain columns for: Roll Number, Test Name, Test Date, Physics Marks, Chemistry Marks, and Mathematics Marks.</p>
+            <div className="mt-3">
+              <a 
+                href="#" 
+                className="text-blue-600 hover:text-blue-800 underline flex items-center"
+                onClick={(e) => {
+                  e.preventDefault();
+                  // You would implement this to provide a template download
+                  toast.success("Template download functionality will be implemented soon");
+                }}
+              >
+                <FileSpreadsheet className="h-4 w-4 mr-1" />
+                Download Sample Template
+              </a>
+            </div>
           </div>
 
           {/* File Upload Section */}
@@ -171,9 +194,12 @@ const TestReportBulkUpload: React.FC<Props> = ({ onUploadSuccess }) => {
               <AlertCircle className={`h-4 w-4 ${uploadResult.success ? "text-green-600" : "text-red-600"}`} />
               <AlertDescription>
                 <div className="space-y-2">
-                  <p className={uploadResult.success ? "text-green-800" : "text-red-800"}>
+                  <p className={uploadResult.success ? "text-green-800 font-medium" : "text-red-800 font-medium"}>
                     {uploadResult.message}
                   </p>
+                  {uploadResult.success && uploadResult.successCount && uploadResult.successCount > 0 && (
+                    <p className="text-sm text-gray-600">The test reports have been successfully processed and added to the database.</p>
+                  )}
                   {uploadResult.successCount !== undefined && (
                     <p className="text-sm text-green-700">
                       ✓ Successfully uploaded: {uploadResult.successCount} records

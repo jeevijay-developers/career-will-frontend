@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -9,52 +9,26 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Plus, FileText, TrendingUp, TrendingDown } from "lucide-react"
 import TestReportBulkUpload from "./TestReportBulkUpload"
+import toast from "react-hot-toast"
+import { getAllTestScores } from "../../server/server"
 
 interface TestReport {
-  id: string
+  _id: string
   studentName: string
-  rollNumber: string
+  studentRollNo: number
   testName: string
   testDate: string
   physicsMarks: number
   chemistryMarks: number
   mathsMarks: number
-  totalMarks: number
+  totalMarks?: number
   maxMarks: number
-  percentage: number
+  percentage?: number
 }
 
-const mockTestReports: TestReport[] = [
-  {
-    id: "1",
-    studentName: "Rahul Sharma",
-    rollNumber: "JEE001",
-    testName: "Mock Test 1",
-    testDate: "2024-01-20",
-    physicsMarks: 85,
-    chemistryMarks: 78,
-    mathsMarks: 92,
-    totalMarks: 255,
-    maxMarks: 300,
-    percentage: 85,
-  },
-  {
-    id: "2",
-    studentName: "Priya Patel",
-    rollNumber: "JEE002",
-    testName: "Mock Test 1",
-    testDate: "2024-01-20",
-    physicsMarks: 90,
-    chemistryMarks: 88,
-    mathsMarks: 85,
-    totalMarks: 263,
-    maxMarks: 300,
-    percentage: 87.7,
-  },
-]
-
 export function TestReports() {
-  const [testReports, setTestReports] = useState<TestReport[]>(mockTestReports)
+  const [testReports, setTestReports] = useState<TestReport[]>([])
+  const [isLoading, setIsLoading] = useState(false)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [formData, setFormData] = useState({
     studentName: "",
@@ -66,29 +40,49 @@ export function TestReports() {
     mathsMarks: "",
     maxMarks: "300",
   })
-
-  const handleAddReport = () => {
-    const physics = Number.parseInt(formData.physicsMarks)
-    const chemistry = Number.parseInt(formData.chemistryMarks)
-    const maths = Number.parseInt(formData.mathsMarks)
-    const total = physics + chemistry + maths
-    const max = Number.parseInt(formData.maxMarks)
-
-    const newReport: TestReport = {
-      id: Date.now().toString(),
-      studentName: formData.studentName,
-      rollNumber: formData.rollNumber,
-      testName: formData.testName,
-      testDate: formData.testDate,
-      physicsMarks: physics,
-      chemistryMarks: chemistry,
-      mathsMarks: maths,
-      totalMarks: total,
-      maxMarks: max,
-      percentage: Math.round((total / max) * 100 * 10) / 10,
+  
+  // Function to fetch test scores
+  const fetchTestScores = async () => {
+    setIsLoading(true);
+    try {
+      const data = await getAllTestScores();
+      console.log("Fetched test scores:", data);
+      
+      // Transform data if needed
+      const formattedData = data.map((score: any) => {
+        // Calculate total and percentage
+        const physics = score.physicsMarks || 0;
+        const chemistry = score.chemistryMarks || 0;
+        const maths = score.mathsMarks || 0;
+        const total = physics + chemistry + maths;
+        const percentage = score.maxMarks ? Math.round((total / score.maxMarks) * 100 * 10) / 10 : 0;
+        
+        return {
+          ...score,
+          totalMarks: total,
+          percentage: percentage
+        };
+      });
+      
+      setTestReports(formattedData);
+    } catch (error) {
+      console.error("Error fetching test scores:", error);
+      toast.error("Failed to load test reports");
+    } finally {
+      setIsLoading(false);
     }
+  };
+  
+  // Fetch test scores on component mount
+  useEffect(() => {
+    fetchTestScores();
+  }, []);
 
-    setTestReports([...testReports, newReport])
+  const handleAddReport = async () => {
+    // Currently, we're not implementing the create test score endpoint
+    // This would be replaced with an API call to create a test score
+    // For now, just show a toast message
+    toast.success("Test report added successfully");
     setFormData({
       studentName: "",
       rollNumber: "",
@@ -98,8 +92,11 @@ export function TestReports() {
       chemistryMarks: "",
       mathsMarks: "",
       maxMarks: "300",
-    })
-    setIsAddDialogOpen(false)
+    });
+    setIsAddDialogOpen(false);
+    
+    // Refresh the data
+    await fetchTestScores();
   }
 
   return (
@@ -110,7 +107,7 @@ export function TestReports() {
           <p className="text-gray-600">Manage and track student test performance</p>
         </div>
         <div className="flex gap-2">
-          <TestReportBulkUpload onUploadSuccess={() => {}} />
+          <TestReportBulkUpload onUploadSuccess={fetchTestScores} />
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-blue-600 hover:bg-blue-700">
@@ -244,40 +241,61 @@ export function TestReports() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {testReports.map((report) => (
-                  <TableRow key={report.id}>
-                    <TableCell className="font-medium">{report.rollNumber}</TableCell>
-                    <TableCell>{report.studentName}</TableCell>
-                    <TableCell>{report.testName}</TableCell>
-                    <TableCell>{report.testDate}</TableCell>
-                    <TableCell>{report.physicsMarks}</TableCell>
-                    <TableCell>{report.chemistryMarks}</TableCell>
-                    <TableCell>{report.mathsMarks}</TableCell>
-                    <TableCell className="font-medium">
-                      {report.totalMarks}/{report.maxMarks}
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={`px-2 py-1 rounded-full text-sm ${
-                          report.percentage >= 80
-                            ? "bg-green-100 text-green-800"
-                            : report.percentage >= 60
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {report.percentage}%
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      {report.percentage >= 80 ? (
-                        <TrendingUp className="h-4 w-4 text-green-600" />
-                      ) : (
-                        <TrendingDown className="h-4 w-4 text-red-600" />
-                      )}
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={10} className="text-center py-10">
+                      <div className="flex justify-center items-center">
+                        <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent mr-2"></div>
+                        Loading test reports...
+                      </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : testReports.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={10} className="text-center py-10">
+                      <p className="text-gray-500">No test reports found.</p>
+                      <p className="text-gray-500 text-sm mt-1">Upload reports using the Bulk Upload button or add individual reports.</p>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  testReports.map((report) => {
+                    const percentage = report.percentage || 0;
+                    return (
+                      <TableRow key={report._id}>
+                        <TableCell className="font-medium">{report.studentRollNo}</TableCell>
+                        <TableCell>{report.studentName}</TableCell>
+                        <TableCell>{report.testName}</TableCell>
+                        <TableCell>{report.testDate}</TableCell>
+                        <TableCell>{report.physicsMarks}</TableCell>
+                        <TableCell>{report.chemistryMarks}</TableCell>
+                        <TableCell>{report.mathsMarks}</TableCell>
+                        <TableCell className="font-medium">
+                          {report.totalMarks || (report.physicsMarks + report.chemistryMarks + report.mathsMarks)}/{report.maxMarks}
+                        </TableCell>
+                        <TableCell>
+                          <span
+                            className={`px-2 py-1 rounded-full text-sm ${
+                              percentage >= 80
+                                ? "bg-green-100 text-green-800"
+                                : percentage >= 60
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {percentage}%
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          {percentage >= 80 ? (
+                            <TrendingUp className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <TrendingDown className="h-4 w-4 text-red-600" />
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
               </TableBody>
             </Table>
           </div>

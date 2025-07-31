@@ -143,11 +143,27 @@ export const bulkUploadStudents = async (formData) => {
 }
 
 export async function bulkUploadTestReports(formData) {
-  // TODO: Implement API call to backend for bulk uploading test reports
-  // Example:
-  // return fetch('/api/test-reports/bulk-upload', { method: 'POST', body: formData })
-  //   .then(res => res.json());
-  return { message: 'Stub: Implement backend', successCount: 0, errorCount: 0, errors: [] };
+  try {
+    const response = await apiClient.post("/api/bulk/upload-test-scores", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error uploading test reports file:", error);
+    throw new Error("Error uploading test reports file");
+  }
+}
+
+export const getAllTestScores = async () => {
+  try {
+    const response = await apiClient.get("/api/test-score/get-all-test-scores");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching test scores:", error);
+    throw new Error("Error fetching test scores");
+  }
 }
 
 export const bulkUploadAttendance = async (formData) => {
