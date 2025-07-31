@@ -65,7 +65,7 @@ const TestReportBulkUpload: React.FC<Props> = ({ onUploadSuccess }) => {
 
     try {
       const formData = new FormData();
-      formData.append("file", selectedFile);
+      formData.append("scoresFile", selectedFile);
 
       const response = await bulkUploadTestReports(formData);
       
