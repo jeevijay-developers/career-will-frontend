@@ -324,7 +324,7 @@ export function TestReports() {
                         <TableCell>{report.mathsMarks || 'N/A'}</TableCell>
                         <TableCell>{report.biologyMarks || 'N/A'}</TableCell>
                         <TableCell className="font-medium">
-                          {report.totalMarks || report.total}
+                          {report.total}
                         </TableCell>
                         <TableCell>
                           <span
