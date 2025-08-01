@@ -59,7 +59,7 @@ const BulkUploadButton: React.FC<Props> = ({ viewModal, setModal, onUploadSucces
 
     try {
       const formData = new FormData();
-      formData.append("file", selectedFile);
+      formData.append("studentFile", selectedFile);
 
       const response = await bulkUploadStudents(formData);
       
@@ -79,27 +79,44 @@ const BulkUploadButton: React.FC<Props> = ({ viewModal, setModal, onUploadSucces
       }
 
       if (response.errorCount > 0) {
-        toast.error(`${response.errorCount} students failed to upload`);
+        toast.error(`${response.errorCount} students failed to upload. Check the error details below.`);
       }
 
     } catch (error: any) {
       console.error("Upload error:", error);
+      // Attempt to provide more specific error information
+      let errorMessage = "Failed to upload students. Please check the file format and try again.";
+      let errorDetails: string[] = [];
+      
+      if (error.response?.data) {
+        if (error.response.data.message) {
+          errorMessage = error.response.data.message;
+        }
+        
+        if (Array.isArray(error.response.data.errors)) {
+          errorDetails = error.response.data.errors;
+        } else if (typeof error.response.data.error === 'string') {
+          errorDetails = [error.response.data.error];
+        }
+      }
+      
       setUploadResult({
         success: false,
-        message: error.response?.data?.message || "Failed to upload students. Please try again.",
-        errors: error.response?.data?.errors || []
+        message: errorMessage,
+        errors: errorDetails
       });
-      toast.error("Upload failed. Please check the file format and try again.");
+      
+      toast.error(errorMessage);
     } finally {
       setIsUploading(false);
     }
   };
 
   const handleDownloadTemplate = () => {
-    // Create a sample template CSV content
-    const csvContent = `Name,Phone,Address,Batch,Parent Username,Parent Email,Parent Phone,Parent Password,Kit Names (comma separated)
-John Doe,1234567890,123 Main St,Batch A,parent1,parent1@example.com,9876543210,password123,"Kit 1,Kit 2"
-Jane Smith,0987654321,456 Oak Ave,Batch B,parent2,parent2@example.com,8765432109,password456,"Kit 1,Kit 3"`;
+    // Create a sample template CSV content with updated schema fields
+    const csvContent = `name,rollNo,class,previousSchoolName,medium,DOB,gender,category,state,city,pinCode,permanentAddress,mobileNumber,tShirtSize,howDidYouHearAboutUs,programmeName,emergencyContact,email,parent.occupation,parent.fatherName,parent.motherName,parent.parentContact,parent.email,batch,phone,kit
+John Doe,12345,11th,ABC School,English,2000-01-01,MALE,GENERAL,Maharashtra,Mumbai,400001,123 Main St,9876543210,M,Online,JEE Program,9876543210,john@example.com,Doctor,Mr. Doe,Mrs. Doe,9988776655,parent@example.com,Batch A,9876543210,"Kit1,Kit2"
+Jane Smith,12346,12th,XYZ School,English,2001-02-02,FEMALE,OBC,Delhi,New Delhi,110001,456 Oak Ave,8765432109,L,Friend,NEET Program,8765432109,jane@example.com,Engineer,Mr. Smith,Mrs. Smith,8877665544,parent2@example.com,Batch B,8765432109,"Kit1,Kit3"`;
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -147,7 +164,14 @@ Jane Smith,0987654321,456 Oak Ave,Batch B,parent2,parent2@example.com,8765432109
             <Label htmlFor="file-upload" className="text-base font-medium">
               Select Excel File
             </Label>
-            <div className="flex items-center gap-4">
+            <p className="text-sm text-gray-600 mb-2">
+              Upload a CSV or Excel file with student data. Required fields: name, rollNo, class, mobileNumber, emergencyContact, parent.parentContact, and phone.
+            </p>
+            <div className="flex flex-wrap items-center gap-4">
+              {/* <Button variant="outline" onClick={handleDownloadTemplate} className="text-sm border-dashed">
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                Download Template
+              </Button> */}
               <label
                 htmlFor="file-upload"
                 className="cursor-pointer px-4 py-2 bg-blue-600 text-white rounded flex items-center hover:bg-blue-700"
@@ -208,6 +232,9 @@ Jane Smith,0987654321,456 Oak Ave,Batch B,parent2,parent2@example.com,8765432109
                           <li>... and {uploadResult.errors.length - 5} more errors</li>
                         )}
                       </ul>
+                      <p className="text-xs text-gray-600 mt-2 italic">
+                        Make sure all required fields are properly filled: name, rollNo, class, mobileNumber, emergencyContact, parent.parentContact, and phone.
+                      </p>
                     </div>
                   )}
                 </div>

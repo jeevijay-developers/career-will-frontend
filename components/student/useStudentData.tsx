@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import toast from "react-hot-toast"
-import { getAllKits, getAllBatches, getAllStudents, getBatchById } from "../../server/server.js"
+import { getAllKits, getAllBatches, getAllStudents, } from "../../server/server.js"
 import { Student, Kit, Batch } from "./types"
 
 export function useStudentData() {
@@ -61,19 +61,19 @@ export function useStudentData() {
         const batchIds = [...new Set(studentsArr.map((student: any) => student.batch).filter(Boolean))] as string[];
         const batchNamesMap: {[key: string]: string} = {};
         
-        await Promise.all(
-          batchIds.map(async (batchId: string) => {
-            try {
-              const batchResponse = await getBatchById(batchId);
-              if (batchResponse && batchResponse.name) {
-                batchNamesMap[batchId] = batchResponse.name;
-              }
-            } catch (error) {
-              console.error(`Error fetching batch ${batchId}:`, error);
-              batchNamesMap[batchId] = "No batch allotted";
-            }
-          })
-        );
+        // await Promise.all(
+        //   batchIds.map(async (batchId: string) => {
+        //     try {
+        //       const batchResponse = await getBatchById(batchId);
+        //       if (batchResponse && batchResponse.name) {
+        //         batchNamesMap[batchId] = batchResponse.name;
+        //       }
+        //     } catch (error) {
+        //       console.error(`Error fetching batch ${batchId}:`, error);
+        //       batchNamesMap[batchId] = "No batch allotted";
+        //     }
+        //   })
+        // );
         
         setBatchNames(batchNamesMap);
       }

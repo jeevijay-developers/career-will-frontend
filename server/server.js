@@ -150,7 +150,7 @@ export const updateStudentKit = async (studentId, kitItems) => {
 export const bulkUploadStudents = async (formData) => {
   try {
     const response = await apiClient.post(
-      "/api/student/bulk-upload",
+      "/api/bulk/upload-bulk-students",
       formData,
       {
         headers: {
@@ -232,20 +232,20 @@ export const createBatch = async (batchData) => {
   }
 };
 
-export const getBatchById = async (batchId) => {
-  try {
-    const response = await apiClient.get(
-      `/api/batch/get-batch-by-id/${batchId}`
-    );
-    return response.data;
-  } catch (error) {
-    if (error.response && error.response.status === 404) {
-      return null;
-    }
-    console.error("Error fetching batch by ID:", error);
-    throw new Error("Error fetching batch by ID");
-  }
-};
+// export const getBatchById = async (batchId) => {
+//   try {
+//     const response = await apiClient.get(
+//       `/api/batch/get-batch-by-id/${batchId}`
+//     );
+//     return response.data;
+//   } catch (error) {
+//     if (error.response && error.response.status === 404) {
+//       return null;
+//     }
+//     console.error("Error fetching batch by ID:", error);
+//     throw new Error("Error fetching batch by ID");
+//   }
+// };
 
 export const updateBatch = async (batchId, batchData) => {
   try {
