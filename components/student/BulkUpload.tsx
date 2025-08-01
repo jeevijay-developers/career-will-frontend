@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react'
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -48,6 +47,16 @@ const BulkUploadButton: React.FC<Props> = ({ viewModal, setModal, onUploadSucces
     }
   };
 
+  // Helper function to check if any error string contains roll number exists error
+  const hasRollNumberError = (errors: string[] | undefined): boolean => {
+    if (!errors) return false;
+    return errors.some(error => 
+      error.toLowerCase().includes("roll number already exists") || 
+      error.toLowerCase().includes("duplicate roll") ||
+      error.toLowerCase().includes("rollno") && error.toLowerCase().includes("exists")
+    );
+  };
+
   const handleUpload = async () => {
     if (!selectedFile) {
       toast.error("Please select a file first");
@@ -63,6 +72,9 @@ const BulkUploadButton: React.FC<Props> = ({ viewModal, setModal, onUploadSucces
 
       const response = await bulkUploadStudents(formData);
       
+      // Check if there are roll number errors specifically
+      const hasRollNumberDuplicateError = hasRollNumberError(response.errors);
+      
       setUploadResult({
         success: true,
         message: response.message || "Students uploaded successfully",
@@ -77,29 +89,97 @@ const BulkUploadButton: React.FC<Props> = ({ viewModal, setModal, onUploadSucces
           onUploadSuccess();
         }
       }
+      
+      // If there are roll number errors, show a specific toast
+      if (hasRollNumberDuplicateError) {
+        toast.error("Duplicate roll numbers found. Please ensure all roll numbers are unique.", 
+          { duration: 5000, id: "duplicate-roll-error" });
+      }
 
+      // Display error information in toast with more details
       if (response.errorCount > 0) {
-        toast.error(`${response.errorCount} students failed to upload. Check the error details below.`);
+        // Show a summary toast
+        toast.error(`${response.errorCount} students failed to upload`);
+        
+        // Show more detailed errors if available (up to 3)
+        if (response.errors && response.errors.length > 0) {
+          const errorsToShow = response.errors.slice(0, 3);
+          errorsToShow.forEach((error: string) => {
+            setTimeout(() => {
+              // Check for specific error messages
+              if (error.includes("Roll number already exists")) {
+                toast.error("Roll number already exists. Please use unique roll numbers.", { duration: 5000 });
+              } else {
+                toast.error(error);
+              }
+            }, 300); // Small delay between toasts for readability
+          });
+          
+          // If there are more errors, show a count
+          if (response.errors.length > 3) {
+            setTimeout(() => {
+              toast.error(`...and ${response.errors.length - 3} more errors. See details in the dialog.`);
+            }, 1200);
+          }
+        }
       }
 
     } catch (error: any) {
       console.error("Upload error:", error);
-      // Attempt to provide more specific error information
+      // Extract error message from our improved server response
       let errorMessage = "Failed to upload students. Please check the file format and try again.";
       let errorDetails: string[] = [];
       
-      if (error.response?.data) {
-        if (error.response.data.message) {
+      // Check if this is our formatted error from server.js
+      if (error && error.message) {
+        errorMessage = error.message;
+        
+        // Handle specific roll number error message
+        if (error.message.includes("Roll number already exists")) {
+          toast.error("Duplicate roll numbers found. Please ensure all roll numbers are unique.", 
+            { duration: 5000, id: "duplicate-roll-error" });
+        } else {
+          toast.error(errorMessage, { duration: 5000 });
+        }
+        
+        errorDetails = [error.message];
+      }
+      // Fallback for other error formats (backward compatibility)
+      else if (error.response?.data) {
+        // Handle specific error cases
+        const isRollNumberError = error.response.data.error === "Roll number already exists." ||
+                               (typeof error.message === 'string' && error.message.includes("Roll number already exists"));
+        
+        if (isRollNumberError || 
+           (typeof error.response.data.error === 'string' && 
+            error.response.data.error.toLowerCase().includes("roll") && 
+            error.response.data.error.toLowerCase().includes("exists"))) {
+          errorMessage = "Roll number already exists. Please use unique roll numbers.";
+          toast.error(errorMessage, { duration: 5000, id: "duplicate-roll-error" });
+        } else if (error.response.data.message) {
           errorMessage = error.response.data.message;
+          toast.error(errorMessage);
         }
         
         if (Array.isArray(error.response.data.errors)) {
           errorDetails = error.response.data.errors;
-        } else if (typeof error.response.data.error === 'string') {
+          
+          // Check if any error is about duplicate roll numbers
+          if (hasRollNumberError(errorDetails)) {
+            toast.error("Duplicate roll numbers found. Please ensure all roll numbers are unique.", 
+              { duration: 5000, id: "duplicate-roll-error" });
+          } else {
+            // Show up to 3 specific error messages in toasts
+            errorDetails.slice(0, 3).forEach((errorDetail: string, index: number) => {
+              setTimeout(() => {
+                toast.error(errorDetail);
+              }, 300 * (index + 1)); // Stagger toasts
+            });
+          }
+        } else if (typeof error.response?.data?.error === 'string') {
           errorDetails = [error.response.data.error];
         }
       }
-      
       setUploadResult({
         success: false,
         message: errorMessage,
@@ -168,10 +248,10 @@ Jane Smith,12346,12th,XYZ School,English,2001-02-02,FEMALE,OBC,Delhi,New Delhi,1
               Upload a CSV or Excel file with student data. Required fields: name, rollNo, class, mobileNumber, emergencyContact, parent.parentContact, and phone.
             </p>
             <div className="flex flex-wrap items-center gap-4">
-              {/* <Button variant="outline" onClick={handleDownloadTemplate} className="text-sm border-dashed">
+              <Button variant="outline" onClick={handleDownloadTemplate} className="text-sm border-dashed">
                 <FileSpreadsheet className="h-4 w-4 mr-2" />
                 Download Template
-              </Button> */}
+              </Button>
               <label
                 htmlFor="file-upload"
                 className="cursor-pointer px-4 py-2 bg-blue-600 text-white rounded flex items-center hover:bg-blue-700"

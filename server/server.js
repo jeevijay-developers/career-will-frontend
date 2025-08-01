@@ -91,7 +91,6 @@ export const getAllStudents = async (params) => {
     return response.data;
   } catch (error) {
     console.error("Error fetching students:", error);
-    throw new Error("Error fetching students");
   }
 };
 
@@ -161,7 +160,17 @@ export const bulkUploadStudents = async (formData) => {
     return response.data;
   } catch (error) {
     console.error("Error uploading students file:", error);
-    throw new Error("Error uploading students file");
+    // Extract error message from response if available
+    if (error.response && error.response.data) {
+      if (error.response.data.error === "Roll number already exists.") {
+        throw new Error("Roll number already exists. Please use unique roll numbers.");
+      } else if (error.response.data.error) {
+        throw new Error(error.response.data.error);
+      } else if (error.response.data.message) {
+        throw new Error(error.response.data.message);
+      }
+    }
+    throw new Error("Error uploading students. Please check your file and try again.");
   }
 };
 
