@@ -1,21 +1,41 @@
-"use client"
+"use client";
 
-import React, { useState } from 'react'
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Upload, FileSpreadsheet, AlertCircle, CheckCircle, X } from "lucide-react"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import toast from "react-hot-toast"
-import { bulkUploadTestReports } from "../../server/server.js"
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Upload,
+  FileSpreadsheet,
+  AlertCircle,
+  CheckCircle,
+  X,
+} from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import toast from "react-hot-toast";
+import { bulkUploadTestReports } from "../../server/server.js";
 
 type Props = {
-    onUploadSuccess?: () => void;
-}
+  onUploadSuccess?: () => void;
+};
+type TestDetails = {
+  name: string;
+  date: string;
+};
 
 const TestReportBulkUpload: React.FC<Props> = ({ onUploadSuccess }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [testDetails, setTestDetails] = useState<TestDetails>({
+    name: "",
+    date: "",
+  });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<{
@@ -31,26 +51,37 @@ const TestReportBulkUpload: React.FC<Props> = ({ onUploadSuccess }) => {
     if (file) {
       // Validate file type
       const allowedTypes = [
-        'application/vnd.ms-excel',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'text/csv'
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "text/csv",
       ];
-      
-      if (!allowedTypes.includes(file.type) && !file.name.endsWith('.xls') && !file.name.endsWith('.xlsx') && !file.name.endsWith('.csv')) {
-        toast.error("Please select a valid Excel file (.xls, .xlsx) or CSV file");
+
+      if (
+        !allowedTypes.includes(file.type) &&
+        !file.name.endsWith(".xls") &&
+        !file.name.endsWith(".xlsx") &&
+        !file.name.endsWith(".csv")
+      ) {
+        toast.error(
+          "Please select a valid Excel file (.xls, .xlsx) or CSV file"
+        );
         return;
       }
-      
+
       // Validate file size (limit to 5MB)
       const maxSize = 5 * 1024 * 1024; // 5MB
       if (file.size > maxSize) {
-        toast.error("File size exceeds the 5MB limit. Please upload a smaller file.");
+        toast.error(
+          "File size exceeds the 5MB limit. Please upload a smaller file."
+        );
         return;
       }
-      
+
       setSelectedFile(file);
       setUploadResult(null);
-      toast.success("File selected successfully. Click 'Upload Test Reports' to process the data.");
+      toast.success(
+        "File selected successfully. Click 'Upload Test Reports' to process the data."
+      );
     }
   };
 
@@ -64,21 +95,29 @@ const TestReportBulkUpload: React.FC<Props> = ({ onUploadSuccess }) => {
     setUploadResult(null);
 
     try {
+      if (testDetails.name === "" || testDetails.date === "") {
+        toast.error("Please enter test name and date");
+        return;
+      }
       const formData = new FormData();
       formData.append("scoresFile", selectedFile);
+      formData.append("name", testDetails.name);
+      formData.append("date", testDetails.date);
 
       const response = await bulkUploadTestReports(formData);
-      
+
       setUploadResult({
         success: true,
         message: response.message || "Test reports uploaded successfully",
         successCount: response.successCount,
         errorCount: response.errorCount,
-        errors: response.errors
+        errors: response.errors,
       });
 
       if (response.successCount > 0) {
-        toast.success(`Successfully uploaded ${response.successCount} test reports`);
+        toast.success(
+          `Successfully uploaded ${response.successCount} test reports`
+        );
         if (onUploadSuccess) {
           onUploadSuccess();
         }
@@ -87,13 +126,14 @@ const TestReportBulkUpload: React.FC<Props> = ({ onUploadSuccess }) => {
       if (response.errorCount > 0) {
         toast.error(`${response.errorCount} records failed to upload`);
       }
-
     } catch (error: any) {
       console.error("Upload error:", error);
       setUploadResult({
         success: false,
-        message: error.response?.data?.message || "Failed to upload test reports. Please try again.",
-        errors: error.response?.data?.errors || []
+        message:
+          error.response?.data?.message ||
+          "Failed to upload test reports. Please try again.",
+        errors: error.response?.data?.errors || [],
       });
       toast.error("Upload failed. Please check the file format and try again.");
     } finally {
@@ -115,8 +155,8 @@ const TestReportBulkUpload: React.FC<Props> = ({ onUploadSuccess }) => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           className="bg-transparent text-black border-blue-600"
           onClick={() => setIsOpen(true)}
         >
@@ -131,24 +171,78 @@ const TestReportBulkUpload: React.FC<Props> = ({ onUploadSuccess }) => {
             Bulk Upload Test Reports
           </DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-6">
           <div className="text-sm text-gray-600">
-            <p className="mt-1">Upload Excel (.xls, .xlsx) or CSV file with test report records.</p>
-            <p className="mt-2">File should contain columns for: Roll Number, Test Name, Test Date, Physics Marks, Chemistry Marks, and Mathematics Marks.</p>
+            <p className="mt-1">
+              Upload Excel (.xls, .xlsx) or CSV file with test report records.
+            </p>
+            <p className="mt-2">
+              File should contain columns htmlFor: Roll Number, Test Name, Test
+              Date, Physics Marks, Chemistry Marks, and Mathematics Marks.
+            </p>
             <div className="mt-3">
-              <a 
-                href="#" 
+              <a
+                href="#"
                 className="text-blue-600 hover:text-blue-800 underline flex items-center"
                 onClick={(e) => {
                   e.preventDefault();
                   // You would implement this to provide a template download
-                  toast.success("Template download functionality will be implemented soon");
+                  toast.success(
+                    "Template download functionality will be implemented soon"
+                  );
                 }}
               >
                 <FileSpreadsheet className="h-4 w-4 mr-1" />
                 Download Sample Template
               </a>
+            </div>
+          </div>
+          {/* Date and name */}
+          <div className="flex flex-col gap-4 max-w-sm mx-auto mt-6">
+            {/* <!-- Date Input --> */}
+            <div>
+              <label
+                htmlFor="receiptDate"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Date of Receipt
+              </label>
+              <input
+                type="date"
+                id="receiptDate"
+                name="receiptDate"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={(e) =>
+                  setTestDetails({
+                    ...testDetails,
+                    date: e.target.value,
+                  })
+                }
+              />
+            </div>
+
+            {/* <!-- Text Input --> */}
+            <div>
+              <label
+                htmlFor="receiptNumber"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Test Name
+              </label>
+              <input
+                type="text"
+                id="receiptNumber"
+                name="receiptNumber"
+                placeholder="Enter receipt number"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={(e) =>
+                  setTestDetails({
+                    ...testDetails,
+                    name: e.target.value,
+                  })
+                }
+              />
             </div>
           </div>
 
@@ -190,35 +284,62 @@ const TestReportBulkUpload: React.FC<Props> = ({ onUploadSuccess }) => {
 
           {/* Upload Results */}
           {uploadResult && (
-            <Alert className={uploadResult.success ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}>
-              <AlertCircle className={`h-4 w-4 ${uploadResult.success ? "text-green-600" : "text-red-600"}`} />
+            <Alert
+              className={
+                uploadResult.success
+                  ? "border-green-200 bg-green-50"
+                  : "border-red-200 bg-red-50"
+              }
+            >
+              <AlertCircle
+                className={`h-4 w-4 ${
+                  uploadResult.success ? "text-green-600" : "text-red-600"
+                }`}
+              />
               <AlertDescription>
                 <div className="space-y-2">
-                  <p className={uploadResult.success ? "text-green-800 font-medium" : "text-red-800 font-medium"}>
+                  <p
+                    className={
+                      uploadResult.success
+                        ? "text-green-800 font-medium"
+                        : "text-red-800 font-medium"
+                    }
+                  >
                     {uploadResult.message}
                   </p>
-                  {uploadResult.success && uploadResult.successCount && uploadResult.successCount > 0 && (
-                    <p className="text-sm text-gray-600">The test reports have been successfully processed and added to the database.</p>
-                  )}
+                  {uploadResult.success &&
+                    uploadResult.successCount &&
+                    uploadResult.successCount > 0 && (
+                      <p className="text-sm text-gray-600">
+                        The test reports have been successfully processed and
+                        added to the database.
+                      </p>
+                    )}
                   {uploadResult.successCount !== undefined && (
                     <p className="text-sm text-green-700">
-                      ✓ Successfully uploaded: {uploadResult.successCount} records
+                      ✓ Successfully uploaded: {uploadResult.successCount}{" "}
+                      records
                     </p>
                   )}
-                  {uploadResult.errorCount !== undefined && uploadResult.errorCount > 0 && (
-                    <p className="text-sm text-red-700">
-                      ✗ Failed to upload: {uploadResult.errorCount} records
-                    </p>
-                  )}
+                  {uploadResult.errorCount !== undefined &&
+                    uploadResult.errorCount > 0 && (
+                      <p className="text-sm text-red-700">
+                        ✗ Failed to upload: {uploadResult.errorCount} records
+                      </p>
+                    )}
                   {uploadResult.errors && uploadResult.errors.length > 0 && (
                     <div className="mt-2">
-                      <p className="text-sm font-medium text-red-700">Errors:</p>
+                      <p className="text-sm font-medium text-red-700">
+                        Errors:
+                      </p>
                       <ul className="text-sm text-red-600 list-disc list-inside space-y-1">
                         {uploadResult.errors.slice(0, 5).map((error, index) => (
                           <li key={index}>{error}</li>
                         ))}
                         {uploadResult.errors.length > 5 && (
-                          <li>... and {uploadResult.errors.length - 5} more errors</li>
+                          <li>
+                            ... and {uploadResult.errors.length - 5} more errors
+                          </li>
                         )}
                       </ul>
                     </div>
@@ -230,14 +351,14 @@ const TestReportBulkUpload: React.FC<Props> = ({ onUploadSuccess }) => {
 
           {/* Action Buttons */}
           <div className="flex justify-end gap-3">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={handleClose}
               disabled={isUploading}
             >
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={handleUpload}
               disabled={!selectedFile || isUploading}
               className="bg-blue-600 hover:bg-blue-700"
@@ -258,7 +379,7 @@ const TestReportBulkUpload: React.FC<Props> = ({ onUploadSuccess }) => {
         </div>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};
 
-export default TestReportBulkUpload
+export default TestReportBulkUpload;
