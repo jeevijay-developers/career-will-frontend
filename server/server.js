@@ -56,7 +56,7 @@ export const createStudent = async (studentData) => {
     return response.data;
   } catch (error) {
     console.error("Error creating student:", error);
-    throw new Error("Error creating student");
+    throw error;
   }
 };
 
@@ -163,14 +163,18 @@ export const bulkUploadStudents = async (formData) => {
     // Extract error message from response if available
     if (error.response && error.response.data) {
       if (error.response.data.error === "Roll number already exists.") {
-        throw new Error("Roll number already exists. Please use unique roll numbers.");
+        throw new Error(
+          "Roll number already exists. Please use unique roll numbers."
+        );
       } else if (error.response.data.error) {
         throw new Error(error.response.data.error);
       } else if (error.response.data.message) {
         throw new Error(error.response.data.message);
       }
     }
-    throw new Error("Error uploading students. Please check your file and try again.");
+    throw new Error(
+      "Error uploading students. Please check your file and try again."
+    );
   }
 };
 
@@ -315,5 +319,20 @@ export const updateFeeOfStudent = async (feeId, feeData) => {
   } catch (error) {
     console.error("Error updating fee of student:", error);
     throw new Error("Error updating fee of student");
+  }
+};
+
+export const checkRollNumberExists = async (rollNo) => {
+  try {
+    const response = await apiClient.get(
+      `/api/student/check-roll-number/${rollNo}`
+    );
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.status === 404) {
+      return null;
+    }
+    console.error("Error fetching fee by ID:", error);
+    throw new Error("Error fetching fee by ID");
   }
 };
