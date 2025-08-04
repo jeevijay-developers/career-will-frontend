@@ -7,7 +7,7 @@ import { StudentManagement } from "@/components/student/student-management";
 import { BatchManagement } from "@/components/batch-management";
 import { TestReports } from "@/components/test-report/test-reports";
 import { AttendanceReports } from "@/components/attendence/attendance-reports";
-import { FeeManagement } from "@/components/fee-management";
+import { FeeManagement } from "@/components/fee/fee-management";
 import { KitManagement } from "@/components/kit-management";
 import { MarksComparison } from "@/components/marks-comparison";
 import toast from "react-hot-toast";
