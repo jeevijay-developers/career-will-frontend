@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CreditCard, Search, ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+import { CreditCard, Search, ChevronLeft, ChevronRight, MoreHorizontal, Loader2, X } from "lucide-react";
 import { FeeRecord } from "./fee-types";
 import { getStatusBadge, getStatusIcon, calculateFeeStatus } from "./fee-status-utils";
 import {
@@ -22,6 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getFeeByRollNumber } from "../../server/server";
+import toast from "react-hot-toast";
 
 // Helper function to convert backend status to frontend status
 const convertBackendStatus = (backendStatus: "PAID" | "UNPAID" | "PARTIAL"): "paid" | "partial" | "pending" => {
@@ -51,28 +53,92 @@ export function FeeRecordsTable({
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(10);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResult, setSearchResult] = useState<FeeRecord | null>(null);
+  const [isSearchMode, setIsSearchMode] = useState(false);
 
-  // Filter records based on search term
-  const filteredRecords = useMemo(() => {
-    if (!searchTerm) return feeRecords;
-    
-    return feeRecords.filter((record) =>
-      record.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.studentRollNo.toString().includes(searchTerm) ||
-      record.approvedBy?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [feeRecords, searchTerm]);
+  // Use search result or original records based on search mode
+  const displayRecords = isSearchMode && searchResult ? [searchResult] : feeRecords;
 
-  // Calculate pagination
-  const totalPages = Math.ceil(filteredRecords.length / recordsPerPage);
+  // Calculate pagination for display records
+  const totalPages = Math.ceil(displayRecords.length / recordsPerPage);
   const startIndex = (currentPage - 1) * recordsPerPage;
   const endIndex = startIndex + recordsPerPage;
-  const currentRecords = filteredRecords.slice(startIndex, endIndex);
+  const currentRecords = displayRecords.slice(startIndex, endIndex);
 
-  // Reset to first page when search changes
-  const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
+  // Search function to call backend API
+  const handleSearch = useCallback(async () => {
+    if (!searchTerm.trim()) {
+      handleClearSearch();
+      return;
+    }
+
+    // Check if search term is a valid roll number (numeric)
+    const rollNumber = parseInt(searchTerm.trim());
+    if (isNaN(rollNumber)) {
+      toast.error("Please enter a valid roll number");
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const result = await getFeeByRollNumber(rollNumber);
+      console.log("Search result from backend:", result);
+      
+      // Handle different response formats from backend
+      let feeRecord = null;
+      if (Array.isArray(result) && result.length > 0) {
+        // Backend returns an array with records
+        feeRecord = result[0];
+        console.log("Using first record from array:", feeRecord);
+      } else if (result && typeof result === 'object' && result._id) {
+        // Backend returns a single record object
+        feeRecord = result;
+        console.log("Using single record object:", feeRecord);
+      }
+      
+      if (feeRecord) {
+        setSearchResult(feeRecord);
+        setIsSearchMode(true);
+        setCurrentPage(1);
+        toast.success(`Found fee record for roll number ${rollNumber}`);
+      } else {
+        setSearchResult(null);
+        setIsSearchMode(false);
+        toast.error(`No fee record found for roll number ${rollNumber}`);
+      }
+    } catch (error) {
+      console.error("Search error:", error);
+      setSearchResult(null);
+      setIsSearchMode(false);
+      toast.error("Error searching for fee record");
+    } finally {
+      setIsSearching(false);
+    }
+  }, [searchTerm]);
+
+  // Clear search and return to all records
+  const handleClearSearch = useCallback(() => {
+    setSearchTerm("");
+    setSearchResult(null);
+    setIsSearchMode(false);
     setCurrentPage(1);
+  }, []);
+
+  // Handle search input changes
+  const handleSearchInputChange = (value: string) => {
+    setSearchTerm(value);
+    // If user clears the input, automatically clear search
+    if (!value.trim()) {
+      handleClearSearch();
+    }
+  };
+
+  // Handle Enter key press for search
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
   };
 
   const handlePageChange = (page: number) => {
@@ -83,6 +149,9 @@ export function FeeRecordsTable({
     setRecordsPerPage(parseInt(value));
     setCurrentPage(1);
   };
+
+  // Only show pagination controls when not in search mode or when search has results
+  const shouldShowPagination = totalPages > 1 && (!isSearchMode || (isSearchMode && searchResult));
   return (
     <Card>
       <CardHeader>
@@ -94,7 +163,11 @@ export function FeeRecordsTable({
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">Show:</span>
-              <Select value={recordsPerPage.toString()} onValueChange={handleRecordsPerPageChange}>
+              <Select 
+                value={recordsPerPage.toString()} 
+                onValueChange={handleRecordsPerPageChange}
+                disabled={isSearchMode}
+              >
                 <SelectTrigger className="w-[70px]">
                   <SelectValue />
                 </SelectTrigger>
@@ -109,19 +182,45 @@ export function FeeRecordsTable({
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by name, roll number..."
+                placeholder="Search by roll number..."
                 value={searchTerm}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                className="pl-8 w-[250px] md:w-[300px]"
+                onChange={(e) => handleSearchInputChange(e.target.value)}
+                onKeyPress={handleKeyPress}
+                className="pl-8 pr-20 w-[250px] md:w-[300px]"
+                disabled={isSearching}
               />
+              <div className="absolute right-2 top-2 flex items-center gap-1">
+                {isSearching && <Loader2 className="h-4 w-4 animate-spin" />}
+                {isSearchMode && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleClearSearch}
+                    className="h-6 w-6 p-0"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSearch}
+                  disabled={isSearching || !searchTerm.trim()}
+                  className="h-6 w-6 p-0"
+                >
+                  <Search className="h-3 w-3" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
         {/* Search results info */}
         <div className="text-sm text-muted-foreground">
-          {filteredRecords.length === feeRecords.length 
-            ? `Showing ${feeRecords.length} records`
-            : `Showing ${filteredRecords.length} of ${feeRecords.length} records`
+          {isSearchMode 
+            ? searchResult 
+              ? `Found 1 record for roll number ${searchTerm}`
+              : "No records found"
+            : `Showing ${feeRecords.length} records`
           }
         </div>
       </CardHeader>
@@ -143,7 +242,10 @@ export function FeeRecordsTable({
               {currentRecords.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    {searchTerm ? `No records found for "${searchTerm}"` : "No fee records found"}
+                    {isSearchMode 
+                      ? `No fee record found for roll number "${searchTerm}"`
+                      : "No fee records found"
+                    }
                   </TableCell>
                 </TableRow>
               ) : (
@@ -164,7 +266,7 @@ export function FeeRecordsTable({
                         </span>
                       )}
                     </TableCell>
-                    <TableCell>{record.studentName}</TableCell>
+                    <TableCell>{record.studentName || `Student ${record.studentRollNo}`}</TableCell>
                     <TableCell>₹{record.finalFees}</TableCell>
                     <TableCell>₹{record.paidAmount}</TableCell>
                     <TableCell>₹{remainingAmount}</TableCell>
@@ -215,13 +317,13 @@ export function FeeRecordsTable({
         </div>
         
         {/* Pagination Controls */}
-        {totalPages > 1 && (
+        {shouldShowPagination && (
           <div className="flex items-center justify-between px-6 py-4 border-t">
             <div className="text-sm text-muted-foreground">
               Page {currentPage} of {totalPages} 
-              {filteredRecords.length > 0 && (
+              {displayRecords.length > 0 && (
                 <span className="ml-2">
-                  ({startIndex + 1}-{Math.min(endIndex, filteredRecords.length)} of {filteredRecords.length})
+                  ({startIndex + 1}-{Math.min(endIndex, displayRecords.length)} of {displayRecords.length})
                 </span>
               )}
             </div>

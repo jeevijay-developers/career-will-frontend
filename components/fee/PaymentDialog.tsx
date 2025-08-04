@@ -83,7 +83,7 @@ export function PaymentDialog({
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="text-blue-600">Name:</span>
-                <p className="font-medium text-blue-900">{selectedStudent.studentName}</p>
+                <p className="font-medium text-blue-900">{selectedStudent.studentName || `Student ${selectedStudent.studentRollNo}`}</p>
               </div>
               <div>
                 <span className="text-blue-600">Roll Number:</span>

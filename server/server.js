@@ -336,3 +336,18 @@ export const checkRollNumberExists = async (rollNo) => {
     throw new Error("Error fetching fee by ID");
   }
 };
+
+export const getFeeByRollNumber = async (rollNo) => {
+  try {
+    const response = await apiClient.get(
+      `/api/fee/get-fee-by-roll-number/${rollNo}`
+    );
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.status === 404) {
+      return null;
+    }
+    console.error("Error fetching fee by roll number:", error);
+    throw new Error("Error fetching fee by roll number");
+  }
+}

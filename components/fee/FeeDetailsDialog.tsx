@@ -48,7 +48,7 @@ export function FeeDetailsDialog({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Fee Details - {selectedStudent.studentName}</DialogTitle>
+          <DialogTitle>Fee Details - {selectedStudent.studentName || `Student ${selectedStudent.studentRollNo}`}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
@@ -61,7 +61,7 @@ export function FeeDetailsDialog({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <span className="text-sm font-medium text-gray-600">Student Name:</span>
-                  <p className="font-semibold">{selectedStudent.studentName}</p>
+                  <p className="font-semibold">{selectedStudent.studentName || `Student ${selectedStudent.studentRollNo}`}</p>
                 </div>
                 <div>
                   <span className="text-sm font-medium text-gray-600">Roll Number:</span>

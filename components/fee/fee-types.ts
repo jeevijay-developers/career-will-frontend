@@ -1,7 +1,7 @@
 export interface FeeRecord {
   _id: string;
   studentRollNo: number;
-  studentName: string;
+  studentName?: string; // Optional since backend might not always include it
   totalFees: number;
   discount: number;
   finalFees: number;
