@@ -118,9 +118,16 @@ const TestReportBulkUpload: React.FC<Props> = ({ onUploadSuccess }) => {
         toast.success(
           `Successfully uploaded ${response.successCount} test reports`
         );
+        // Reset everything after successful upload
+        setSelectedFile(null);
+        setTestDetails({ name: "", date: "" });
+        setUploadResult(null);
+        setIsUploading(false);
+        setIsOpen(false); // Close the dialog on successful upload
         if (onUploadSuccess) {
           onUploadSuccess();
         }
+        return; // Don't show error toast if success
       }
 
       if (response.errorCount > 0) {
@@ -143,6 +150,7 @@ const TestReportBulkUpload: React.FC<Props> = ({ onUploadSuccess }) => {
 
   const resetForm = () => {
     setSelectedFile(null);
+    setTestDetails({ name: "", date: "" });
     setUploadResult(null);
     setIsUploading(false);
   };
@@ -178,85 +186,58 @@ const TestReportBulkUpload: React.FC<Props> = ({ onUploadSuccess }) => {
               Upload Excel (.xls, .xlsx) or CSV file with test report records.
             </p>
             <p className="mt-2">
-              File should contain columns htmlFor: Roll Number, Test Name, Test
-              Date, Physics Marks, Chemistry Marks, and Mathematics Marks.
+              File should contain columns for: Roll Number, Test Name, Test Date, Physics Marks, Chemistry Marks, and Mathematics Marks. All fields marked as required must be filled.
             </p>
-            <div className="mt-3">
-              <a
-                href="#"
-                className="text-blue-600 hover:text-blue-800 underline flex items-center"
-                onClick={(e) => {
-                  e.preventDefault();
-                  // You would implement this to provide a template download
-                  toast.success(
-                    "Template download functionality will be implemented soon"
-                  );
-                }}
-              >
-                <FileSpreadsheet className="h-4 w-4 mr-1" />
-                Download Sample Template
-              </a>
-            </div>
           </div>
-          {/* Date and name */}
-          <div className="flex flex-col gap-4 max-w-sm mx-auto mt-6">
-            {/* <!-- Date Input --> */}
-            <div>
-              <label
-                htmlFor="receiptDate"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Date of Receipt
-              </label>
-              <input
-                type="date"
-                id="receiptDate"
-                name="receiptDate"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                onChange={(e) =>
-                  setTestDetails({
-                    ...testDetails,
-                    date: e.target.value,
-                  })
-                }
-              />
-            </div>
 
-            {/* <!-- Text Input --> */}
-            <div>
-              <label
-                htmlFor="receiptNumber"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Test Name
-              </label>
-              <input
+          {/* Test Details Section */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="testName" className="text-base font-medium">Test Name</Label>
+              <Input
+                id="testName"
                 type="text"
-                id="receiptNumber"
-                name="receiptNumber"
-                placeholder="Enter receipt number"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Enter test name"
+                value={testDetails.name}
                 onChange={(e) =>
                   setTestDetails({
                     ...testDetails,
                     name: e.target.value,
                   })
                 }
+                className="w-full"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="testDate" className="text-base font-medium">Test Date</Label>
+              <Input
+                id="testDate"
+                type="date"
+                value={testDetails.date}
+                onChange={(e) =>
+                  setTestDetails({
+                    ...testDetails,
+                    date: e.target.value,
+                  })
+                }
+                className="w-full"
+                required
               />
             </div>
           </div>
 
           {/* File Upload Section */}
-          <div className="space-y-4">
+          <div className="flex flex-row gap-4 items-center">
             <Label htmlFor="file-upload" className="text-base font-medium">
               Select Excel File
             </Label>
             <div className="flex items-center gap-4">
               <label
                 htmlFor="file-upload"
-                className="cursor-pointer px-4 py-2 bg-blue-600 text-white rounded flex items-center hover:bg-blue-700"
+                className="cursor-pointer px-4 py-2 bg-blue-600 text-sm text-white rounded flex items-center hover:bg-blue-700"
               >
-                <Upload className="h-4 w-4 mr-2" />
+                <Upload className="h-3 w-3 mr-2" />
                 {selectedFile ? "Change File" : "Choose File"}
               </label>
               <Input
@@ -301,30 +282,22 @@ const TestReportBulkUpload: React.FC<Props> = ({ onUploadSuccess }) => {
                   <p
                     className={
                       uploadResult.success
-                        ? "text-green-800 font-medium"
-                        : "text-red-800 font-medium"
+                        ? "text-green-800"
+                        : "text-red-800"
                     }
                   >
                     {uploadResult.message}
                   </p>
-                  {uploadResult.success &&
-                    uploadResult.successCount &&
-                    uploadResult.successCount > 0 && (
-                      <p className="text-sm text-gray-600">
-                        The test reports have been successfully processed and
-                        added to the database.
-                      </p>
-                    )}
                   {uploadResult.successCount !== undefined && (
                     <p className="text-sm text-green-700">
                       ✓ Successfully uploaded: {uploadResult.successCount}{" "}
-                      records
+                      test reports
                     </p>
                   )}
                   {uploadResult.errorCount !== undefined &&
                     uploadResult.errorCount > 0 && (
                       <p className="text-sm text-red-700">
-                        ✗ Failed to upload: {uploadResult.errorCount} records
+                        ✗ Failed to upload: {uploadResult.errorCount} test reports
                       </p>
                     )}
                   {uploadResult.errors && uploadResult.errors.length > 0 && (
@@ -350,31 +323,33 @@ const TestReportBulkUpload: React.FC<Props> = ({ onUploadSuccess }) => {
           )}
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-3">
-            <Button
-              variant="outline"
-              onClick={handleClose}
-              disabled={isUploading}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleUpload}
-              disabled={!selectedFile || isUploading}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              {isUploading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-                  Uploading...
-                </>
-              ) : (
-                <>
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload Test Reports
-                </>
-              )}
-            </Button>
+          <div className="flex justify-end items-center">
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={handleClose}
+                disabled={isUploading}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleUpload}
+                disabled={!selectedFile || isUploading}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {isUploading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload Test Reports
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>

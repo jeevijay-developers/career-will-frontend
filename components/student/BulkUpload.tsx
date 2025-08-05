@@ -192,6 +192,17 @@ const BulkUploadButton: React.FC<Props> = ({ viewModal, setModal, onUploadSucces
     }
   };
 
+  const resetForm = () => {
+    setSelectedFile(null);
+    setUploadResult(null);
+    setIsUploading(false);
+  };
+
+  const handleClose = () => {
+    setModal(false);
+    resetForm();
+  };
+
   const handleDownloadTemplate = () => {
     // Create a sample template CSV content with updated schema fields
     const csvContent = `name,rollNo,class,previousSchoolName,medium,DOB,gender,category,state,city,pinCode,permanentAddress,mobileNumber,tShirtSize,howDidYouHearAboutUs,programmeName,emergencyContact,email,parent.occupation,parent.fatherName,parent.motherName,parent.parentContact,parent.email,batch,phone,kit
@@ -209,12 +220,6 @@ Jane Smith,12346,12th,XYZ School,English,2001-02-02,FEMALE,OBC,Delhi,New Delhi,1
     window.URL.revokeObjectURL(url);
     
     toast.success("Template downloaded successfully");
-  };
-
-  const resetForm = () => {
-    setSelectedFile(null);
-    setUploadResult(null);
-    setIsUploading(false);
   };
 
   return (
@@ -238,20 +243,21 @@ Jane Smith,12346,12th,XYZ School,English,2001-02-02,FEMALE,OBC,Delhi,New Delhi,1
         </DialogHeader>
         
         <div className="space-y-6">
+          <div className="text-sm text-gray-600">
+            <p className="mt-1">
+              Upload Excel (.xls, .xlsx) or CSV file with student records.
+            </p>
+            <p className="mt-2">
+              File should contain columns for: name, rollNo, class, mobileNumber, emergencyContact, parent.parentContact, and phone. All fields marked as required must be filled.
+            </p>
+          </div>
 
           {/* File Upload Section */}
           <div className="space-y-4">
             <Label htmlFor="file-upload" className="text-base font-medium">
               Select Excel File
             </Label>
-            <p className="text-sm text-gray-600 mb-2">
-              Upload a CSV or Excel file with student data. Required fields: name, rollNo, class, mobileNumber, emergencyContact, parent.parentContact, and phone.
-            </p>
-            <div className="flex flex-wrap items-center gap-4">
-              <Button variant="outline" onClick={handleDownloadTemplate} className="text-sm border-dashed">
-                <FileSpreadsheet className="h-4 w-4 mr-2" />
-                Download Template
-              </Button>
+            <div className="flex items-center gap-4">
               <label
                 htmlFor="file-upload"
                 className="cursor-pointer px-4 py-2 bg-blue-600 text-white rounded flex items-center hover:bg-blue-700"
@@ -284,37 +290,64 @@ Jane Smith,12346,12th,XYZ School,English,2001-02-02,FEMALE,OBC,Delhi,New Delhi,1
 
           {/* Upload Results */}
           {uploadResult && (
-            <Alert className={uploadResult.success ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}>
-              <AlertCircle className={`h-4 w-4 ${uploadResult.success ? "text-green-600" : "text-red-600"}`} />
+            <Alert
+              className={
+                uploadResult.success
+                  ? "border-green-200 bg-green-50"
+                  : "border-red-200 bg-red-50"
+              }
+            >
+              <AlertCircle
+                className={`h-4 w-4 ${
+                  uploadResult.success ? "text-green-600" : "text-red-600"
+                }`}
+              />
               <AlertDescription>
                 <div className="space-y-2">
-                  <p className={uploadResult.success ? "text-green-800" : "text-red-800"}>
+                  <p
+                    className={
+                      uploadResult.success
+                        ? "text-green-800 font-medium"
+                        : "text-red-800 font-medium"
+                    }
+                  >
                     {uploadResult.message}
                   </p>
+                  {uploadResult.success &&
+                    uploadResult.successCount &&
+                    uploadResult.successCount > 0 && (
+                      <p className="text-sm text-gray-600">
+                        The students have been successfully processed and
+                        added to the database.
+                      </p>
+                    )}
                   {uploadResult.successCount !== undefined && (
                     <p className="text-sm text-green-700">
-                      ✓ Successfully uploaded: {uploadResult.successCount} students
+                      ✓ Successfully uploaded: {uploadResult.successCount}{" "}
+                      students
                     </p>
                   )}
-                  {uploadResult.errorCount !== undefined && uploadResult.errorCount > 0 && (
-                    <p className="text-sm text-red-700">
-                      ✗ Failed to upload: {uploadResult.errorCount} students
-                    </p>
-                  )}
+                  {uploadResult.errorCount !== undefined &&
+                    uploadResult.errorCount > 0 && (
+                      <p className="text-sm text-red-700">
+                        ✗ Failed to upload: {uploadResult.errorCount} students
+                      </p>
+                    )}
                   {uploadResult.errors && uploadResult.errors.length > 0 && (
                     <div className="mt-2">
-                      <p className="text-sm font-medium text-red-700">Errors:</p>
+                      <p className="text-sm font-medium text-red-700">
+                        Errors:
+                      </p>
                       <ul className="text-sm text-red-600 list-disc list-inside space-y-1">
                         {uploadResult.errors.slice(0, 5).map((error, index) => (
                           <li key={index}>{error}</li>
                         ))}
                         {uploadResult.errors.length > 5 && (
-                          <li>... and {uploadResult.errors.length - 5} more errors</li>
+                          <li>
+                            ... and {uploadResult.errors.length - 5} more errors
+                          </li>
                         )}
                       </ul>
-                      <p className="text-xs text-gray-600 mt-2 italic">
-                        Make sure all required fields are properly filled: name, rollNo, class, mobileNumber, emergencyContact, parent.parentContact, and phone.
-                      </p>
                     </div>
                   )}
                 </div>
@@ -324,20 +357,17 @@ Jane Smith,12346,12th,XYZ School,English,2001-02-02,FEMALE,OBC,Delhi,New Delhi,1
 
           {/* Action Buttons */}
           <div className="flex justify-end gap-3">
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setModal(false);
-                resetForm();
-              }}
+            <Button
+              variant="outline"
+              onClick={handleClose}
               disabled={isUploading}
             >
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={handleUpload}
               disabled={!selectedFile || isUploading}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-blue-600 hover:bg-blue-700"
             >
               {isUploading ? (
                 <>
