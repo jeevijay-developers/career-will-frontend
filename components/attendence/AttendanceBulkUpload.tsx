@@ -17,6 +17,8 @@ type Props = {
 const AttendanceBulkUpload: React.FC<Props> = ({ onUploadSuccess }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const today = new Date().toISOString().slice(0, 10);
+  const [attendanceDate, setAttendanceDate] = useState<string>(today);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<{
     success: boolean;
@@ -56,11 +58,17 @@ const AttendanceBulkUpload: React.FC<Props> = ({ onUploadSuccess }) => {
     setUploadResult(null);
 
     try {
+      if (!attendanceDate) {
+        toast.error("Please select a date for attendance");
+        setIsUploading(false);
+        return;
+      }
       const formData = new FormData();
-      formData.append("file", selectedFile);
+      formData.append("attendenceFile", selectedFile);
+      formData.append("date", attendanceDate);
 
       const response = await bulkUploadAttendance(formData);
-      
+
       setUploadResult({
         success: true,
         message: response.message || "Attendance uploaded successfully",
@@ -71,9 +79,16 @@ const AttendanceBulkUpload: React.FC<Props> = ({ onUploadSuccess }) => {
 
       if (response.successCount > 0) {
         toast.success(`Successfully uploaded ${response.successCount} attendance records`);
+        // Reset everything after successful upload
+        setSelectedFile(null);
+        setAttendanceDate(today); // Reset to today's date instead of empty string
+        setUploadResult(null);
+        setIsUploading(false);
         if (onUploadSuccess) {
           onUploadSuccess();
         }
+        setIsOpen(false); // Close the dialog on successful upload
+        return; // Don't show error toast if success
       }
 
       if (response.errorCount > 0) {
@@ -95,6 +110,7 @@ const AttendanceBulkUpload: React.FC<Props> = ({ onUploadSuccess }) => {
 
   const resetForm = () => {
     setSelectedFile(null);
+    setAttendanceDate(today);
     setUploadResult(null);
     setIsUploading(false);
   };
@@ -127,6 +143,19 @@ const AttendanceBulkUpload: React.FC<Props> = ({ onUploadSuccess }) => {
         <div className="space-y-6">
           <div className="text-sm text-gray-600">
             <p className="mt-1">Upload Excel (.xls, .xlsx) or CSV file with attendance records.</p>
+          </div>
+
+          {/* Date Picker Section */}
+          <div className="space-y-2">
+            <Label htmlFor="attendance-date" className="text-base font-medium">Attendance Date</Label>
+            <Input
+              id="attendance-date"
+              type="date"
+              value={attendanceDate}
+              onChange={e => setAttendanceDate(e.target.value)}
+              className="w-[200px]"
+              required
+            />
           </div>
 
           {/* File Upload Section */}

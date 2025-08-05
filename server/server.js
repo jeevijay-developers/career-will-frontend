@@ -209,7 +209,7 @@ export const getAllTestScores = async () => {
 export const bulkUploadAttendance = async (formData) => {
   try {
     const response = await apiClient.post(
-      "/api/attendance/bulk-upload",
+      "/api/bulk/upload-bulk-attendence",
       formData,
       {
         headers: {
@@ -349,5 +349,16 @@ export const getFeeByRollNumber = async (rollNo) => {
     }
     console.error("Error fetching fee by roll number:", error);
     throw new Error("Error fetching fee by roll number");
+  }
+}
+
+// Attendance APIs
+export const getAttendanceByDate = async (date) => {
+  try {
+    const response = await apiClient.get(`/api/student/get-attendence-by-date?date=${date}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching attendance by date:", error);
+    throw new Error("Error fetching attendance by date");
   }
 }
