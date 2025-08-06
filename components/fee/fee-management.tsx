@@ -26,7 +26,7 @@ export function FeeManagement() {
       try {
         const response = await getAllFees();
         console.log("Fetched fee records:", response);
-        setFeeRecords(response);
+        setFeeRecords(response.data);
       } catch (error) {
         console.error("Error fetching fee records:", error);
         toast.error("Failed to fetch fee records");
@@ -64,7 +64,7 @@ export function FeeManagement() {
 
       // Refresh the data from server
       const updatedRecords = await getAllFees();
-      setFeeRecords(updatedRecords);
+      setFeeRecords(updatedRecords.data);
 
       setIsAddDialogOpen(false);
       toast.success("Fee record created successfully!");

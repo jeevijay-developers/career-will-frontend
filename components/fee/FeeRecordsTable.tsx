@@ -54,12 +54,14 @@ export function FeeRecordsTable({
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(10);
   const [isSearching, setIsSearching] = useState(false);
-  const [searchResult, setSearchResult] = useState<FeeRecord | null>(null);
+  const [searchResult, setSearchResult] = useState<any | null>(null);
   const [isSearchMode, setIsSearchMode] = useState(false);
 
   // Use search result or original records based on search mode
   const displayRecords = isSearchMode && searchResult ? [searchResult] : feeRecords;
 
+  console.log("Display records:", displayRecords);
+  
   // Calculate pagination for display records
   const totalPages = Math.ceil(displayRecords.length / recordsPerPage);
   const startIndex = (currentPage - 1) * recordsPerPage;

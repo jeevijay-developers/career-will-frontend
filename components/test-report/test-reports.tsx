@@ -69,9 +69,12 @@ export function TestReports() {
     try {
       const data = await getAllTestScores();
       console.log("Fetched test scores:", data);
-      
+      if(data.data === null || data.data.length === 0) {
+        setTestReports([]);
+        return;
+      }
       // Transform data to match our UI format
-      const formattedData = data.map((score: TestReport) => {
+      const formattedData = data.data.map((score: TestReport) => {
         // Extract subject marks for easy display
         const physicsSubject = score.subjects.find(s => s.name === 'physics');
         const chemistrySubject = score.subjects.find(s => s.name === 'chemistry');
