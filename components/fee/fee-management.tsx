@@ -94,7 +94,7 @@ export function FeeManagement() {
       
       // Refresh the data from server
       const updatedRecords = await getAllFees();
-      setFeeRecords(updatedRecords);
+      setFeeRecords(updatedRecords.data);
       
       toast.success("Payment installment added successfully!");
     } catch (error) {
