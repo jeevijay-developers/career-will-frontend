@@ -1,30 +1,37 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Edit, Trash2 } from "lucide-react"
-import { confirmAlert } from 'react-confirm-alert';
-import 'react-confirm-alert/src/react-confirm-alert.css';
-import { EditStudentForm } from "./EditStudentForm"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Search, Edit, Trash2 } from "lucide-react";
+import { confirmAlert } from "react-confirm-alert";
+import "react-confirm-alert/src/react-confirm-alert.css";
+import { EditStudentForm } from "./EditStudentForm";
 
 interface Student {
-  id: string
-  studentId: number
-  name: string
-  rollNo: string
-  class: string
-  kit: string[]
+  id: string;
+  studentId: number;
+  name: string;
+  rollNo: string;
+  class: string;
+  kit: string[];
   parent: {
-    id: string
-    username: string
-    name: string
-    email: string
-    phone: string
-  }
-  joinDate: string
+    id: string;
+    username: string;
+    name: string;
+    email: string;
+    phone: string;
+  };
+  joinDate: string;
 }
 
 interface Kit {
@@ -60,17 +67,19 @@ export function StudentList({
   batchNames,
   kits,
   batches,
-  onStudentUpdated
+  onStudentUpdated,
 }: StudentListProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
   // Sort students in ascending order by name before filtering
   const sortedStudents = [...students].sort((a, b) => {
-    const nameA = (a.name || '').toLowerCase();
-    const nameB = (b.name || '').toLowerCase();
+    const nameA = (a.name || "").toLowerCase();
+    const nameB = (b.name || "").toLowerCase();
     return nameA.localeCompare(nameB);
   });
+
+  console.log(students);
 
   const lowerSearch = searchTerm.toLowerCase();
 
@@ -83,36 +92,36 @@ export function StudentList({
     const searchableFields = [
       student.name,
       student.rollNo?.toString(),
-      student.parent?.name,
+      student.parent?.fatherName,
       student.parent?.email,
-      student.parent?.phone,
+      student.parent?.parentContact,
       student.class,
       batchName,
     ];
 
-    return searchableFields.some(
-      (field) => field?.toLowerCase().includes(lowerSearch)
+    return searchableFields.some((field) =>
+      field?.toLowerCase().includes(lowerSearch)
     );
   });
 
   const handleDelete = () => {
     confirmAlert({
-      title: 'Confirm Delete',
-      message: 'Are you sure you want to delete this item?',
+      title: "Confirm Delete",
+      message: "Are you sure you want to delete this item?",
       buttons: [
         {
-          label: 'Yes',
+          label: "Yes",
           onClick: () => {
-            alert('Item deleted!');
-          }
+            alert("Item deleted!");
+          },
         },
         {
-          label: 'No',
+          label: "No",
           onClick: () => {
-            console.log('Deletion cancelled');
-          }
-        }
-      ]
+            console.log("Deletion cancelled");
+          },
+        },
+      ],
     });
   };
 
@@ -151,8 +160,8 @@ export function StudentList({
                 <TableHead>Roll No.</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Class</TableHead>
-                <TableHead>Parent Name</TableHead>
-                <TableHead>Parent Email</TableHead>
+                <TableHead>Father Name</TableHead>
+                {/* <TableHead>Parent Email</TableHead> */}
                 <TableHead>Parent Phone</TableHead>
                 <TableHead>Kits</TableHead>
                 <TableHead>Actions</TableHead>
@@ -160,50 +169,70 @@ export function StudentList({
             </TableHeader>
             <TableBody>
               {filteredStudents.length > 0 ? (
-                filteredStudents.map((student, i) => (
-                  <TableRow key={student.id || i}>
-                    <TableCell className="font-medium">{(currentPage - 1) * pageSize + i + 1}</TableCell>
-                    <TableCell className="font-medium">{student.rollNo ?? "-"}</TableCell>
-                    <TableCell>{student.name}</TableCell>
-                    <TableCell>
-                      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                        {typeof student.class === "string" && student.class
-                          ? student.class
-                          : (student as any).batch && batchNames[(student as any).batch]
+                filteredStudents.map((student: any, i) => {
+                  console.log(student);
+
+                  return (
+                    <TableRow key={student.id || i}>
+                      <TableCell className="font-medium">
+                        {(currentPage - 1) * pageSize + i + 1}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {student.rollNo ?? "-"}
+                      </TableCell>
+                      <TableCell>{student.name}</TableCell>
+                      <TableCell>
+                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                          {typeof student.class === "string" && student.class
+                            ? student.class
+                            : (student as any).batch &&
+                              batchNames[(student as any).batch]
                             ? batchNames[(student as any).batch]
                             : "No batch allotted"}
-                      </span>
-                    </TableCell>
-                    <TableCell>{student.parent?.name ?? student.parent?.username ?? "-"}</TableCell>
-                    <TableCell>{student.parent?.email ?? "-"}</TableCell>
-                    <TableCell>{student.parent?.phone ?? "-"}</TableCell>
-                    <TableCell>
-                      <span className="text-sm text-gray-700">{student.kit?.length ?? 0} / {(kits ?? []).length}</span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit(student)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-red-600 hover:text-red-700 bg-transparent"
-                          onClick={handleDelete}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        {student.parent?.fatherName ??
+                          student.parent?.fatherName ??
+                          "-"}
+                      </TableCell>
+                      {/* <TableCell>{student.parent?.email ?? "-"}</TableCell> */}
+                      <TableCell>
+                        {student.parent?.parentContact ?? "-"}
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-gray-700">
+                          {student.kit?.length ?? 0} / {(kits ?? []).length}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(student)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700 bg-transparent"
+                            onClick={handleDelete}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+                  <TableCell
+                    colSpan={9}
+                    className="text-center py-8 text-gray-500"
+                  >
                     No students found
                   </TableCell>
                 </TableRow>
@@ -220,12 +249,16 @@ export function StudentList({
             >
               Previous
             </Button>
-            <span className="text-sm">Page {currentPage} of {totalPages}</span>
+            <span className="text-sm">
+              Page {currentPage} of {totalPages}
+            </span>
             <Button
               variant="outline"
               size="sm"
               disabled={currentPage === totalPages}
-              onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+              onClick={() =>
+                onPageChange(Math.min(totalPages, currentPage + 1))
+              }
             >
               Next
             </Button>
@@ -243,5 +276,5 @@ export function StudentList({
         onStudentUpdated={onStudentUpdated}
       />
     </Card>
-  )
+  );
 }
