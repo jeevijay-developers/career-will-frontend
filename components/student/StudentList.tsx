@@ -140,6 +140,30 @@ export function StudentList({
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Students List</CardTitle>
+          {/* Pagination Controls */}
+          <div className="flex justify-end items-center gap-2 mt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage === 1}
+              onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+            >
+              Previous
+            </Button>
+            <span className="text-sm">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage === totalPages}
+              onClick={() =>
+                onPageChange(Math.min(totalPages, currentPage + 1))
+              }
+            >
+              Next
+            </Button>
+          </div>
           <div className="relative w-72">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
@@ -239,30 +263,6 @@ export function StudentList({
               )}
             </TableBody>
           </Table>
-          {/* Pagination Controls */}
-          <div className="flex justify-end items-center gap-2 mt-4">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={currentPage === 1}
-              onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-            >
-              Previous
-            </Button>
-            <span className="text-sm">
-              Page {currentPage} of {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={currentPage === totalPages}
-              onClick={() =>
-                onPageChange(Math.min(totalPages, currentPage + 1))
-              }
-            >
-              Next
-            </Button>
-          </div>
         </div>
       </CardContent>
 
