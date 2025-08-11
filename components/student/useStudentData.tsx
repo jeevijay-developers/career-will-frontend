@@ -9,7 +9,7 @@ export function useStudentData() {
   const [students, setStudents] = useState<Student[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [pageSize] = useState(5);
+  const [pageSize] = useState(50);
   const [kits, setKits] = useState<Kit[]>([]);
   const [batches, setBatches] = useState<Batch[]>([]);
   const [batchNames, setBatchNames] = useState<{[key: string]: string}>({});

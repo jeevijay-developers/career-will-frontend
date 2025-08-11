@@ -145,6 +145,22 @@ export const updateStudentKit = async (studentId, kitItems) => {
   }
 };
 
+export const updateStudentBatch = async(studentId, newBatchId) => {
+  try {
+    const response = await apiClient.put(
+      `/api/student/update-student-batch`,
+      { 
+        studentId: studentId,
+        newBatchId: newBatchId
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating student batch:", error);
+    throw new Error("Error updating student batch");
+  }
+}
+
 // Bulk upload APIs
 export const bulkUploadStudents = async (formData) => {
   try {

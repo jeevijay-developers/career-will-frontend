@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Checkbox } from "@/components/ui/checkbox"
 import { Eye, EyeOff } from "lucide-react"
 import toast from "react-hot-toast"
-import { updateStudent, uploadStudentImage, findParentByEmail } from "../../server/server.js"
+import { updateStudent, uploadStudentImage, findParentByEmail, updateStudentBatch } from "../../server/server.js"
 import Image from "next/image.js"
 
 interface Kit {
@@ -56,7 +56,8 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isCheckingEmail, setIsCheckingEmail] = useState(false);
-
+    
+    const user = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("user_data") || "{}") : {};
     const [errors, setErrors] = useState({
         name: "",
         phone: "",
@@ -86,7 +87,7 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
                 name: student.name || "",
                 phone: student.phone || "",
                 address: student.address || "",
-                batch: student.class || (student as any).batch || "",
+                batch: (student as any).batch || "",
                 parentUsername: student.parent?.username || "",
                 parentPassword: "", // Don't populate password for security
                 parentEmail: student.parent?.email || "",
@@ -146,23 +147,29 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
     const validateForm = () => {
         const newErrors: any = {};
 
-        // Student validation
-        if (!formData.name.trim()) newErrors.name = "Student name is required";
-        if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
-        if (!formData.address.trim()) newErrors.address = "Address is required";
-        if (!formData.batch.trim()) newErrors.batch = "Batch is required";
+        // For FRONTDESK users, batch is optional (can be "-" for no batch)
+        if (user.role === "FRONTDESK") {
+            // No validation needed for FRONTDESK users - batch can be empty or "-"
+        } else {
+            // For other roles (ADMIN, etc.), validate all fields
+            // Student validation
+            if (!formData.name.trim()) newErrors.name = "Student name is required";
+            if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
+            if (!formData.address.trim()) newErrors.address = "Address is required";
+            if (!formData.batch.trim()) newErrors.batch = "Batch is required";
 
-        // Parent validation
-        if (!formData.parentUsername.trim()) newErrors.parentUsername = "Username is required";
-        if (!formData.parentEmail.trim()) {
-            newErrors.parentEmail = "Email is required";
-        } else if (!/\S+@\S+\.\S+/.test(formData.parentEmail)) {
-            newErrors.parentEmail = "Email is invalid";
-        }
-        if (!formData.parentPhone.trim()) newErrors.parentPhone = "Parent phone number is required";
-        // Password is optional for edit (only validate if provided)
-        if (formData.parentPassword.trim() && formData.parentPassword.length < 6) {
-            newErrors.parentPassword = "Password must be at least 6 characters";
+            // Parent validation
+            if (!formData.parentUsername.trim()) newErrors.parentUsername = "Username is required";
+            if (!formData.parentEmail.trim()) {
+                newErrors.parentEmail = "Email is required";
+            } else if (!/\S+@\S+\.\S+/.test(formData.parentEmail)) {
+                newErrors.parentEmail = "Email is invalid";
+            }
+            if (!formData.parentPhone.trim()) newErrors.parentPhone = "Parent phone number is required";
+            // Password is optional for edit (only validate if provided)
+            if (formData.parentPassword.trim() && formData.parentPassword.length < 6) {
+                newErrors.parentPassword = "Password must be at least 6 characters";
+            }
         }
 
         setErrors(newErrors);
@@ -170,38 +177,62 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
     };
 
     const handleUpdateStudent = async () => {
-        if (!validateForm() || !student) return;
-
         setIsLoading(true);
+        if (!validateForm() || !student) {
+            setIsLoading(false);
+            return;
+        }
+
         const kitIds = selectedKits.map(k => k._id);
 
         // Find the selected batch ObjectId
         const selectedBatch = batches.find(batch => batch.name === formData.batch);
 
-        const updatedStudent = {
-            id: (student as any)._id || student.id,
-            name: formData.name,
-            batch: selectedBatch?._id || selectedBatch?.id,
-            phone: formData.phone,
-            image: uploadedImage ? uploadedImage : undefined,
-            parent: {
-                username: formData.parentUsername,
-                email: formData.parentEmail,
-                phone: formData.parentPhone,
-                ...(formData.parentPassword.trim() && { password: formData.parentPassword })
-            },
-            kit: kitIds,
-            address: formData.address,
-        }
-
         try {
-            console.log("Updating student:", updatedStudent);
-            await updateStudent(updatedStudent);
+            // If user is FRONTDESK, use updateStudentBatch for batch updates
+            if (user.role === "FRONTDESK") {
+                const studentId = (student as any)._id || student.id;
+                
+                // Handle the batch selection
+                let newBatchId = "-";
+                
+                if (formData.batch && formData.batch !== "-") {
+                    // Check if the selected batch exists in the batches array
+                    const selectedBatch = batches.find(batch => batch.name === formData.batch);
+                    if (selectedBatch) {
+                        newBatchId = selectedBatch.name;
+                    }
+                }
+                
+                console.log("Updating student batch:", { studentId, newBatchId });
+                await updateStudentBatch(studentId, newBatchId);
+                toast.success("Student batch updated successfully!");
+            } else {
+                // For other roles (ADMIN, etc.), use the full update method
+                const updatedStudent = {
+                    id: (student as any)._id || student.id,
+                    name: formData.name,
+                    batch: selectedBatch?._id || selectedBatch?.id,
+                    phone: formData.phone,
+                    image: uploadedImage ? uploadedImage : undefined,
+                    parent: {
+                        username: formData.parentUsername,
+                        email: formData.parentEmail,
+                        phone: formData.parentPhone,
+                        ...(formData.parentPassword.trim() && { password: formData.parentPassword })
+                    },
+                    kit: kitIds,
+                    address: formData.address,
+                }
+
+                console.log("Updating student:", updatedStudent);
+                await updateStudent(updatedStudent);
+                toast.success("Student updated successfully!");
+            }
 
             resetForm();
             onClose();
             onStudentUpdated();
-            toast.success("Student updated successfully!");
         } catch (error) {
             toast.error("Failed to update student. Please try again.");
         } finally {
@@ -260,13 +291,14 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
                     <div>
                         <h3 className="text-lg font-semibold mb-4 text-gray-800">Student Information</h3>
 
-                        {/* Profile Picture */}
-                        <div className="flex flex-col items-center mb-6">
+                        {/* Profile Picture - Only for admin */}
+                        {user.role === "ADMIN" && (
+                          <div className="flex flex-col items-center mb-6">
                             <div className="relative">
                                 <div className="w-24 h-24 rounded-full border-2 border-gray-300 bg-gray-100 flex items-center justify-center overflow-hidden">
                                     {selectedImage ? (
                                         <Image
-                                            src={typeof selectedImage === 'string' ? selectedImage : (selectedImage?.url || "")}
+                                            src={typeof selectedImage === 'string' ? selectedImage : (selectedImage?.url || "/placeholder-user.jpg")}
                                             alt="Student Profile"
                                             width={96}
                                             height={96}
@@ -321,8 +353,11 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
                             />
                             <p className="text-sm text-gray-500 mt-2">Profile Picture</p>
                         </div>
+                        )}
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {/* Student Name - Only for admin */}
+                          {user.role === "ADMIN" && (
                             <div className="space-y-2">
                                 <Label htmlFor="name">Student Name</Label>
                                 <Input
@@ -334,6 +369,9 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
                                 />
                                 {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
                             </div>
+                          )}
+                          {/* Phone - Only for admin */}
+                          {user.role === "ADMIN" && (
                             <div className="space-y-2">
                                 <Label htmlFor="phone">Phone Number</Label>
                                 <Input
@@ -345,20 +383,25 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
                                 />
                                 {errors.phone && <p className="text-red-500 text-sm">{errors.phone}</p>}
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="batch">Batch</Label>
-                                <Select value={formData.batch} onValueChange={(value) => setFormData({ ...formData, batch: value })}>
-                                    <SelectTrigger className={errors.batch ? "border-red-500" : ""}>
-                                        <SelectValue placeholder="Select batch" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {(batches ?? []).map((batch) => (
-                                            <SelectItem key={batch._id || batch.id} value={batch.name}>{batch.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                {errors.batch && <p className="text-red-500 text-sm">{errors.batch}</p>}
-                            </div>
+                          )}
+                          {/* Batch - Always visible */}
+                          <div className="space-y-2">
+                            <Label htmlFor="batch">Batch</Label>
+                            <Select value={formData.batch} onValueChange={(value) => setFormData({ ...formData, batch: value })}>
+                                <SelectTrigger className={errors.batch ? "border-red-500" : ""}>
+                                    <SelectValue placeholder="Select batch" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="-">No Batch</SelectItem>
+                                    {(batches ?? []).map((batch) => (
+                                        <SelectItem key={batch._id || batch.id} value={batch.name}>{batch.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {errors.batch && <p className="text-red-500 text-sm">{errors.batch}</p>}
+                          </div>
+                          {/* Address - Only for admin */}
+                          {user.role === "ADMIN" && (
                             <div className="space-y-2">
                                 <Label htmlFor="address">Address</Label>
                                 <Input
@@ -370,11 +413,13 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
                                 />
                                 {errors.address && <p className="text-red-500 text-sm">{errors.address}</p>}
                             </div>
+                          )}
                         </div>
                     </div>
 
-                    {/* Kit Selection */}
-                    <div>
+                    {/* Kit Selection - Only for admin */}
+                    {user.role === "ADMIN" && (
+                      <div>
                         <h3 className="text-lg font-semibold mb-4 text-gray-800">Student Kits</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {(kits ?? []).map((kit) => (
@@ -396,10 +441,12 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
                                 </div>
                             ))}
                         </div>
-                    </div>
+                      </div>
+                    )}
 
-                    {/* Parent Information */}
-                    <div>
+                    {/* Parent Information - Only for admin */}
+                    {user.role === "ADMIN" && (
+                      <div>
                         <h3 className="text-lg font-semibold mb-4 text-gray-800">Parent Information</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
@@ -474,7 +521,8 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
                                 {errors.parentPassword && <p className="text-red-500 text-sm">{errors.parentPassword}</p>}
                             </div>
                         </div>
-                    </div>
+                      </div>
+                    )}
                 </div>
                 <div className="flex justify-end gap-2 mt-6">
                     <Button
