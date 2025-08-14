@@ -326,7 +326,7 @@ export function StudentList({
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <Table className="w-max table-auto">
+          <Table className="w-full table-auto">
             <TableHeader>
               <TableRow>
                 <TableHead className="min-w-[60px]">S No.</TableHead>

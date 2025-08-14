@@ -508,7 +508,7 @@ export function TestReports() {
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <Table className="w-max table-auto">
+            <Table className="w-full table-auto">
               <TableHeader>
                 <TableRow>
                   <TableHead className="min-w-[80px]">Roll No.</TableHead>
