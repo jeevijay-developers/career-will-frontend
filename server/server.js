@@ -161,6 +161,30 @@ export const updateStudentBatch = async(studentId, newBatchId) => {
   }
 }
 
+export const searchStudent = async (searchTerm) => {
+  try {
+    const response = await apiClient.get(
+      `/api/student/search-students?query=${searchTerm}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error searching student:", error);
+    throw new Error("Error searching student");
+  }
+};
+
+export const searchTestScore = async (searchTerm) => {
+  try {
+    const response = await apiClient.get(
+      `/api/test-score/search-test-scores?query=${searchTerm}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error searching test scores:", error);
+    throw new Error("Error searching test scores");
+  }
+};
+
 // Bulk upload APIs
 export const bulkUploadStudents = async (formData) => {
   try {
@@ -212,9 +236,10 @@ export async function bulkUploadTestReports(formData) {
   }
 }
 
-export const getAllTestScores = async () => {
+export const getAllTestScores = async (page, limit) => {
   try {
-    const response = await apiClient.get("/api/test-score/get-all-test-scores");
+    const response = await apiClient.get(`/api/test-score/get-all-test-scores?page=${page}&limit=${limit}`);
+    console.log("Fetched test scores:", response.data);
     return response.data;
   } catch (error) {
     console.error("Error fetching test scores:", error);

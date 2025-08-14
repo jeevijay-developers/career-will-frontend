@@ -40,7 +40,7 @@ export function StudentManagement() {
             Student Management
           </h1>
           <p className="text-gray-600">
-            Manage JEE students and their information
+            Manage NEET students and their information
           </p>
         </div>
 

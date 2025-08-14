@@ -231,9 +231,9 @@ export function AttendanceReports() {
                         <SelectValue placeholder="Select batch" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="JEE-2024-A">JEE-2024-A</SelectItem>
-                        <SelectItem value="JEE-2024-B">JEE-2024-B</SelectItem>
-                        <SelectItem value="JEE-2024-C">JEE-2024-C</SelectItem>
+                        <SelectItem value="NEET-2024-A">NEET-2024-A</SelectItem>
+                        <SelectItem value="NEET-2024-B">NEET-2024-B</SelectItem>
+                        <SelectItem value="NEET-2024-C">NEET-2024-C</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

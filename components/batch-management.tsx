@@ -271,7 +271,7 @@ export function BatchManagement() {
                   id="batchName"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g., JEE-2024-C"
+                  placeholder="e.g., NEET-2024-C"
                   className={errors.name ? "border-red-500" : ""}
                 />
                 {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
@@ -403,7 +403,7 @@ export function BatchManagement() {
                 id="edit-batchName"
                 value={editFormData.name}
                 onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                placeholder="e.g., JEE-2024-C"
+                placeholder="e.g., NEET-2024-C"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">

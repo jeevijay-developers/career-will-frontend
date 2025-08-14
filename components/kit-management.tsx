@@ -550,7 +550,7 @@ export function KitManagement() {
                   <div className="flex justify-between">
                     <div className="">
                       <div className="font-medium">{item.name}</div>
-                      <div className="text-sm text-gray-600 truncate w-full max-w-[200px] sm:max-w-[450px] ">
+                      <div className="text-sm text-gray-600 break-words w-full max-w-[250px] sm:max-w-[450px] line-clamp-2">
                         {item.description}
                       </div>
                     </div>

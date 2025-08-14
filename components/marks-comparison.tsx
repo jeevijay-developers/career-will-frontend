@@ -23,9 +23,9 @@ interface StudentMarks {
 const mockMarksData: StudentMarks[] = [
   {
     id: "1",
-    rollNumber: "JEE001",
+    rollNumber: "NEET001",
     studentName: "Rahul Sharma",
-    batch: "JEE-2024-A",
+    batch: "NEET-2024-A",
     physics: 85,
     chemistry: 78,
     mathematics: 92,
@@ -35,9 +35,9 @@ const mockMarksData: StudentMarks[] = [
   },
   {
     id: "2",
-    rollNumber: "JEE002",
+    rollNumber: "NEET002",
     studentName: "Priya Patel",
-    batch: "JEE-2024-B",
+    batch: "NEET-2024-B",
     physics: 90,
     chemistry: 88,
     mathematics: 85,
@@ -47,9 +47,9 @@ const mockMarksData: StudentMarks[] = [
   },
   {
     id: "3",
-    rollNumber: "JEE003",
+    rollNumber: "NEET003",
     studentName: "Amit Kumar",
-    batch: "JEE-2024-A",
+    batch: "NEET-2024-A",
     physics: 75,
     chemistry: 82,
     mathematics: 88,
@@ -59,9 +59,9 @@ const mockMarksData: StudentMarks[] = [
   },
   {
     id: "4",
-    rollNumber: "JEE004",
+    rollNumber: "NEET004",
     studentName: "Sneha Singh",
-    batch: "JEE-2024-B",
+    batch: "NEET-2024-B",
     physics: 88,
     chemistry: 75,
     mathematics: 80,
@@ -236,9 +236,9 @@ export function MarksComparison() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Batches</SelectItem>
-                  <SelectItem value="JEE-2024-A">JEE-2024-A</SelectItem>
-                  <SelectItem value="JEE-2024-B">JEE-2024-B</SelectItem>
-                  <SelectItem value="JEE-2024-C">JEE-2024-C</SelectItem>
+                  <SelectItem value="NEET-2024-A">NEET-2024-A</SelectItem>
+                  <SelectItem value="NEET-2024-B">NEET-2024-B</SelectItem>
+                  <SelectItem value="NEET-2024-C">NEET-2024-C</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={sortBy} onValueChange={setSortBy}>

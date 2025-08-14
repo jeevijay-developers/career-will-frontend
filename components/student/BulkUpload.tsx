@@ -206,7 +206,7 @@ const BulkUploadButton: React.FC<Props> = ({ viewModal, setModal, onUploadSucces
   const handleDownloadTemplate = () => {
     // Create a sample template CSV content with updated schema fields
     const csvContent = `name,rollNo,class,previousSchoolName,medium,DOB,gender,category,state,city,pinCode,permanentAddress,mobileNumber,tShirtSize,howDidYouHearAboutUs,programmeName,emergencyContact,email,parent.occupation,parent.fatherName,parent.motherName,parent.parentContact,parent.email,batch,phone,kit
-John Doe,12345,11th,ABC School,English,2000-01-01,MALE,GENERAL,Maharashtra,Mumbai,400001,123 Main St,9876543210,M,Online,JEE Program,9876543210,john@example.com,Doctor,Mr. Doe,Mrs. Doe,9988776655,parent@example.com,Batch A,9876543210,"Kit1,Kit2"
+John Doe,12345,11th,ABC School,English,2000-01-01,MALE,GENERAL,Maharashtra,Mumbai,400001,123 Main St,9876543210,M,Online,NEET Program,9876543210,john@example.com,Doctor,Mr. Doe,Mrs. Doe,9988776655,parent@example.com,Batch A,9876543210,"Kit1,Kit2"
 Jane Smith,12346,12th,XYZ School,English,2001-02-02,FEMALE,OBC,Delhi,New Delhi,110001,456 Oak Ave,8765432109,L,Friend,NEET Program,8765432109,jane@example.com,Engineer,Mr. Smith,Mrs. Smith,8877665544,parent2@example.com,Batch B,8765432109,"Kit1,Kit3"`;
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
