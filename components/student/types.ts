@@ -6,6 +6,7 @@ interface Student {
   class: string
   kit: string[]
   parent: Parent
+  batch: string
   joinDate: string
 }
 

@@ -8,7 +8,6 @@ import {
   CreditCard,
   Package,
   BarChart3,
-  GraduationCap,
   LogOut,
   User,
 } from "lucide-react";
@@ -25,16 +24,18 @@ interface SidebarProps {
 }
 
 const menuItems = [
-  { id: "students", label: "Students", icon: Users },
-  { id: "addStudent", label: "Add Student", icon: User },
-  { id: "batches", label: "Batches", icon: BookOpen },
-  { id: "tests", label: "Test Reports", icon: FileText },
-  { id: "attendance", label: "Attendance", icon: Calendar },
-  { id: "fees", label: "Fee Management", icon: CreditCard },
-  { id: "kits", label: "Kit Management", icon: Package },
-  { id: "marks", label: "Marks Comparison", icon: BarChart3 },
+  { id: "students", label: "Students", icon: Users, accessTo: ["ADMIN", "FRONTDESK", "ACCOUNTS", "STORE"] },
+  { id: "addStudent", label: "Add Student", icon: User, accessTo: ["ADMIN"] },
+  { id: "batches", label: "Batches", icon: BookOpen, accessTo: ["ADMIN"] },
+  { id: "tests", label: "Test Reports", icon: FileText, accessTo: ["ADMIN"] },
+  { id: "attendance", label: "Attendance", icon: Calendar, accessTo: ["ADMIN"] },
+  { id: "fees", label: "Fee Management", icon: CreditCard, accessTo: ["ADMIN", "ACCOUNTS"] },
+  { id: "kits", label: "Kit Management", icon: Package, accessTo: ["ADMIN", "STORE"] },
+  { id: "marks", label: "Marks Comparison", icon: BarChart3, accessTo: ["ADMIN"] },
   { id: "logout", label: "Logout", icon: LogOut },
 ];
+
+const user = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("user_data") || "{}") : {};
 
 export function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarProps) {
   const handleItemClick = (itemId: string) => {
@@ -73,24 +74,26 @@ export function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarProps) {
 
       <nav className="flex-1 p-4">
         <div className="space-y-2">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Button
-                key={item.id}
-                variant="ghost"
-                className={cn(
-                  "w-full justify-start gap-3 h-11",
-                  activeTab === item.id &&
-                    "bg-blue-50 text-blue-700 border-r-2 border-blue-600"
-                )}
-                onClick={() => handleItemClick(item.id)}
-              >
-                <Icon className="h-5 w-5" />
-                {item.label}
-              </Button>
-            );
-          })}
+          {menuItems
+            .filter(item => !item.accessTo || item.accessTo.includes(user.role))
+            .map((item) => {
+              const Icon = item.icon;
+              return (
+                <Button
+                  key={item.id}
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start gap-3 h-11",
+                    activeTab === item.id &&
+                      "bg-blue-50 text-blue-700 border-r-2 border-blue-600"
+                  )}
+                  onClick={() => handleItemClick(item.id)}
+                >
+                  <Icon className="h-5 w-5" />
+                  {item.label}
+                </Button>
+              );
+            })}
         </div>
       </nav>
     </div>

@@ -36,8 +36,8 @@ export function Login({ onLoginSuccess }: LoginProps) {
       if (response && response.token) {
         localStorage.setItem("auth_token", response.token)
         localStorage.setItem("user_data", JSON.stringify(response.user || {}))
-        toast.success("Login successful")
-        onLoginSuccess()
+        toast.success("Login successful");
+        onLoginSuccess();
       } else {
         toast.error("Invalid credentials")
       }

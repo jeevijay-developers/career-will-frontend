@@ -18,12 +18,13 @@ import "react-confirm-alert/src/react-confirm-alert.css";
 import { EditStudentForm } from "./EditStudentForm";
 
 interface Student {
-  id: string;
-  studentId: number;
-  name: string;
-  rollNo: string;
-  class: string;
-  kit: string[];
+  id: string
+  studentId: number
+  name: string
+  rollNo: string
+  class: string
+  batch?: string
+  kit: string[]
   parent: {
     id: string;
     username: string;
@@ -106,8 +107,8 @@ export function StudentList({
 
   const handleDelete = () => {
     confirmAlert({
-      title: "Confirm Delete",
-      message: "Are you sure you want to delete this item?",
+      title: 'Confirm Delete',
+      message: 'Are you sure you want to delete this student?',
       buttons: [
         {
           label: "Yes",
@@ -134,6 +135,8 @@ export function StudentList({
     setIsEditDialogOpen(false);
     setSelectedStudent(null);
   };
+
+  const user = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("user_data") || "{}") : {};
 
   return (
     <Card>
@@ -182,79 +185,132 @@ export function StudentList({
               <TableRow>
                 <TableHead>S No.</TableHead>
                 <TableHead>Roll No.</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Class</TableHead>
-                <TableHead>Father Name</TableHead>
-                {/* <TableHead>Parent Email</TableHead> */}
-                <TableHead>Parent Phone</TableHead>
-                <TableHead>Kits</TableHead>
-                <TableHead>Actions</TableHead>
+                {user.role === "ADMIN" && (
+                  <>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Class</TableHead>
+                    <TableHead>Batch</TableHead>
+                    <TableHead>Parent Name</TableHead>
+                    <TableHead>Parent Email</TableHead>
+                    <TableHead>Parent Phone</TableHead>
+                    <TableHead>Kits</TableHead>
+                  </>
+                )}
+                {user.role === "ACCOUNTS" && (
+                  <>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Class</TableHead>
+                    <TableHead>Batch</TableHead>
+                    <TableHead>Parent Name</TableHead>
+                    <TableHead>Parent Email</TableHead>
+                    <TableHead>Parent Phone</TableHead>
+                    <TableHead>Kits</TableHead>
+                  </>
+                )}
+                {user.role === "STORE" && (
+                  <TableHead>Batch</TableHead>
+                )}
+                {user.role === "FRONTDESK" && <TableHead>Batch</TableHead>}
+                {(user.role === "ADMIN" || user.role === "FRONTDESK" || user.role === "STORE") && (
+                  <TableHead>Actions</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredStudents.length > 0 ? (
-                filteredStudents.map((student: any, i) => {
-                  console.log(student);
-
-                  return (
-                    <TableRow key={student.id || i}>
-                      <TableCell className="font-medium">
-                        {(currentPage - 1) * pageSize + i + 1}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {student.rollNo ?? "-"}
-                      </TableCell>
-                      <TableCell>{student.name}</TableCell>
-                      <TableCell>
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                          {typeof student.class === "string" && student.class
-                            ? student.class
-                            : (student as any).batch &&
-                              batchNames[(student as any).batch]
-                            ? batchNames[(student as any).batch]
-                            : "No batch allotted"}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        {student.parent?.fatherName ??
-                          student.parent?.fatherName ??
-                          "-"}
-                      </TableCell>
-                      {/* <TableCell>{student.parent?.email ?? "-"}</TableCell> */}
-                      <TableCell>
-                        {student.parent?.parentContact ?? "-"}
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-gray-700">
-                          {student.kit?.length ?? 0} / {(kits ?? []).length}
-                        </span>
-                      </TableCell>
+                filteredStudents.map((student, i) => (
+                  <TableRow key={student.id || i}>
+                    <TableCell className="font-medium">{(currentPage - 1) * pageSize + i + 1}</TableCell>
+                    <TableCell className="font-medium">{student.rollNo ?? "-"}</TableCell>
+                    {user.role === "ADMIN" && (
+                      <>
+                        <TableCell>{student.name}</TableCell>
+                        <TableCell>
+                          <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                            {student.class || "No batch allotted"}
+                          </span>
+                        </TableCell>
+                        <TableCell>{student.batch || "-"}</TableCell>
+                        <TableCell>{student.parent?.name ?? student.parent?.username ?? "-"}</TableCell>
+                        <TableCell>{student.parent?.email ?? "-"}</TableCell>
+                        <TableCell>{student.parent?.phone ?? "-"}</TableCell>
+                        <TableCell>
+                          <span className="text-sm text-gray-700">{student.kit?.length ?? 0} / {(kits ?? []).length}</span>
+                        </TableCell>
+                      </>
+                    )}
+                    {user.role === "ACCOUNTS" && (
+                      <>
+                        <TableCell>{student.name}</TableCell>
+                        <TableCell>
+                          <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                            {student.class || "No batch allotted"}
+                          </span>
+                        </TableCell>
+                        <TableCell>{student.batch || "-"}</TableCell>
+                        <TableCell>{student.parent?.name ?? student.parent?.username ?? "-"}</TableCell>
+                        <TableCell>{student.parent?.email ?? "-"}</TableCell>
+                        <TableCell>{student.parent?.phone ?? "-"}</TableCell>
+                        <TableCell>
+                          <span className="text-sm text-gray-700">{student.kit?.length ?? 0} / {(kits ?? []).length}</span>
+                        </TableCell>
+                      </>
+                    )}
+                    {user.role === "STORE" && (
+                      <TableCell>{student.batch || "-"}</TableCell>
+                    )}
+                    {user.role === "FRONTDESK" && (
+                      <TableCell>{student.batch || "-"}</TableCell>
+                    )}
+                    {(user.role === "ADMIN" || user.role === "FRONTDESK" || user.role === "STORE") && (
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEdit(student)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-red-600 hover:text-red-700 bg-transparent"
-                            onClick={handleDelete}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {user.role === "ADMIN" && (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleEdit(student)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-red-600 hover:text-red-700 bg-transparent"
+                                onClick={handleDelete}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                          {user.role === "FRONTDESK" && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEdit(student)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {/* If STORE should have actions, add here */}
                         </div>
                       </TableCell>
-                    </TableRow>
-                  );
-                })
+                    )}
+                  </TableRow>
+                ))
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={9}
+                    colSpan={
+                      user.role === "ADMIN"
+                        ? 10
+                        : user.role === "ACCOUNTS"
+                        ? 8
+                        : user.role === "STORE"
+                        ? 3
+                        : 3
+                    }
                     className="text-center py-8 text-gray-500"
                   >
                     No students found
