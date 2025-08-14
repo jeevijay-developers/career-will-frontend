@@ -1,14 +1,21 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Edit, Trash2 } from "lucide-react"
-import { confirmAlert } from 'react-confirm-alert';
-import 'react-confirm-alert/src/react-confirm-alert.css';
-import { EditStudentForm } from "./EditStudentForm"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Search, Edit, Trash2 } from "lucide-react";
+import { confirmAlert } from "react-confirm-alert";
+import "react-confirm-alert/src/react-confirm-alert.css";
+import { EditStudentForm } from "./EditStudentForm";
 
 interface Student {
   id: string
@@ -19,13 +26,13 @@ interface Student {
   batch?: string
   kit: string[]
   parent: {
-    id: string
-    username: string
-    name: string
-    email: string
-    phone: string
-  }
-  joinDate: string
+    id: string;
+    username: string;
+    name: string;
+    email: string;
+    phone: string;
+  };
+  joinDate: string;
 }
 
 interface Kit {
@@ -61,17 +68,19 @@ export function StudentList({
   batchNames,
   kits,
   batches,
-  onStudentUpdated
+  onStudentUpdated,
 }: StudentListProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
   // Sort students in ascending order by name before filtering
   const sortedStudents = [...students].sort((a, b) => {
-    const nameA = (a.name || '').toLowerCase();
-    const nameB = (b.name || '').toLowerCase();
+    const nameA = (a.name || "").toLowerCase();
+    const nameB = (b.name || "").toLowerCase();
     return nameA.localeCompare(nameB);
   });
+
+  console.log(students);
 
   const lowerSearch = searchTerm.toLowerCase();
 
@@ -84,15 +93,15 @@ export function StudentList({
     const searchableFields = [
       student.name,
       student.rollNo?.toString(),
-      student.parent?.name,
+      student.parent?.fatherName,
       student.parent?.email,
-      student.parent?.phone,
+      student.parent?.parentContact,
       student.class,
       batchName,
     ];
 
-    return searchableFields.some(
-      (field) => field?.toLowerCase().includes(lowerSearch)
+    return searchableFields.some((field) =>
+      field?.toLowerCase().includes(lowerSearch)
     );
   });
 
@@ -102,18 +111,18 @@ export function StudentList({
       message: 'Are you sure you want to delete this student?',
       buttons: [
         {
-          label: 'Yes',
+          label: "Yes",
           onClick: () => {
-            alert('Item deleted!');
-          }
+            alert("Item deleted!");
+          },
         },
         {
-          label: 'No',
+          label: "No",
           onClick: () => {
-            console.log('Deletion cancelled');
-          }
-        }
-      ]
+            console.log("Deletion cancelled");
+          },
+        },
+      ],
     });
   };
 
@@ -134,6 +143,30 @@ export function StudentList({
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Students List</CardTitle>
+          {/* Pagination Controls */}
+          <div className="flex justify-end items-center gap-2 mt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage === 1}
+              onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+            >
+              Previous
+            </Button>
+            <span className="text-sm">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage === totalPages}
+              onClick={() =>
+                onPageChange(Math.min(totalPages, currentPage + 1))
+              }
+            >
+              Next
+            </Button>
+          </div>
           <div className="relative w-72">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
@@ -286,26 +319,6 @@ export function StudentList({
               )}
             </TableBody>
           </Table>
-          {/* Pagination Controls */}
-          <div className="flex justify-end items-center gap-2 mt-4">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={currentPage === 1}
-              onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-            >
-              Previous
-            </Button>
-            <span className="text-sm">Page {currentPage} of {totalPages}</span>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={currentPage === totalPages}
-              onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-            >
-              Next
-            </Button>
-          </div>
         </div>
       </CardContent>
 
@@ -319,5 +332,5 @@ export function StudentList({
         onStudentUpdated={onStudentUpdated}
       />
     </Card>
-  )
+  );
 }
