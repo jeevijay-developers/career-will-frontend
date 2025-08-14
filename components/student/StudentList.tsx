@@ -18,13 +18,13 @@ import "react-confirm-alert/src/react-confirm-alert.css";
 import { EditStudentForm } from "./EditStudentForm";
 
 interface Student {
-  id: string
-  studentId: number
-  name: string
-  rollNo: string
-  class: string
-  batch?: string
-  kit: string[]
+  id: string;
+  studentId: number;
+  name: string;
+  rollNo: string;
+  class: string;
+  batch?: string;
+  kit: string[];
   parent: {
     id: string;
     username: string;
@@ -107,8 +107,8 @@ export function StudentList({
 
   const handleDelete = () => {
     confirmAlert({
-      title: 'Confirm Delete',
-      message: 'Are you sure you want to delete this student?',
+      title: "Confirm Delete",
+      message: "Are you sure you want to delete this student?",
       buttons: [
         {
           label: "Yes",
@@ -136,7 +136,10 @@ export function StudentList({
     setSelectedStudent(null);
   };
 
-  const user = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("user_data") || "{}") : {};
+  const user =
+    typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem("user_data") || "{}")
+      : {};
 
   return (
     <Card>
@@ -190,8 +193,8 @@ export function StudentList({
                     <TableHead>Name</TableHead>
                     <TableHead>Class</TableHead>
                     <TableHead>Batch</TableHead>
-                    <TableHead>Parent Name</TableHead>
-                    <TableHead>Parent Email</TableHead>
+                    <TableHead>Father Name</TableHead>
+                    {/* <TableHead>Parent Email</TableHead> */}
                     <TableHead>Parent Phone</TableHead>
                     <TableHead>Kits</TableHead>
                   </>
@@ -201,27 +204,29 @@ export function StudentList({
                     <TableHead>Name</TableHead>
                     <TableHead>Class</TableHead>
                     <TableHead>Batch</TableHead>
-                    <TableHead>Parent Name</TableHead>
-                    <TableHead>Parent Email</TableHead>
+                    <TableHead>Father Name</TableHead>
+                    {/* <TableHead>Parent Email</TableHead> */}
                     <TableHead>Parent Phone</TableHead>
                     <TableHead>Kits</TableHead>
                   </>
                 )}
-                {user.role === "STORE" && (
-                  <TableHead>Batch</TableHead>
-                )}
+                {user.role === "STORE" && <TableHead>Batch</TableHead>}
                 {user.role === "FRONTDESK" && <TableHead>Batch</TableHead>}
-                {(user.role === "ADMIN" || user.role === "FRONTDESK" || user.role === "STORE") && (
-                  <TableHead>Actions</TableHead>
-                )}
+                {(user.role === "ADMIN" ||
+                  user.role === "FRONTDESK" ||
+                  user.role === "STORE") && <TableHead>Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredStudents.length > 0 ? (
-                filteredStudents.map((student, i) => (
+                filteredStudents.map((student: any, i) => (
                   <TableRow key={student.id || i}>
-                    <TableCell className="font-medium">{(currentPage - 1) * pageSize + i + 1}</TableCell>
-                    <TableCell className="font-medium">{student.rollNo ?? "-"}</TableCell>
+                    <TableCell className="font-medium">
+                      {(currentPage - 1) * pageSize + i + 1}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {student.rollNo ?? "-"}
+                    </TableCell>
                     {user.role === "ADMIN" && (
                       <>
                         <TableCell>{student.name}</TableCell>
@@ -231,11 +236,19 @@ export function StudentList({
                           </span>
                         </TableCell>
                         <TableCell>{student.batch || "-"}</TableCell>
-                        <TableCell>{student.parent?.name ?? student.parent?.username ?? "-"}</TableCell>
-                        <TableCell>{student.parent?.email ?? "-"}</TableCell>
-                        <TableCell>{student.parent?.phone ?? "-"}</TableCell>
                         <TableCell>
-                          <span className="text-sm text-gray-700">{student.kit?.length ?? 0} / {(kits ?? []).length}</span>
+                          {student.parent?.fatherName ??
+                            student.parent?.fatherName ??
+                            "-"}
+                        </TableCell>
+                        {/* <TableCell>{student.parent?.email ?? "-"}</TableCell> */}
+                        <TableCell>
+                          {student.parent?.parentContact ?? "-"}
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm text-gray-700">
+                            {student.kit?.length ?? 0} / {(kits ?? []).length}
+                          </span>
                         </TableCell>
                       </>
                     )}
@@ -248,11 +261,19 @@ export function StudentList({
                           </span>
                         </TableCell>
                         <TableCell>{student.batch || "-"}</TableCell>
-                        <TableCell>{student.parent?.name ?? student.parent?.username ?? "-"}</TableCell>
-                        <TableCell>{student.parent?.email ?? "-"}</TableCell>
-                        <TableCell>{student.parent?.phone ?? "-"}</TableCell>
                         <TableCell>
-                          <span className="text-sm text-gray-700">{student.kit?.length ?? 0} / {(kits ?? []).length}</span>
+                          {student.parent?.fatherName ??
+                            student.parent?.fatherName ??
+                            "-"}
+                        </TableCell>
+                        {/* <TableCell>{student.parent?.email ?? "-"}</TableCell> */}
+                        <TableCell>
+                          {student.parent?.parentContact ?? "-"}
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm text-gray-700">
+                            {student.kit?.length ?? 0} / {(kits ?? []).length}
+                          </span>
                         </TableCell>
                       </>
                     )}
@@ -262,7 +283,9 @@ export function StudentList({
                     {user.role === "FRONTDESK" && (
                       <TableCell>{student.batch || "-"}</TableCell>
                     )}
-                    {(user.role === "ADMIN" || user.role === "FRONTDESK" || user.role === "STORE") && (
+                    {(user.role === "ADMIN" ||
+                      user.role === "FRONTDESK" ||
+                      user.role === "STORE") && (
                       <TableCell>
                         <div className="flex gap-2">
                           {user.role === "ADMIN" && (
