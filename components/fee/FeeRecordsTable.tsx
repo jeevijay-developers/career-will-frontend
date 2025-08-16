@@ -86,17 +86,30 @@ export function FeeRecordsTable({
     try {
       const result = await getFeeByRollNumber(rollNumber);
       console.log("Search result from backend:", result);
-      
+
       // Handle different response formats from backend
       let feeRecord = null;
-      if (Array.isArray(result) && result.length > 0) {
+      if (result && typeof result === 'object') {
+        // Check if result has fees array (your current backend structure)
+        if (result.fees && Array.isArray(result.fees) && result.fees.length > 0) {
+          // The fee data is in the fees array, but we need to combine it with student info
+          const feeData = result.fees[0];
+          feeRecord = {
+            ...feeData,
+            studentName: result.studentName,
+            studentRollNo: result.fees[0].studentRollNo,
+            _id: feeData._id
+          };
+          console.log("Using fee record from fees array with student info:", feeRecord);
+        } else if (result._id) {
+          // Backend returns a single record object
+          feeRecord = result;
+          console.log("Using single record object:", feeRecord);
+        }
+      } else if (Array.isArray(result) && result.length > 0) {
         // Backend returns an array with records
         feeRecord = result[0];
         console.log("Using first record from array:", feeRecord);
-      } else if (result && typeof result === 'object' && result._id) {
-        // Backend returns a single record object
-        feeRecord = result;
-        console.log("Using single record object:", feeRecord);
       }
       
       if (feeRecord) {
@@ -268,7 +281,7 @@ export function FeeRecordsTable({
                         </span>
                       )}
                     </TableCell>
-                    <TableCell>{record.studentName || `Student ${record.studentRollNo}`}</TableCell>
+                    <TableCell>{record.studentName}</TableCell>
                     <TableCell>₹{record.finalFees}</TableCell>
                     <TableCell>₹{record.paidAmount}</TableCell>
                     <TableCell>₹{remainingAmount}</TableCell>

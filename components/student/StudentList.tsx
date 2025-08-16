@@ -372,7 +372,7 @@ export function StudentList({
                     </TableCell>
                     {user.role === "ADMIN" && (
                       <>
-                        <TableCell className="min-w-[150px]">{student.name}</TableCell>
+                        <TableCell className="min-w-[150px] uppercase">{student.name}</TableCell>
                         <TableCell className="min-w-[120px]">
                           <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
                             {student.class || "No batch allotted"}
