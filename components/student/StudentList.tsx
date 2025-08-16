@@ -92,9 +92,7 @@ export function StudentList({
       setSearchError(null);
       
       try {
-        const result = await searchStudent(searchQuery.trim());
-        console.log("Search result:", result); // Debug log
-        
+        const result = await searchStudent(searchQuery.trim());        
         // Handle the response - backend returns array directly, not wrapped in data property
         if (result && Array.isArray(result)) {
           setSearchResults(result);
@@ -155,9 +153,7 @@ export function StudentList({
     setSearchError(null);
     
     try {
-      const result = await searchStudent(searchQuery);
-      console.log("Immediate search result:", result); // Debug log
-      
+      const result = await searchStudent(searchQuery);      
       // Handle the response - backend returns array directly, not wrapped in data property
       if (result && Array.isArray(result)) {
         setSearchResults(result);
@@ -205,8 +201,6 @@ export function StudentList({
     const nameB = (b.name || "").toLowerCase();
     return nameA.localeCompare(nameB);
   });
-
-  console.log(students);
 
   const lowerSearch = searchTerm.toLowerCase();
 
@@ -489,7 +483,7 @@ export function StudentList({
                         "Searching..."
                       )
                     ) : (
-                      "No students found"
+                      "Loading students..."
                     )}
                   </TableCell>
                 </TableRow>

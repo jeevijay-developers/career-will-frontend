@@ -234,7 +234,7 @@ export function FeeRecordsTable({
           {isSearchMode 
             ? searchResult 
               ? `Found 1 record for roll number ${searchTerm}`
-              : "No records found"
+              : "Searching..."
             : `Showing ${feeRecords.length} records`
           }
         </div>
@@ -259,7 +259,7 @@ export function FeeRecordsTable({
                   <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     {isSearchMode 
                       ? `No fee record found for roll number "${searchTerm}"`
-                      : "No fee records found"
+                      : "Searching..."
                     }
                   </TableCell>
                 </TableRow>
