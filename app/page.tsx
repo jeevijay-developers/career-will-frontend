@@ -12,6 +12,7 @@ import { KitManagement } from "@/components/kit-management";
 import { MarksComparison } from "@/components/marks-comparison";
 import toast from "react-hot-toast";
 import AddNewStudent from "@/components/student/AddNewStudent";
+import { AddTeacher } from "@/components/teacher/AddTeacher";
 
 export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState("students");
@@ -45,6 +46,18 @@ export default function AdminPanel() {
         return <StudentManagement />;
       case "addStudent":
         return <AddNewStudent />;
+      case "teachers":
+        return (
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Teacher Management</h1>
+              <p className="text-gray-600">Add new teachers to the system</p>
+            </div>
+            <div className="max-w-3xl">
+              <AddTeacher onComplete={() => toast.success("Teacher added successfully")} />
+            </div>
+          </div>
+        );
       case "batches":
         return <BatchManagement />;
       case "tests":

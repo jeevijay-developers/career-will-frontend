@@ -403,3 +403,33 @@ export const getAttendanceByDate = async (date) => {
     throw new Error("Error fetching attendance by date");
   }
 }
+
+// Marks comparison
+
+export const getMarksComparisonByRollNumber = async (rollNumber) => {
+  try {
+    const response = await apiClient.get(`api/test-score/get-all-attended-tests/${rollNumber}`);
+    return response?.data;
+  } catch (error) {
+    // If it's a 404, throw the specific error message from the server
+    if (error.response && error.response.status === 404) {
+      const errorMessage = error.response.data?.message || "No scores found for this roll number";
+      throw error; // Re-throw the error so the component can access the response
+    }
+    console.error("Error fetching marks comparison by roll number:", error);
+    throw error; // Re-throw other errors as well
+  }
+};
+
+
+// create user or signup
+
+export const createUser = async (userData) => {
+  try {
+    const response = await apiClient.post("/api/auth/signup", userData);
+    return response.data;
+  } catch (error) {
+    console.error("Error creating user:", error);
+    throw new Error("Error creating user");
+  }
+};
