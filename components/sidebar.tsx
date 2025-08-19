@@ -27,6 +27,7 @@ interface SidebarProps {
 const menuItems = [
   { id: "students", label: "Students", icon: Users, accessTo: ["ADMIN", "FRONTDESK", "ACCOUNTS", "STORE"] },
   { id: "addStudent", label: "Add Student", icon: User, accessTo: ["ADMIN"] },
+  { id: "teachers", label: "Teachers", icon: Users, accessTo: ["ADMIN"] },
   { id: "batches", label: "Batches", icon: BookOpen, accessTo: ["ADMIN"] },
   { id: "tests", label: "Test Reports", icon: FileText, accessTo: ["ADMIN"] },
   { id: "attendance", label: "Attendance", icon: Calendar, accessTo: ["ADMIN"] },
@@ -78,7 +79,7 @@ export function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarProps) {
     }
   };
   return (
-    <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
+    <div className="w-64 bg-white border-r border-gray-200 flex flex-col h-screen">
       <div className="p-2 border-b border-gray-200">
         <div className="flex items-center justify-center gap-2">
           <Image
@@ -91,8 +92,9 @@ export function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarProps) {
         </div>
       </div>
 
-      <nav className="flex-1 p-4">
-        <div className="space-y-2">
+      <nav className="flex-1 p-4 overflow-hidden">
+        {/* The max-h-[calc(8*2.75rem)] limits height to show approximately 8 menu items */}
+        <div className="space-y-2 overflow-y-auto max-h-[470px] pr-2 custom-scrollbar">
           {menuItems
             .filter(item => !item.accessTo || item.accessTo.includes(userData.role))
             .map((item) => {
