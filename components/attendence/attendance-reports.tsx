@@ -249,7 +249,7 @@ export function AttendanceReports() {
                       <SelectContent>
                         <SelectItem value="Physics">Physics</SelectItem>
                         <SelectItem value="Chemistry">Chemistry</SelectItem>
-                        <SelectItem value="Mathematics">Mathematics</SelectItem>
+                        <SelectItem value="Biology">Biology</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

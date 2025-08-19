@@ -14,7 +14,7 @@ interface StudentMarks {
   batch: string
   physics: number
   chemistry: number
-  mathematics: number
+  biology: number
   total: number
   average: number
   rank: number
@@ -28,7 +28,7 @@ const mockMarksData: StudentMarks[] = [
     batch: "NEET-2024-A",
     physics: 85,
     chemistry: 78,
-    mathematics: 92,
+    biology: 92,
     total: 255,
     average: 85,
     rank: 2,
@@ -40,7 +40,7 @@ const mockMarksData: StudentMarks[] = [
     batch: "NEET-2024-B",
     physics: 90,
     chemistry: 88,
-    mathematics: 85,
+    biology: 85,
     total: 263,
     average: 87.7,
     rank: 1,
@@ -52,7 +52,7 @@ const mockMarksData: StudentMarks[] = [
     batch: "NEET-2024-A",
     physics: 75,
     chemistry: 82,
-    mathematics: 88,
+    biology: 88,
     total: 245,
     average: 81.7,
     rank: 3,
@@ -64,7 +64,7 @@ const mockMarksData: StudentMarks[] = [
     batch: "NEET-2024-B",
     physics: 88,
     chemistry: 75,
-    mathematics: 80,
+    biology: 80,
     total: 243,
     average: 81,
     rank: 4,
@@ -95,14 +95,14 @@ export function MarksComparison() {
           return b.physics - a.physics
         case "chemistry":
           return b.chemistry - a.chemistry
-        case "mathematics":
-          return b.mathematics - a.mathematics
+        case "biology":
+          return b.biology - a.biology
         default:
           return a.rank - b.rank
       }
     })
 
-  const getSubjectStats = (subject: keyof Pick<StudentMarks, "physics" | "chemistry" | "mathematics">) => {
+  const getSubjectStats = (subject: keyof Pick<StudentMarks, "physics" | "chemistry" | "biology">) => {
     const marks = filteredData.map((student) => student[subject])
     const average = marks.reduce((sum, mark) => sum + mark, 0) / marks.length
     const highest = Math.max(...marks)
@@ -112,7 +112,7 @@ export function MarksComparison() {
 
   const physicsStats = getSubjectStats("physics")
   const chemistryStats = getSubjectStats("chemistry")
-  const mathsStats = getSubjectStats("mathematics")
+  const mathsStats = getSubjectStats("biology")
 
   const getRankBadge = (rank: number) => {
     if (rank === 1) return "bg-yellow-100 text-yellow-800 border-yellow-200"
@@ -133,7 +133,7 @@ export function MarksComparison() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Marks Comparison</h1>
-        <p className="text-gray-600">Compare student performance across Physics, Chemistry, and Mathematics</p>
+        <p className="text-gray-600">Compare student performance across Physics, Chemistry, and Biology</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -191,7 +191,7 @@ export function MarksComparison() {
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
               <div className="w-3 h-3 bg-purple-600 rounded-full"></div>
-              Mathematics
+              Biology
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -250,7 +250,7 @@ export function MarksComparison() {
                   <SelectItem value="total">Total</SelectItem>
                   <SelectItem value="physics">Physics</SelectItem>
                   <SelectItem value="chemistry">Chemistry</SelectItem>
-                  <SelectItem value="mathematics">Mathematics</SelectItem>
+                  <SelectItem value="biology">Biology</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -267,7 +267,7 @@ export function MarksComparison() {
                   <TableHead>Batch</TableHead>
                   <TableHead className="text-center">Physics</TableHead>
                   <TableHead className="text-center">Chemistry</TableHead>
-                  <TableHead className="text-center">Mathematics</TableHead>
+                  <TableHead className="text-center">Biology</TableHead>
                   <TableHead className="text-center">Total</TableHead>
                   <TableHead className="text-center">Average</TableHead>
                 </TableRow>
@@ -301,8 +301,8 @@ export function MarksComparison() {
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-1">
-                        <span className="font-medium">{student.mathematics}</span>
-                        {getPerformanceIcon(student.mathematics, mathsStats.average)}
+                        <span className="font-medium">{student.biology}</span>
+                        {getPerformanceIcon(student.biology, mathsStats.average)}
                       </div>
                     </TableCell>
                     <TableCell className="text-center font-bold">{student.total}</TableCell>

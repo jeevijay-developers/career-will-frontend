@@ -186,7 +186,7 @@ const TestReportBulkUpload: React.FC<Props> = ({ onUploadSuccess }) => {
               Upload Excel (.xls, .xlsx) or CSV file with test report records.
             </p>
             <p className="mt-2">
-              File should contain columns for: Roll Number, Test Name, Test Date, Physics Marks, Chemistry Marks, and Mathematics Marks. All fields marked as required must be filled.
+              File should contain columns for: Roll Number, Test Name, Test Date, Physics Marks, Chemistry Marks, and Biology Marks. All fields marked as required must be filled.
             </p>
           </div>
 
