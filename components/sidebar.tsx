@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import {
   Users,
   BookOpen,
@@ -35,9 +36,27 @@ const menuItems = [
   { id: "logout", label: "Logout", icon: LogOut },
 ];
 
-const user = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("user_data") || "{}") : {};
-
 export function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarProps) {
+  // Use React's useState to store the user data
+  const [userData, setUserData] = useState<any>({});
+  
+  // Use useEffect to fetch user data from localStorage when component mounts
+  useEffect(() => {
+    // Only run on the client side
+    if (typeof window !== "undefined") {
+      const storedUser = localStorage.getItem("user_data");
+      if (storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          setUserData(parsedUser);
+        } catch (error) {
+          console.error("Failed to parse user data from localStorage:", error);
+          setUserData({});
+        }
+      }
+    }
+  }, []);
+
   const handleItemClick = (itemId: string) => {
     if (itemId === "logout") {
       confirmAlert({
@@ -75,7 +94,7 @@ export function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarProps) {
       <nav className="flex-1 p-4">
         <div className="space-y-2">
           {menuItems
-            .filter(item => !item.accessTo || item.accessTo.includes(user.role))
+            .filter(item => !item.accessTo || item.accessTo.includes(userData.role))
             .map((item) => {
               const Icon = item.icon;
               return (
