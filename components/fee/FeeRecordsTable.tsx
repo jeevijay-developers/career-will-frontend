@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -56,6 +56,7 @@ export function FeeRecordsTable({
   const [isSearching, setIsSearching] = useState(false);
   const [searchResult, setSearchResult] = useState<any | null>(null);
   const [isSearchMode, setIsSearchMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Use search result or original records based on search mode
   const displayRecords = isSearchMode && searchResult ? [searchResult] : feeRecords;
@@ -67,6 +68,17 @@ export function FeeRecordsTable({
   const startIndex = (currentPage - 1) * recordsPerPage;
   const endIndex = startIndex + recordsPerPage;
   const currentRecords = displayRecords.slice(startIndex, endIndex);
+  
+  // Set loading state when component mounts
+  useEffect(() => {
+    setIsLoading(true);
+    // Simulate loading delay - in a real app, this would be an API call
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   // Search function to call backend API
   const handleSearch = useCallback(async () => {
@@ -157,12 +169,21 @@ export function FeeRecordsTable({
   };
 
   const handlePageChange = (page: number) => {
+    setIsLoading(true);
     setCurrentPage(page);
+    // Simulate loading delay when changing pages - in a real app, this might be an API call
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 300);
   };
 
   const handleRecordsPerPageChange = (value: string) => {
+    setIsLoading(true);
     setRecordsPerPage(parseInt(value));
     setCurrentPage(1);
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 300);
   };
 
   // Only show pagination controls when not in search mode or when search has results
@@ -191,6 +212,7 @@ export function FeeRecordsTable({
                   <SelectItem value="10">10</SelectItem>
                   <SelectItem value="20">20</SelectItem>
                   <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -240,7 +262,7 @@ export function FeeRecordsTable({
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="h-[500px] overflow-auto">
+        <div className="overflow-auto">
           <Table>
             <TableHeader className="sticky top-0 bg-white z-10">
               <TableRow>
@@ -259,7 +281,12 @@ export function FeeRecordsTable({
                   <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     {isSearchMode 
                       ? `No fee record found for roll number "${searchTerm}"`
-                      : "Searching..."
+                      : isLoading
+                        ? <div className="flex justify-center items-center">
+                            <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent mr-2"></div>
+                            Loading fee records...
+                          </div>
+                        : "No fee records found"
                     }
                   </TableCell>
                 </TableRow>
