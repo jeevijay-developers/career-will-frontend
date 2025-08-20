@@ -244,7 +244,10 @@ export function BatchManagement() {
     fetchBatches();
   }, []);
 
-
+  const user =
+    typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem("user_data") || "{}")
+      : {};
 
   return (
     <div className="space-y-6">
@@ -340,7 +343,7 @@ export function BatchManagement() {
                   <TableHead>Start Date</TableHead>
                   <TableHead>End Date</TableHead>
                   <TableHead>Class</TableHead>
-                  <TableHead>Actions</TableHead>
+                  {!(user.role === "STORE") && <TableHead>Actions</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -359,7 +362,7 @@ export function BatchManagement() {
                       <TableCell>
                         {batch.class ? batch.class.charAt(0).toUpperCase() + batch.class.slice(1) : ""}
                       </TableCell>
-                      <TableCell>
+                      {!(user.role === "STORE") && <TableCell>
                         <div className="flex gap-2">
                           <Button 
                             onClick={() => handleEditClick(batch)} 
@@ -380,7 +383,7 @@ export function BatchManagement() {
                             Delete
                           </Button>
                         </div>
-                      </TableCell>
+                      </TableCell>}
                     </TableRow>
                   ))
                 )}
