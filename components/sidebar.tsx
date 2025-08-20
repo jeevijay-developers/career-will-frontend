@@ -33,7 +33,7 @@ const menuItems = [
   { id: "attendance", label: "Attendance", icon: Calendar, accessTo: ["ADMIN", "FRONTDESK"] },
   { id: "fees", label: "Fee Management", icon: CreditCard, accessTo: ["ADMIN", "ACCOUNTS"] },
   { id: "kits", label: "Kit Management", icon: Package, accessTo: ["ADMIN", "STORE"] },
-  { id: "marks", label: "Marks Comparison", icon: BarChart3, accessTo: ["ADMIN"] },
+  { id: "marks", label: "Marks Comparison", icon: BarChart3, accessTo: ["ADMIN", "TEACHER"] },
   { id: "logout", label: "Logout", icon: LogOut },
 ];
 
