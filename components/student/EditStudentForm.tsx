@@ -475,7 +475,7 @@ export function EditStudentForm({
                     )}
 
           {/* Parent Information - Only for admin */}
-          {user.role === "ADMIN" && (
+          {(user.role === "ADMIN" || user.role === "ACCOUNTS")  && (
             <div>
               <h3 className="text-lg font-semibold mb-4 text-gray-800">
                 Parent Information

@@ -360,7 +360,8 @@ export function StudentList({
                   <TableHead className="min-w-[100px]">Batch</TableHead>
                 )}
                 {(user.role === "ADMIN" ||
-                  user.role === "FRONTDESK" ||
+                  user.role === "FRONTDESK"||
+                  user.role === "ACCOUNTS" ||
                   user.role === "STORE") && (
                   <TableHead className="min-w-[100px]">Actions</TableHead>
                 )}
@@ -445,11 +446,12 @@ export function StudentList({
                       </TableCell>
                     )}
                     {(user.role === "ADMIN" ||
-                      user.role === "FRONTDESK" ||
+                      user.role === "FRONTDESK"||
+                      user.role === "ACCOUNTS" ||
                       user.role === "STORE") && (
                       <TableCell className="min-w-[100px]">
                         <div className="flex gap-2">
-                          {user.role === "ADMIN" && (
+                          {(user.role === "ADMIN" || user.role === "ACCOUNTS") && (
                             <>
                               <Button
                                 variant="outline"
