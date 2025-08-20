@@ -79,8 +79,6 @@ export function StudentList({
   const [searchError, setSearchError] = useState<string | null>(null);
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
 
-  console.log("Students: ", students[0]);
-
   // Debounced search function
   const debouncedSearch = useCallback(
     debounce(async (searchQuery: string) => {
@@ -92,9 +90,9 @@ export function StudentList({
 
       setIsSearching(true);
       setSearchError(null);
-      
+
       try {
-        const result = await searchStudent(searchQuery.trim());        
+        const result = await searchStudent(searchQuery.trim());
         // Handle the response - backend returns array directly, not wrapped in data property
         if (result && Array.isArray(result)) {
           setSearchResults(result);
@@ -124,24 +122,24 @@ export function StudentList({
   const handleInputChange = (value: string) => {
     setLocalSearchTerm(value);
     onSearchChange(value);
-    
+
     if (!value.trim()) {
       setSearchResults([]);
       setSearchError(null);
       debouncedSearch.cancel(); // Cancel pending search
       return;
     }
-    
+
     // Start debounced search
     debouncedSearch(value);
   };
 
   // Handle Enter key press for immediate search
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       debouncedSearch.cancel(); // Cancel any pending debounced search
-      
+
       if (localSearchTerm.trim()) {
         // Immediately execute search
         handleImmediateSearch(localSearchTerm.trim());
@@ -153,9 +151,9 @@ export function StudentList({
   const handleImmediateSearch = async (searchQuery: string) => {
     setIsSearching(true);
     setSearchError(null);
-    
+
     try {
-      const result = await searchStudent(searchQuery);      
+      const result = await searchStudent(searchQuery);
       // Handle the response - backend returns array directly, not wrapped in data property
       if (result && Array.isArray(result)) {
         setSearchResults(result);
@@ -208,26 +206,28 @@ export function StudentList({
 
   // For API search results, don't apply additional filtering since API already filtered
   // For regular students list, apply client-side filtering as before
-  const filteredStudents = searchTerm.trim() ? sortedStudents : sortedStudents.filter((student: any) => {
-    const batchName =
-      typeof student.class === "string"
-        ? student.class
-        : batchNames[student.batch] || "No batch allotted";
+  const filteredStudents = searchTerm.trim()
+    ? sortedStudents
+    : sortedStudents.filter((student: any) => {
+        const batchName =
+          typeof student.class === "string"
+            ? student.class
+            : batchNames[student.batch] || "No batch allotted";
 
-    const searchableFields = [
-      student.name,
-      student.rollNo?.toString(),
-      student.parent?.fatherName,
-      student.parent?.email,
-      student.parent?.parentContact,
-      student.class,
-      batchName,
-    ];
+        const searchableFields = [
+          student.name,
+          student.rollNo?.toString(),
+          student.parent?.fatherName,
+          student.parent?.email,
+          student.parent?.parentContact,
+          student.class,
+          batchName,
+        ];
 
-    return searchableFields.some((field) =>
-      field?.toLowerCase().includes(lowerSearch)
-    );
-  });
+        return searchableFields.some((field) =>
+          field?.toLowerCase().includes(lowerSearch)
+        );
+      });
 
   const handleDelete = () => {
     confirmAlert({
@@ -310,11 +310,11 @@ export function StudentList({
             )}
             {localSearchTerm.trim() && (
               <div className="absolute top-full left-0 right-0 mt-1 text-xs text-gray-500 bg-white border rounded px-2 py-1 shadow-sm z-10">
-                {searchResults.length > 0 
-                  ? `Found ${searchResults.length} student(s)` 
-                  : isSearching 
-                    ? 'Searching...' 
-                    : 'Press Enter to search or wait for auto-search'}
+                {searchResults.length > 0
+                  ? `Found ${searchResults.length} student(s)`
+                  : isSearching
+                  ? "Searching..."
+                  : "Press Enter to search or wait for auto-search"}
               </div>
             )}
           </div>
@@ -334,7 +334,9 @@ export function StudentList({
                     <TableHead className="min-w-[100px]">Batch</TableHead>
                     <TableHead className="min-w-[150px]">Father Name</TableHead>
                     {/* <TableHead>Parent Email</TableHead> */}
-                    <TableHead className="min-w-[120px]">Parent Phone</TableHead>
+                    <TableHead className="min-w-[120px]">
+                      Parent Phone
+                    </TableHead>
                     <TableHead className="min-w-[80px]">Kits</TableHead>
                   </>
                 )}
@@ -345,30 +347,23 @@ export function StudentList({
                     <TableHead className="min-w-[100px]">Batch</TableHead>
                     <TableHead className="min-w-[150px]">Father Name</TableHead>
                     {/* <TableHead>Parent Email</TableHead> */}
-                    <TableHead className="min-w-[120px]">Parent Phone</TableHead>
+                    <TableHead className="min-w-[120px]">
+                      Parent Phone
+                    </TableHead>
                     <TableHead className="min-w-[80px]">Kits</TableHead>
                   </>
                 )}
                 {user.role === "STORE" && (
-                  <>
                   <TableHead className="min-w-[100px]">Batch</TableHead>
-                  <TableHead className="min-w-[100px]">Kits</TableHead>
-                  </>
-                  )}
+                )}
                 {user.role === "FRONTDESK" && (
-                  <>
-                    <TableHead className="min-w-[150px]">Name</TableHead>
-                    <TableHead className="min-w-[120px]">Class</TableHead>
-                    <TableHead className="min-w-[100px]">Batch</TableHead>
-                    <TableHead className="min-w-[150px]">Father Name</TableHead>
-                    {/* <TableHead>Parent Email</TableHead> */}
-                    <TableHead className="min-w-[80px]">Kits</TableHead>
-                  </>
+                  <TableHead className="min-w-[100px]">Batch</TableHead>
                 )}
                 {(user.role === "ADMIN" ||
-                  user.role === "FRONTDESK"||
-                  user.role === "ACCOUNTS" ||
-                  user.role === "STORE") && <TableHead className="min-w-[100px]">Actions</TableHead>}
+                  user.role === "FRONTDESK" ||
+                  user.role === "STORE") && (
+                  <TableHead className="min-w-[100px]">Actions</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -383,13 +378,17 @@ export function StudentList({
                     </TableCell>
                     {user.role === "ADMIN" && (
                       <>
-                        <TableCell className="min-w-[150px] uppercase">{student.name}</TableCell>
+                        <TableCell className="min-w-[150px] uppercase">
+                          {student.name}
+                        </TableCell>
                         <TableCell className="min-w-[120px]">
                           <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
                             {student.class || "No batch allotted"}
                           </span>
                         </TableCell>
-                        <TableCell className="min-w-[100px]">{student.batch || "-"}</TableCell>
+                        <TableCell className="min-w-[100px]">
+                          {student.batch || "-"}
+                        </TableCell>
                         <TableCell className="min-w-[150px]">
                           {student.parent?.fatherName ??
                             student.parent?.fatherName ??
@@ -408,13 +407,17 @@ export function StudentList({
                     )}
                     {user.role === "ACCOUNTS" && (
                       <>
-                        <TableCell className="min-w-[150px] uppercase">{student.name}</TableCell>
+                        <TableCell className="min-w-[150px] uppercase">
+                          {student.name}
+                        </TableCell>
                         <TableCell className="min-w-[120px]">
                           <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
                             {student.class || "No batch allotted"}
                           </span>
                         </TableCell>
-                        <TableCell className="min-w-[100px]">{student.batch || "-"}</TableCell>
+                        <TableCell className="min-w-[100px]">
+                          {student.batch || "-"}
+                        </TableCell>
                         <TableCell className="min-w-[150px]">
                           {student.parent?.fatherName ??
                             student.parent?.fatherName ??
@@ -432,35 +435,21 @@ export function StudentList({
                       </>
                     )}
                     {user.role === "STORE" && (
-                      <>
-                      <TableCell className="min-w-[100px]">{student.batch || "-"}</TableCell>
-                      <TableCell className="min-w-[80px]">
-                          <span className="text-sm text-gray-700">
-                            {student.kit?.length ?? 0} / {(kits ?? []).length}
-                          </span>
-                        </TableCell>
-                      </>
+                      <TableCell className="min-w-[100px]">
+                        {student.batch || "-"}
+                      </TableCell>
                     )}
                     {user.role === "FRONTDESK" && (
-                      <>
-                      <TableCell className="min-w-[100px] uppercase">{student.name || "-"}</TableCell>
-                      <TableCell className="min-w-[100px]">{student.class || "-"}</TableCell>
-                      <TableCell className="min-w-[100px]">{student.batch || "-"}</TableCell>
-                      <TableCell className="min-w-[100px]">{student.parent.fatherName || "-"}</TableCell>
-                      <TableCell className="min-w-[80px]">
-                          <span className="text-sm text-gray-700">
-                            {student.kit?.length ?? 0} / {(kits ?? []).length}
-                          </span>
+                      <TableCell className="min-w-[100px]">
+                        {student.batch || "-"}
                       </TableCell>
-                      </>
                     )}
                     {(user.role === "ADMIN" ||
-                      user.role === "FRONTDESK"||
-                      user.role === "ACCOUNTS" ||
+                      user.role === "FRONTDESK" ||
                       user.role === "STORE") && (
                       <TableCell className="min-w-[100px]">
                         <div className="flex gap-2">
-                          {(user.role === "ADMIN" || user.role === "ACCOUNTS" || user.role === "STORE") && (
+                          {user.role === "ADMIN" && (
                             <>
                               <Button
                                 variant="outline"
@@ -479,7 +468,7 @@ export function StudentList({
                               </Button>
                             </>
                           )}
-                          {(user.role === "FRONTDESK") && (
+                          {user.role === "FRONTDESK" && (
                             <Button
                               variant="outline"
                               size="sm"
@@ -489,7 +478,6 @@ export function StudentList({
                             </Button>
                           )}
                           {/* If STORE should have actions, add here */}
-
                         </div>
                       </TableCell>
                     )}
@@ -513,7 +501,9 @@ export function StudentList({
                       searchError ? (
                         <div>
                           <p className="text-red-500">{searchError}</p>
-                          <p className="text-sm text-gray-400 mt-1">Try searching with a different roll number</p>
+                          <p className="text-sm text-gray-400 mt-1">
+                            Try searching with a different roll number
+                          </p>
                         </div>
                       ) : (
                         "Searching..."
@@ -548,23 +538,23 @@ function debounce<T extends (...args: any[]) => any>(
   delay: number
 ): T & { cancel: () => void } {
   let timeoutId: NodeJS.Timeout | null = null;
-  
+
   const debouncedFunc = ((...args: Parameters<T>) => {
     if (timeoutId) {
       clearTimeout(timeoutId);
     }
-    
+
     timeoutId = setTimeout(() => {
       func(...args);
     }, delay);
   }) as T & { cancel: () => void };
-  
+
   debouncedFunc.cancel = () => {
     if (timeoutId) {
       clearTimeout(timeoutId);
       timeoutId = null;
     }
   };
-  
+
   return debouncedFunc;
 }

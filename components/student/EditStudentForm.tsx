@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -13,139 +13,153 @@ import { updateStudent, uploadStudentImage, findParentByEmail, updateStudentBatc
 import Image from "next/image.js"
 
 interface Kit {
-    _id: string;
-    name: string;
-    description: string;
-    createdAt: string;
-    updatedAt: string;
+  _id: string;
+  name: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface Student {
-    id: string
-    studentId: number
-    name: string
-    rollNo: string
-    class: string
-    kit: string[]
-    parent: {
-        id: string
-        username: string
-        name: string
-        email: string
-        phone: string
-    }
-    joinDate: string
-    phone?: string
-    address?: string
-    image?: string
+  id: string;
+  studentId: number;
+  name: string;
+  rollNo: string;
+  class: string;
+  kit: string[];
+  parent: {
+    id: string;
+    username: string;
+    name: string;
+    email: string;
+    phone: string;
+  };
+  joinDate: string;
+  phone?: string;
+  address?: string;
+  image?: string;
 }
 
 interface EditStudentFormProps {
-    isOpen: boolean;
-    onClose: () => void;
-    student: Student | null;
-    kits: Kit[];
-    batches: any[];
-    onStudentUpdated: () => void;
+  isOpen: boolean;
+  onClose: () => void;
+  student: Student | null;
+  kits: Kit[];
+  batches: any[];
+  onStudentUpdated: () => void;
 }
 
-export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStudentUpdated }: EditStudentFormProps) {
-    const [selectedKits, setSelectedKits] = useState<Kit[]>([])
-    const [selectedImage, setSelectedImage] = useState<string | { url: string } | null>(null);
-    const [uploadedImage, setUploadedImage] = useState<any>(null);
-    const [showPassword, setShowPassword] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [isCheckingEmail, setIsCheckingEmail] = useState(false);
-    
-    const user = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("user_data") || "{}") : {};
-    const [errors, setErrors] = useState({
-        name: "",
-        phone: "",
-        address: "",
-        batch: "",
-        parentUsername: "",
-        parentEmail: "",
-        parentPhone: "",
-        parentPassword: "",
+export function EditStudentForm({
+  isOpen,
+  onClose,
+  student,
+  kits,
+  batches,
+  onStudentUpdated,
+}: EditStudentFormProps) {
+  const [selectedKits, setSelectedKits] = useState<Kit[]>([]);
+  const [selectedImage, setSelectedImage] = useState<
+    string | { url: string } | null
+  >(null);
+  const [uploadedImage, setUploadedImage] = useState<any>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+
+  const user =
+    typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem("user_data") || "{}")
+      : {};
+  const [errors, setErrors] = useState({
+    name: "",
+    phone: "",
+    address: "",
+    batch: "",
+    parentUsername: "",
+    parentEmail: "",
+    parentPhone: "",
+    parentPassword: "",
+  });
+
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+    address: "",
+    batch: "",
+    parentUsername: "",
+    parentPassword: "",
+    parentEmail: "",
+    parentPhone: "",
+  });
+
+  // Populate form with existing student data
+  useEffect(() => {
+    if (student && isOpen) {
+      setFormData({
+        name: student.name || "",
+        phone: student.phone || "",
+        address: student.address || "",
+        batch: (student as any).batch || "",
+        parentUsername: student.parent?.username || "",
+        parentPassword: "", // Don't populate password for security
+        parentEmail: student.parent?.email || "",
+        parentPhone: student.parent?.phone || "",
+      });
+
+      // Set selected kits based on student's current kits
+      if (student.kit && Array.isArray(student.kit)) {
+        const studentKits = kits.filter((kit) =>
+          student.kit.includes(kit.name)
+        );
+        setSelectedKits(studentKits);
+      }
+
+      // Set existing image if available
+      if (student.image) {
+        setSelectedImage(student.image);
+        setUploadedImage(student.image);
+      }
+    }
+  }, [student, isOpen, kits]);
+
+  const handleKitToggle = (kit: Kit) => {
+    setSelectedKits((prev) =>
+      prev.find((k) => k._id === kit._id)
+        ? prev.filter((k) => k._id !== kit._id)
+        : [...prev, kit]
+    );
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      phone: "",
+      address: "",
+      batch: "",
+      parentUsername: "",
+      parentPassword: "",
+      parentEmail: "",
+      parentPhone: "",
     });
+    setSelectedKits([]);
+    setSelectedImage(null);
+    setUploadedImage(null);
+    setShowPassword(false);
+    setIsCheckingEmail(false);
+    setErrors({
+      name: "",
+      phone: "",
+      address: "",
+      batch: "",
+      parentUsername: "",
+      parentEmail: "",
+      parentPhone: "",
+      parentPassword: "",
+    });
+  };
 
-    const [formData, setFormData] = useState({
-        name: "",
-        phone: "",
-        address: "",
-        batch: "",
-        parentUsername: "",
-        parentPassword: "",
-        parentEmail: "",
-        parentPhone: "",
-    })
-
-    // Populate form with existing student data
-    useEffect(() => {
-        if (student && isOpen) {
-            setFormData({
-                name: student.name || "",
-                phone: student.phone || "",
-                address: student.address || "",
-                batch: (student as any).batch || "",
-                parentUsername: student.parent?.username || "",
-                parentPassword: "", // Don't populate password for security
-                parentEmail: student.parent?.email || "",
-                parentPhone: student.parent?.phone || "",
-            });
-
-            // Set selected kits based on student's current kits
-            if (student.kit && Array.isArray(student.kit)) {
-                const studentKits = kits.filter(kit => student.kit.includes(kit.name));
-                setSelectedKits(studentKits);
-            }
-
-            // Set existing image if available
-            if (student.image) {
-                setSelectedImage(student.image);
-                setUploadedImage(student.image);
-            }
-        }
-    }, [student, isOpen, kits]);
-
-    const handleKitToggle = (kit: Kit) => {
-        setSelectedKits(prev =>
-            prev.find(k => k._id === kit._id)
-                ? prev.filter(k => k._id !== kit._id)
-                : [...prev, kit]
-        )
-    }
-
-    const resetForm = () => {
-        setFormData({
-            name: "",
-            phone: "",
-            address: "",
-            batch: "",
-            parentUsername: "",
-            parentPassword: "",
-            parentEmail: "",
-            parentPhone: "",
-        })
-        setSelectedKits([])
-        setSelectedImage(null)
-        setUploadedImage(null)
-        setShowPassword(false)
-        setIsCheckingEmail(false)
-        setErrors({
-            name: "",
-            phone: "",
-            address: "",
-            batch: "",
-            parentUsername: "",
-            parentEmail: "",
-            parentPhone: "",
-            parentPassword: "",
-        })
-    }
-
-    const validateForm = () => {
-        const newErrors: any = {};
+  const validateForm = () => {
+    const newErrors: any = {};
 
         // For FRONTDESK and STORE users, minimal validation
         if (user.role === "FRONTDESK" || user.role === "STORE") {
@@ -159,35 +173,42 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
             if (!formData.address.trim()) newErrors.address = "Address is required";
             if (!formData.batch.trim()) newErrors.batch = "Batch is required";
 
-            // Parent validation
-            if (!formData.parentUsername.trim()) newErrors.parentUsername = "Username is required";
-            if (!formData.parentEmail.trim()) {
-                newErrors.parentEmail = "Email is required";
-            } else if (!/\S+@\S+\.\S+/.test(formData.parentEmail)) {
-                newErrors.parentEmail = "Email is invalid";
-            }
-            if (!formData.parentPhone.trim()) newErrors.parentPhone = "Parent phone number is required";
-            // Password is optional for edit (only validate if provided)
-            if (formData.parentPassword.trim() && formData.parentPassword.length < 6) {
-                newErrors.parentPassword = "Password must be at least 6 characters";
-            }
-        }
+      // Parent validation
+      if (!formData.parentUsername.trim())
+        newErrors.parentUsername = "Username is required";
+      if (!formData.parentEmail.trim()) {
+        newErrors.parentEmail = "Email is required";
+      } else if (!/\S+@\S+\.\S+/.test(formData.parentEmail)) {
+        newErrors.parentEmail = "Email is invalid";
+      }
+      if (!formData.parentPhone.trim())
+        newErrors.parentPhone = "Parent phone number is required";
+      // Password is optional for edit (only validate if provided)
+      if (
+        formData.parentPassword.trim() &&
+        formData.parentPassword.length < 6
+      ) {
+        newErrors.parentPassword = "Password must be at least 6 characters";
+      }
+    }
 
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
-    const handleUpdateStudent = async () => {
-        setIsLoading(true);
-        if (!validateForm() || !student) {
-            setIsLoading(false);
-            return;
-        }
+  const handleUpdateStudent = async () => {
+    setIsLoading(true);
+    if (!validateForm() || !student) {
+      setIsLoading(false);
+      return;
+    }
 
-        const kitIds = selectedKits.map(k => k._id);
+    const kitIds = selectedKits.map((k) => k._id);
 
-        // Find the selected batch ObjectId
-        const selectedBatch = batches.find(batch => batch.name === formData.batch);
+    // Find the selected batch ObjectId
+    const selectedBatch = batches.find(
+      (batch) => batch.name === formData.batch
+    );
 
         try {
             // If user is FRONTDESK, use updateStudentBatch for batch updates
@@ -236,52 +257,52 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
                     address: formData.address,
                 }
 
-                console.log("Updating student:", updatedStudent);
-                await updateStudent(updatedStudent);
-                toast.success("Student updated successfully!");
-            }
+        console.log("Updating student:", updatedStudent);
+        await updateStudent(updatedStudent);
+        toast.success("Student updated successfully!");
+      }
 
-            resetForm();
-            onClose();
-            onStudentUpdated();
-        } catch (error) {
-            toast.error("Failed to update student. Please try again.");
-        } finally {
-            setIsLoading(false);
-        }
+      resetForm();
+      onClose();
+      onStudentUpdated();
+    } catch (error) {
+      toast.error("Failed to update student. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCheckParentEmail = async () => {
+    if (!formData.parentEmail.trim()) {
+      toast.error("Please enter an email address first");
+      return;
     }
 
-    const handleCheckParentEmail = async () => {
-        if (!formData.parentEmail.trim()) {
-            toast.error("Please enter an email address first");
-            return;
-        }
+    if (!/\S+@\S+\.\S+/.test(formData.parentEmail)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
 
-        if (!/\S+@\S+\.\S+/.test(formData.parentEmail)) {
-            toast.error("Please enter a valid email address");
-            return;
-        }
+    setIsCheckingEmail(true);
+    try {
+      const response = await findParentByEmail(formData.parentEmail);
 
-        setIsCheckingEmail(true);
-        try {
-            const response = await findParentByEmail(formData.parentEmail);
-
-            if (response && response.username) {
-                setFormData(prev => ({
-                    ...prev,
-                    parentUsername: response.username || "",
-                    parentPhone: response.phone || "",
-                }));
-                toast.success("Parent found! Details auto-filled.");
-            } else {
-                toast.error("This email doesn't exist");
-            }
-        } catch (error) {
-            toast.error("This email doesn't exist");
-        } finally {
-            setIsCheckingEmail(false);
-        }
-    };
+      if (response && response.username) {
+        setFormData((prev) => ({
+          ...prev,
+          parentUsername: response.username || "",
+          parentPhone: response.phone || "",
+        }));
+        toast.success("Parent found! Details auto-filled.");
+      } else {
+        toast.error("This email doesn't exist");
+      }
+    } catch (error) {
+      toast.error("This email doesn't exist");
+    } finally {
+      setIsCheckingEmail(false);
+    }
+  };
 
     return (
         <Dialog
@@ -343,27 +364,27 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
                                         };
                                         reader.readAsDataURL(file);
 
-                                        const formData = new FormData();
-                                        formData.append("image", file);
-                                        try {
-                                            const res = await uploadStudentImage(formData);
-                                            if (res && res.image) {
-                                                setUploadedImage(res.image);
-                                                toast.success("Image uploaded successfully");
-                                            } else {
-                                                setUploadedImage(null);
-                                                toast.error("Image upload failed");
-                                            }
-                                        } catch (err) {
-                                            setUploadedImage(null);
-                                            toast.error("Image upload failed");
-                                        }
-                                    }
-                                }}
-                            />
-                            <p className="text-sm text-gray-500 mt-2">Profile Picture</p>
-                        </div>
-                        )}
+                      const formData = new FormData();
+                      formData.append("image", file);
+                      try {
+                        const res = await uploadStudentImage(formData);
+                        if (res && res.image) {
+                          setUploadedImage(res.image);
+                          toast.success("Image uploaded successfully");
+                        } else {
+                          setUploadedImage(null);
+                          toast.error("Image upload failed");
+                        }
+                      } catch (err) {
+                        setUploadedImage(null);
+                        toast.error("Image upload failed");
+                      }
+                    }
+                  }}
+                />
+                <p className="text-sm text-gray-500 mt-2">Profile Picture</p>
+              </div>
+            )}
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {/* Student Name - Only for admin */}
@@ -453,103 +474,129 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
                       </div>
                     )}
 
-                    {/* Parent Information - Only for admin */}
-                    {(user.role === "ADMIN" || user.role === "ACCOUNTS") && (
-                      <div>
-                        <h3 className="text-lg font-semibold mb-4 text-gray-800">Parent Information</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="parentUsername">Username</Label>
-                                <Input
-                                    id="parentUsername"
-                                    value={formData.parentUsername}
-                                    onChange={(e) => setFormData({ ...formData, parentUsername: e.target.value })}
-                                    placeholder="Enter username"
-                                    className={errors.parentUsername ? "border-red-500" : ""}
-                                />
-                                {errors.parentUsername && <p className="text-red-500 text-sm">{errors.parentUsername}</p>}
-                            </div>
-                            <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                    <Label htmlFor="parentEmail">Email</Label>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={handleCheckParentEmail}
-                                        disabled={isCheckingEmail || !formData.parentEmail.trim()}
-                                        className="h-6 px-2 text-xs"
-                                    >
-                                        {isCheckingEmail ? "Checking..." : "Check mail"}
-                                    </Button>
-                                </div>
-                                <Input
-                                    id="parentEmail"
-                                    type="email"
-                                    value={formData.parentEmail}
-                                    onChange={(e) => setFormData({ ...formData, parentEmail: e.target.value })}
-                                    placeholder="Enter email"
-                                    className={errors.parentEmail ? "border-red-500" : ""}
-                                />
-                                {errors.parentEmail && <p className="text-red-500 text-sm">{errors.parentEmail}</p>}
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="parentPhone">Parent Phone Number</Label>
-                                <Input
-                                    id="parentPhone"
-                                    value={formData.parentPhone}
-                                    onChange={(e) => setFormData({ ...formData, parentPhone: e.target.value })}
-                                    placeholder="Enter parent phone number"
-                                    className={errors.parentPhone ? "border-red-500" : ""}
-                                />
-                                {errors.parentPhone && <p className="text-red-500 text-sm">{errors.parentPhone}</p>}
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="parentPassword">Password (optional)</Label>
-                                <div className="relative">
-                                    <Input
-                                        id="parentPassword"
-                                        type={showPassword ? "text" : "password"}
-                                        value={formData.parentPassword}
-                                        onChange={(e) => setFormData({ ...formData, parentPassword: e.target.value })}
-                                        placeholder="Leave blank to keep current password"
-                                        className={errors.parentPassword ? "border-red-500 pr-10" : "pr-10"}
-                                    />
-                                    <button
-                                        type="button"
-                                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                    >
-                                        {showPassword ? (
-                                            <EyeOff className="h-4 w-4 text-gray-400 hover:text-gray-600" />
-                                        ) : (
-                                            <Eye className="h-4 w-4 text-gray-400 hover:text-gray-600" />
-                                        )}
-                                    </button>
-                                </div>
-                                {errors.parentPassword && <p className="text-red-500 text-sm">{errors.parentPassword}</p>}
-                            </div>
-                        </div>
-                      </div>
-                    )}
+          {/* Parent Information - Only for admin */}
+          {user.role === "ADMIN" && (
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">
+                Parent Information
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="parentUsername">Username</Label>
+                  <Input
+                    id="parentUsername"
+                    value={formData.parentUsername}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        parentUsername: e.target.value,
+                      })
+                    }
+                    placeholder="Enter username"
+                    className={errors.parentUsername ? "border-red-500" : ""}
+                  />
+                  {errors.parentUsername && (
+                    <p className="text-red-500 text-sm">
+                      {errors.parentUsername}
+                    </p>
+                  )}
                 </div>
-                <div className="flex justify-end gap-2 mt-6">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="parentEmail">Email</Label>
                     <Button
-                        variant="outline"
-                        onClick={onClose}
-                        disabled={isLoading}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCheckParentEmail}
+                      disabled={isCheckingEmail || !formData.parentEmail.trim()}
+                      className="h-6 px-2 text-xs"
                     >
-                        Cancel
+                      {isCheckingEmail ? "Checking..." : "Check mail"}
                     </Button>
-                    <Button
-                        onClick={handleUpdateStudent}
-                        className="bg-blue-600 hover:bg-blue-700"
-                        disabled={isLoading}
-                    >
-                        {isLoading ? "Updating..." : "Update Student"}
-                    </Button>
+                  </div>
+                  <Input
+                    id="parentEmail"
+                    type="email"
+                    value={formData.parentEmail}
+                    onChange={(e) =>
+                      setFormData({ ...formData, parentEmail: e.target.value })
+                    }
+                    placeholder="Enter email"
+                    className={errors.parentEmail ? "border-red-500" : ""}
+                  />
+                  {errors.parentEmail && (
+                    <p className="text-red-500 text-sm">{errors.parentEmail}</p>
+                  )}
                 </div>
-            </DialogContent>
-        </Dialog>
-    )
+                <div className="space-y-2">
+                  <Label htmlFor="parentPhone">Parent Phone Number</Label>
+                  <Input
+                    id="parentPhone"
+                    value={formData.parentPhone}
+                    onChange={(e) =>
+                      setFormData({ ...formData, parentPhone: e.target.value })
+                    }
+                    placeholder="Enter parent phone number"
+                    className={errors.parentPhone ? "border-red-500" : ""}
+                  />
+                  {errors.parentPhone && (
+                    <p className="text-red-500 text-sm">{errors.parentPhone}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="parentPassword">Password (optional)</Label>
+                  <div className="relative">
+                    <Input
+                      id="parentPassword"
+                      type={showPassword ? "text" : "password"}
+                      value={formData.parentPassword}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          parentPassword: e.target.value,
+                        })
+                      }
+                      placeholder="Leave blank to keep current password"
+                      className={
+                        errors.parentPassword ? "border-red-500 pr-10" : "pr-10"
+                      }
+                    />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                      )}
+                    </button>
+                  </div>
+                  {errors.parentPassword && (
+                    <p className="text-red-500 text-sm">
+                      {errors.parentPassword}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="flex justify-end gap-2 mt-6">
+          <Button variant="outline" onClick={onClose} disabled={isLoading}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleUpdateStudent}
+            className="bg-blue-600 hover:bg-blue-700"
+            disabled={isLoading}
+          >
+            {isLoading ? "Updating..." : "Update Student"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }
