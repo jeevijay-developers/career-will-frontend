@@ -207,7 +207,7 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
                 console.log("Updating student batch:", { studentId, newBatchId });
                 await updateStudentBatch(studentId, newBatchId);
                 toast.success("Student batch updated successfully!");
-            } else {
+            } else if (user.role === "ACCOUNTS" || user.role === "ADMIN") {
                 // For other roles (ADMIN, etc.), use the full update method
                 const updatedStudent = {
                     id: (student as any)._id || student.id,
@@ -292,7 +292,7 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
                         <h3 className="text-lg font-semibold mb-4 text-gray-800">Student Information</h3>
 
                         {/* Profile Picture - Only for admin */}
-                        {user.role === "ADMIN" && (
+                        {(user.role === "ADMIN" || user.role === "ACCOUNTS") && (
                           <div className="flex flex-col items-center mb-6">
                             <div className="relative">
                                 <div className="w-24 h-24 rounded-full border-2 border-gray-300 bg-gray-100 flex items-center justify-center overflow-hidden">
@@ -357,7 +357,7 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {/* Student Name - Only for admin */}
-                          {user.role === "ADMIN" && (
+                          {(user.role === "ADMIN" || user.role === "ACCOUNTS") && (
                             <div className="space-y-2">
                                 <Label htmlFor="name">Student Name</Label>
                                 <Input
@@ -371,7 +371,7 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
                             </div>
                           )}
                           {/* Phone - Only for admin */}
-                          {user.role === "ADMIN" && (
+                          {(user.role === "ADMIN" || user.role === "ACCOUNTS") && (
                             <div className="space-y-2">
                                 <Label htmlFor="phone">Phone Number</Label>
                                 <Input
@@ -401,7 +401,7 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
                             {errors.batch && <p className="text-red-500 text-sm">{errors.batch}</p>}
                           </div>
                           {/* Address - Only for admin */}
-                          {user.role === "ADMIN" && (
+                          {(user.role === "ADMIN" || user.role === "ACCOUNTS") && (
                             <div className="space-y-2">
                                 <Label htmlFor="address">Address</Label>
                                 <Input
@@ -418,7 +418,7 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
                     </div>
 
                     {/* Kit Selection - Only for admin */}
-                    {user.role === "ADMIN" && (
+                    {(user.role === "ADMIN" || user.role === "ACCOUNTS") && (
                       <div>
                         <h3 className="text-lg font-semibold mb-4 text-gray-800">Student Kits</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -445,7 +445,7 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
                     )}
 
                     {/* Parent Information - Only for admin */}
-                    {user.role === "ADMIN" && (
+                    {(user.role === "ADMIN" || user.role === "ACCOUNTS") && (
                       <div>
                         <h3 className="text-lg font-semibold mb-4 text-gray-800">Parent Information</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
