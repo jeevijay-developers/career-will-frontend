@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Checkbox } from "@/components/ui/checkbox"
 import { Eye, EyeOff } from "lucide-react"
 import toast from "react-hot-toast"
-import { updateStudent, uploadStudentImage, findParentByEmail, updateStudentBatch } from "../../server/server.js"
+import { updateStudent, uploadStudentImage, findParentByEmail, updateStudentBatch, updateStudentKit } from "../../server/server.js"
 import Image from "next/image.js"
 
 interface Kit {
@@ -147,9 +147,10 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
     const validateForm = () => {
         const newErrors: any = {};
 
-        // For FRONTDESK users, batch is optional (can be "-" for no batch)
-        if (user.role === "FRONTDESK") {
+        // For FRONTDESK and STORE users, minimal validation
+        if (user.role === "FRONTDESK" || user.role === "STORE") {
             // No validation needed for FRONTDESK users - batch can be empty or "-"
+            // No validation needed for STORE users - only kit updates
         } else {
             // For other roles (ADMIN, etc.), validate all fields
             // Student validation
@@ -204,9 +205,19 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
                     }
                 }
                 
-                console.log("Updating student batch:", { studentId, newBatchId });
+                // console.log("Updating student batch:", { studentId, newBatchId });
                 await updateStudentBatch(studentId, newBatchId);
                 toast.success("Student batch updated successfully!");
+            } else if (user.role === "STORE") {
+                // For STORE users, only update student kits
+                const studentId = (student as any)._id || student.id;
+                
+                // Convert selected kits to the format expected by the API
+                const kitArray = selectedKits.map(kit => kit._id);
+                
+                console.log("Updating student kit:", { studentId, kit: kitArray });
+                await updateStudentKit(studentId, { kit: kitArray });
+                toast.success("Student kit updated successfully!");
             } else if (user.role === "ACCOUNTS" || user.role === "ADMIN") {
                 // For other roles (ADMIN, etc.), use the full update method
                 const updatedStudent = {
@@ -289,11 +300,10 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
                 <div className="space-y-6">
                     {/* Student Information */}
                     <div>
-                        <h3 className="text-lg font-semibold mb-4 text-gray-800">Student Information</h3>
-
                         {/* Profile Picture - Only for admin */}
                         {(user.role === "ADMIN" || user.role === "ACCOUNTS") && (
-                          <div className="flex flex-col items-center mb-6">
+                            <div className="flex flex-col items-center mb-6">
+                              <h3 className="text-lg font-semibold mb-4 text-gray-800">Student Information</h3>
                             <div className="relative">
                                 <div className="w-24 h-24 rounded-full border-2 border-gray-300 bg-gray-100 flex items-center justify-center overflow-hidden">
                                     {selectedImage ? (
@@ -385,7 +395,7 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
                             </div>
                           )}
                           {/* Batch - Always visible */}
-                          <div className="space-y-2">
+                         {(user.role !== "STORE") && <div className="space-y-2">
                             <Label htmlFor="batch">Batch</Label>
                             <Select value={formData.batch} onValueChange={(value) => setFormData({ ...formData, batch: value })}>
                                 <SelectTrigger className={errors.batch ? "border-red-500" : ""}>
@@ -399,7 +409,7 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
                                 </SelectContent>
                             </Select>
                             {errors.batch && <p className="text-red-500 text-sm">{errors.batch}</p>}
-                          </div>
+                          </div>}
                           {/* Address - Only for admin */}
                           {(user.role === "ADMIN" || user.role === "ACCOUNTS") && (
                             <div className="space-y-2">
@@ -417,13 +427,13 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
                         </div>
                     </div>
 
-                    {/* Kit Selection - Only for admin */}
-                    {(user.role === "ADMIN" || user.role === "ACCOUNTS") && (
+                    {/* Kit Selection - For admin, accounts, and store */}
+                    {(user.role === "ADMIN" || user.role === "ACCOUNTS" || user.role === "STORE") && (
                       <div>
                         <h3 className="text-lg font-semibold mb-4 text-gray-800">Student Kits</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {(kits ?? []).map((kit) => (
-                                <div key={kit._id} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
+                                <div key={kit._id} onClick={() => handleKitToggle(kit)} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
                                     <Checkbox
                                         id={`kit-${kit._id}`}
                                         checked={selectedKits.some(k => k._id === kit._id)}
@@ -433,7 +443,6 @@ export function EditStudentForm({ isOpen, onClose, student, kits, batches, onStu
                                         <Label
                                             htmlFor={`kit-${kit._id}`}
                                             className="text-sm font-medium capitalize cursor-pointer"
-                                            onClick={() => handleKitToggle(kit)}
                                         >
                                             {kit.name}
                                         </Label>
