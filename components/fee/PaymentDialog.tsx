@@ -50,7 +50,7 @@ export function PaymentDialog({
       setPaymentData({
         paidAmount: "",
         paymentDate: "",
-        dateOfReceipt: new Date().toISOString().split('T')[0],
+        dateOfReceipt: new Date().toISOString().split("T")[0],
         receiptNumber: "",
         UTR: "",
         mode: "CASH",
@@ -60,57 +60,78 @@ export function PaymentDialog({
 
   const handleSubmit = async () => {
     if (!selectedStudent) return;
-    
+
     await onSubmit(paymentData, selectedStudent.studentRollNo);
     onOpenChange(false);
   };
 
   if (!selectedStudent) return null;
 
-  const remainingAmount = selectedStudent.finalFees - selectedStudent.paidAmount;
+  const remainingAmount =
+    selectedStudent.finalFees - selectedStudent.paidAmount;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent aria-describedby={undefined} className="max-w-lg max-h-[80vh] overflow-y-auto">
+      <DialogContent
+        aria-describedby={undefined}
+        className="max-w-lg max-h-[80vh] overflow-y-auto"
+      >
         <DialogHeader>
           <DialogTitle>Add Payment Installment</DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-6">
           {/* Student Information */}
           <div className="p-4 bg-blue-50 rounded-lg">
-            <h4 className="font-semibold text-blue-900 mb-2">Student Information</h4>
+            <h4 className="font-semibold text-blue-900 mb-2">
+              Student Information
+            </h4>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="text-blue-600">Name:</span>
-                <p className="font-medium text-blue-900">{selectedStudent.studentName || `Student ${selectedStudent.studentRollNo}`}</p>
+                <p className="font-medium text-blue-900">
+                  {selectedStudent.studentName ||
+                    `Student ${selectedStudent.studentRollNo}`}
+                </p>
               </div>
               <div>
                 <span className="text-blue-600">Roll Number:</span>
-                <p className="font-medium text-blue-900">{selectedStudent.studentRollNo}</p>
+                <p className="font-medium text-blue-900">
+                  {selectedStudent.studentRollNo}
+                </p>
               </div>
               <div>
                 <span className="text-blue-600">Total Fees:</span>
-                <p className="font-medium text-blue-900">₹{selectedStudent.finalFees.toLocaleString()}</p>
+                <p className="font-medium text-blue-900">
+                  ₹{selectedStudent.finalFees.toLocaleString()}
+                </p>
               </div>
               <div>
                 <span className="text-blue-600">Paid Amount:</span>
-                <p className="font-medium text-blue-900">₹{selectedStudent.paidAmount.toLocaleString()}</p>
+                <p className="font-medium text-blue-900">
+                  ₹{selectedStudent.paidAmount.toLocaleString()}
+                </p>
               </div>
               <div>
                 <span className="text-blue-600">Remaining:</span>
-                <p className="font-medium text-red-600">₹{remainingAmount.toLocaleString()}</p>
+                <p className="font-medium text-red-600">
+                  ₹{remainingAmount.toLocaleString()}
+                </p>
               </div>
               <div>
                 <span className="text-blue-600">Status:</span>
-                <p className="font-medium text-yellow-600">{selectedStudent.status}</p>
+                <p className="font-medium text-yellow-600">
+                  {selectedStudent.status}
+                </p>
               </div>
             </div>
           </div>
 
           {/* Payment Form */}
           <div>
-            <h4 className="font-semibold text-gray-900 mb-4">Payment Details</h4>
+            <h4 className="font-semibold text-gray-900 mb-4">
+              Payment Details
+            </h4>
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="paymentAmount">Payment Amount (₹)</Label>
@@ -148,6 +169,9 @@ export function PaymentDialog({
                     <option value="ONLINE">Online</option>
                     <option value="CHEQUE">Cheque</option>
                     <option value="CARD">Card</option>
+                    <option value="CASH+ONLINE">Cash+Online</option>
+                    <option value="CASH+CHEQUE">Cash+Cheque</option>
+                    <option value="CASH+CARD">Cash+Card</option>
                   </select>
                 </div>
                 <div className="space-y-2">
@@ -181,8 +205,9 @@ export function PaymentDialog({
                     placeholder="Receipt number"
                   />
                 </div>
-                
-                {(paymentData.mode === "ONLINE" || paymentData.mode === "CARD") && (
+
+                {(paymentData.mode === "ONLINE" ||
+                  paymentData.mode === "CARD") && (
                   <div className="space-y-2">
                     <Label htmlFor="utrNumber">UTR/Transaction Number</Label>
                     <Input
@@ -205,33 +230,52 @@ export function PaymentDialog({
           {/* Payment Summary */}
           {paymentData.paidAmount && (
             <div className="p-4 bg-gray-50 rounded-lg">
-              <h4 className="font-semibold text-gray-900 mb-2">Payment Summary</h4>
+              <h4 className="font-semibold text-gray-900 mb-2">
+                Payment Summary
+              </h4>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-gray-600">Current Payment:</span>
-                  <span className="ml-2 font-medium">₹{parseFloat(paymentData.paidAmount || "0").toLocaleString()}</span>
+                  <span className="ml-2 font-medium">
+                    ₹
+                    {parseFloat(paymentData.paidAmount || "0").toLocaleString()}
+                  </span>
                 </div>
                 <div>
                   <span className="text-gray-600">Total After Payment:</span>
-                  <span className="ml-2 font-medium">₹{(selectedStudent.paidAmount + parseFloat(paymentData.paidAmount || "0")).toLocaleString()}</span>
+                  <span className="ml-2 font-medium">
+                    ₹
+                    {(
+                      selectedStudent.paidAmount +
+                      parseFloat(paymentData.paidAmount || "0")
+                    ).toLocaleString()}
+                  </span>
                 </div>
                 <div>
                   <span className="text-gray-600">New Remaining:</span>
                   <span className="ml-2 font-medium text-red-600">
-                    ₹{(remainingAmount - parseFloat(paymentData.paidAmount || "0")).toLocaleString()}
+                    ₹
+                    {(
+                      remainingAmount -
+                      parseFloat(paymentData.paidAmount || "0")
+                    ).toLocaleString()}
                   </span>
                 </div>
                 <div>
                   <span className="text-gray-600">New Status:</span>
                   <span className="ml-2 font-medium text-green-600">
-                    {(remainingAmount - parseFloat(paymentData.paidAmount || "0")) <= 0 ? "PAID" : "PARTIAL"}
+                    {remainingAmount -
+                      parseFloat(paymentData.paidAmount || "0") <=
+                    0
+                      ? "PAID"
+                      : "PARTIAL"}
                   </span>
                 </div>
               </div>
             </div>
           )}
         </div>
-        
+
         <div className="flex justify-end gap-2 mt-6">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
@@ -239,7 +283,11 @@ export function PaymentDialog({
           <Button
             onClick={handleSubmit}
             className="bg-blue-600 hover:bg-blue-700"
-            disabled={!paymentData.paidAmount || !paymentData.dateOfReceipt || !paymentData.receiptNumber}
+            disabled={
+              !paymentData.paidAmount ||
+              !paymentData.dateOfReceipt ||
+              !paymentData.receiptNumber
+            }
           >
             Add Payment
           </Button>

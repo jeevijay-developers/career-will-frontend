@@ -33,7 +33,7 @@ export function AddFeeRecordDialog({
     dueDate: "",
     firstInstallmentAmount: "",
     firstInstallmentMode: "CASH",
-    firstInstallmentDateOfReceipt: new Date().toISOString().split('T')[0],
+    firstInstallmentDateOfReceipt: new Date().toISOString().split("T")[0],
     firstInstallmentUTR: "",
   });
 
@@ -67,7 +67,7 @@ export function AddFeeRecordDialog({
       dueDate: "",
       firstInstallmentAmount: "",
       firstInstallmentMode: "CASH",
-      firstInstallmentDateOfReceipt: new Date().toISOString().split('T')[0],
+      firstInstallmentDateOfReceipt: new Date().toISOString().split("T")[0],
       firstInstallmentUTR: "",
     });
     setCalculatedFinalFees(0);
@@ -81,7 +81,10 @@ export function AddFeeRecordDialog({
           Add Fee Record
         </Button>
       </DialogTrigger>
-      <DialogContent aria-describedby={undefined} className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent
+        aria-describedby={undefined}
+        className="max-w-2xl max-h-[80vh] overflow-y-auto"
+      >
         <DialogHeader>
           <DialogTitle>Add Fee Record with First Installment</DialogTitle>
         </DialogHeader>
@@ -89,7 +92,9 @@ export function AddFeeRecordDialog({
         <div className="space-y-6">
           {/* Fee Structure Section */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Fee Structure</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Fee Structure
+            </h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="studentRollNo">Student Roll Number</Label>
@@ -162,16 +167,23 @@ export function AddFeeRecordDialog({
 
           {/* First Installment Section */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">First Installment Details</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              First Installment Details
+            </h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="firstInstallmentAmount">Installment Amount (₹)</Label>
+                <Label htmlFor="firstInstallmentAmount">
+                  Installment Amount (₹)
+                </Label>
                 <Input
                   id="firstInstallmentAmount"
                   type="number"
                   value={formData.firstInstallmentAmount}
                   onChange={(e) =>
-                    setFormData({ ...formData, firstInstallmentAmount: e.target.value })
+                    setFormData({
+                      ...formData,
+                      firstInstallmentAmount: e.target.value,
+                    })
                   }
                   placeholder="First installment amount"
                   max={calculatedFinalFees}
@@ -184,36 +196,52 @@ export function AddFeeRecordDialog({
                   className="px-3 py-2 border border-gray-300 rounded-md w-full"
                   value={formData.firstInstallmentMode}
                   onChange={(e) =>
-                    setFormData({ ...formData, firstInstallmentMode: e.target.value })
+                    setFormData({
+                      ...formData,
+                      firstInstallmentMode: e.target.value,
+                    })
                   }
                 >
                   <option value="CASH">Cash</option>
                   <option value="ONLINE">Online</option>
                   <option value="CHEQUE">Cheque</option>
                   <option value="CARD">Card</option>
+                  <option value="CASH+ONLINE">Cash+Online</option>
+                  <option value="CASH+CHEQUE">Cash+Cheque</option>
+                  <option value="CASH+CARD">Cash+Card</option>
                 </select>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 mt-4">
               <div className="space-y-2">
-                <Label htmlFor="firstInstallmentDateOfReceipt">Date of Receipt</Label>
+                <Label htmlFor="firstInstallmentDateOfReceipt">
+                  Date of Receipt
+                </Label>
                 <Input
                   id="firstInstallmentDateOfReceipt"
                   type="date"
                   value={formData.firstInstallmentDateOfReceipt}
                   onChange={(e) =>
-                    setFormData({ ...formData, firstInstallmentDateOfReceipt: e.target.value })
+                    setFormData({
+                      ...formData,
+                      firstInstallmentDateOfReceipt: e.target.value,
+                    })
                   }
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="firstInstallmentUTR">UTR/Transaction Number</Label>
+                <Label htmlFor="firstInstallmentUTR">
+                  UTR/Transaction Number
+                </Label>
                 <Input
                   id="firstInstallmentUTR"
                   value={formData.firstInstallmentUTR}
                   onChange={(e) =>
-                    setFormData({ ...formData, firstInstallmentUTR: e.target.value })
+                    setFormData({
+                      ...formData,
+                      firstInstallmentUTR: e.target.value,
+                    })
                   }
                   placeholder="UTR or transaction number (optional)"
                 />
@@ -224,25 +252,40 @@ export function AddFeeRecordDialog({
           {/* Summary Section */}
           {formData.firstInstallmentAmount && (
             <div className="p-4 bg-gray-50 rounded-lg">
-              <h4 className="font-semibold text-gray-900 mb-2">Payment Summary</h4>
+              <h4 className="font-semibold text-gray-900 mb-2">
+                Payment Summary
+              </h4>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-gray-600">Final Fees:</span>
-                  <span className="ml-2 font-medium">₹{calculatedFinalFees.toLocaleString()}</span>
+                  <span className="ml-2 font-medium">
+                    ₹{calculatedFinalFees.toLocaleString()}
+                  </span>
                 </div>
                 <div>
                   <span className="text-gray-600">First Installment:</span>
-                  <span className="ml-2 font-medium">₹{parseFloat(formData.firstInstallmentAmount || "0").toLocaleString()}</span>
+                  <span className="ml-2 font-medium">
+                    ₹
+                    {parseFloat(
+                      formData.firstInstallmentAmount || "0"
+                    ).toLocaleString()}
+                  </span>
                 </div>
                 <div>
                   <span className="text-gray-600">Remaining Amount:</span>
                   <span className="ml-2 font-medium text-red-600">
-                    ₹{(calculatedFinalFees - parseFloat(formData.firstInstallmentAmount || "0")).toLocaleString()}
+                    ₹
+                    {(
+                      calculatedFinalFees -
+                      parseFloat(formData.firstInstallmentAmount || "0")
+                    ).toLocaleString()}
                   </span>
                 </div>
                 <div>
                   <span className="text-gray-600">Status:</span>
-                  <span className="ml-2 font-medium text-yellow-600">PARTIAL</span>
+                  <span className="ml-2 font-medium text-yellow-600">
+                    PARTIAL
+                  </span>
                 </div>
               </div>
             </div>
@@ -256,7 +299,11 @@ export function AddFeeRecordDialog({
           <Button
             onClick={handleSubmit}
             className="bg-blue-600 hover:bg-blue-700"
-            disabled={!formData.studentRollNo || !formData.totalFees || !formData.firstInstallmentAmount}
+            disabled={
+              !formData.studentRollNo ||
+              !formData.totalFees ||
+              !formData.firstInstallmentAmount
+            }
           >
             Create Fee Record
           </Button>
