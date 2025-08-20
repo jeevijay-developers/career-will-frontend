@@ -265,42 +265,6 @@ export function EditStudentForm({
           kit: kitIds,
           address: formData.address,
         };
-        try {
-            // If user is FRONTDESK, use updateStudentBatch for batch updates
-            if (user.role === "FRONTDESK") {
-                const studentId = (student as any)._id || student.id;
-                
-                // Handle the batch selection
-                let newBatchId = "-";
-                
-                if (formData.batch && formData.batch !== "-") {
-                    // Check if the selected batch exists in the batches array
-                    const selectedBatch = batches.find(batch => batch.name === formData.batch);
-                    if (selectedBatch) {
-                        newBatchId = selectedBatch.name;
-                    }
-                }
-                
-                console.log("Updating student batch:", { studentId, newBatchId });
-                await updateStudentBatch(studentId, newBatchId);
-                toast.success("Student batch updated successfully!");
-            } else if (user.role === "ACCOUNTS" || user.role === "ADMIN") {
-                // For other roles (ADMIN, etc.), use the full update method
-                const updatedStudent = {
-                    id: (student as any)._id || student.id,
-                    name: formData.name,
-                    batch: selectedBatch?._id || selectedBatch?.id,
-                    phone: formData.phone,
-                    image: uploadedImage ? uploadedImage : undefined,
-                    parent: {
-                        username: formData.parentUsername,
-                        email: formData.parentEmail,
-                        phone: formData.parentPhone,
-                        ...(formData.parentPassword.trim() && { password: formData.parentPassword })
-                    },
-                    kit: kitIds,
-                    address: formData.address,
-                }
 
         console.log("Updating student:", updatedStudent);
         await updateStudent(updatedStudent);
@@ -436,47 +400,6 @@ export function EditStudentForm({
                         setSelectedImage(event.target?.result as string);
                       };
                       reader.readAsDataURL(file);
-                        {/* Profile Picture - Only for admin */}
-                        {(user.role === "ADMIN" || user.role === "ACCOUNTS") && (
-                          <div className="flex flex-col items-center mb-6">
-                            <div className="relative">
-                                <div className="w-24 h-24 rounded-full border-2 border-gray-300 bg-gray-100 flex items-center justify-center overflow-hidden">
-                                    {selectedImage ? (
-                                        <Image
-                                            src={typeof selectedImage === 'string' ? selectedImage : (selectedImage?.url || "/placeholder-user.jpg")}
-                                            alt="Student Profile"
-                                            width={96}
-                                            height={96}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    ) : (
-                                        <svg className="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                                        </svg>
-                                    )}
-                                </div>
-                                <Label
-                                    htmlFor="studentImage"
-                                    className="absolute bottom-0 right-0 bg-blue-600 text-white rounded-full p-1 cursor-pointer hover:bg-blue-700 transition-colors"
-                                >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                    </svg>
-                                </Label>
-                            </div>
-                            <Input
-                                id="studentImage"
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={async (e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) {
-                                        const reader = new FileReader();
-                                        reader.onload = (event) => {
-                                            setSelectedImage(event.target?.result as string);
-                                        };
-                                        reader.readAsDataURL(file);
 
                       const formData = new FormData();
                       formData.append("image", file);
@@ -587,67 +510,6 @@ export function EditStudentForm({
               )}
             </div>
           </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {/* Student Name - Only for admin */}
-                          {(user.role === "ADMIN" || user.role === "ACCOUNTS") && (
-                            <div className="space-y-2">
-                                <Label htmlFor="name">Student Name</Label>
-                                <Input
-                                    id="name"
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    placeholder="Enter student name"
-                                    className={errors.name ? "border-red-500" : ""}
-                                />
-                                {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
-                            </div>
-                          )}
-                          {/* Phone - Only for admin */}
-                          {(user.role === "ADMIN" || user.role === "ACCOUNTS") && (
-                            <div className="space-y-2">
-                                <Label htmlFor="phone">Phone Number</Label>
-                                <Input
-                                    id="phone"
-                                    value={formData.phone}
-                                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                    placeholder="Enter phone number"
-                                    className={errors.phone ? "border-red-500" : ""}
-                                />
-                                {errors.phone && <p className="text-red-500 text-sm">{errors.phone}</p>}
-                            </div>
-                          )}
-                          {/* Batch - Always visible */}
-                          <div className="space-y-2">
-                            <Label htmlFor="batch">Batch</Label>
-                            <Select value={formData.batch} onValueChange={(value) => setFormData({ ...formData, batch: value })}>
-                                <SelectTrigger className={errors.batch ? "border-red-500" : ""}>
-                                    <SelectValue placeholder="Select batch" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="-">No Batch</SelectItem>
-                                    {(batches ?? []).map((batch) => (
-                                        <SelectItem key={batch._id || batch.id} value={batch.name}>{batch.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            {errors.batch && <p className="text-red-500 text-sm">{errors.batch}</p>}
-                          </div>
-                          {/* Address - Only for admin */}
-                          {(user.role === "ADMIN" || user.role === "ACCOUNTS") && (
-                            <div className="space-y-2">
-                                <Label htmlFor="address">Address</Label>
-                                <Input
-                                    id="address"
-                                    value={formData.address}
-                                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                    placeholder="Enter address"
-                                    className={errors.address ? "border-red-500" : ""}
-                                />
-                                {errors.address && <p className="text-red-500 text-sm">{errors.address}</p>}
-                            </div>
-                          )}
-                        </div>
-                    </div>
 
           {/* Kit Selection - Only for admin */}
           {user.role === "ADMIN" && (
@@ -680,32 +542,6 @@ export function EditStudentForm({
               </div>
             </div>
           )}
-                    {/* Kit Selection - Only for admin */}
-                    {(user.role === "ADMIN" || user.role === "ACCOUNTS") && (
-                      <div>
-                        <h3 className="text-lg font-semibold mb-4 text-gray-800">Student Kits</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {(kits ?? []).map((kit) => (
-                                <div key={kit._id} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
-                                    <Checkbox
-                                        id={`kit-${kit._id}`}
-                                        checked={selectedKits.some(k => k._id === kit._id)}
-                                        onCheckedChange={() => handleKitToggle(kit)}
-                                    />
-                                    <div className="flex-1">
-                                        <Label
-                                            htmlFor={`kit-${kit._id}`}
-                                            className="text-sm font-medium capitalize cursor-pointer"
-                                            onClick={() => handleKitToggle(kit)}
-                                        >
-                                            {kit.name}
-                                        </Label>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                      </div>
-                    )}
 
           {/* Parent Information - Only for admin */}
           {user.role === "ADMIN" && (
@@ -832,103 +668,4 @@ export function EditStudentForm({
       </DialogContent>
     </Dialog>
   );
-                    {/* Parent Information - Only for admin */}
-                    {(user.role === "ADMIN" || user.role === "ACCOUNTS") && (
-                      <div>
-                        <h3 className="text-lg font-semibold mb-4 text-gray-800">Parent Information</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="parentUsername">Username</Label>
-                                <Input
-                                    id="parentUsername"
-                                    value={formData.parentUsername}
-                                    onChange={(e) => setFormData({ ...formData, parentUsername: e.target.value })}
-                                    placeholder="Enter username"
-                                    className={errors.parentUsername ? "border-red-500" : ""}
-                                />
-                                {errors.parentUsername && <p className="text-red-500 text-sm">{errors.parentUsername}</p>}
-                            </div>
-                            <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                    <Label htmlFor="parentEmail">Email</Label>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={handleCheckParentEmail}
-                                        disabled={isCheckingEmail || !formData.parentEmail.trim()}
-                                        className="h-6 px-2 text-xs"
-                                    >
-                                        {isCheckingEmail ? "Checking..." : "Check mail"}
-                                    </Button>
-                                </div>
-                                <Input
-                                    id="parentEmail"
-                                    type="email"
-                                    value={formData.parentEmail}
-                                    onChange={(e) => setFormData({ ...formData, parentEmail: e.target.value })}
-                                    placeholder="Enter email"
-                                    className={errors.parentEmail ? "border-red-500" : ""}
-                                />
-                                {errors.parentEmail && <p className="text-red-500 text-sm">{errors.parentEmail}</p>}
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="parentPhone">Parent Phone Number</Label>
-                                <Input
-                                    id="parentPhone"
-                                    value={formData.parentPhone}
-                                    onChange={(e) => setFormData({ ...formData, parentPhone: e.target.value })}
-                                    placeholder="Enter parent phone number"
-                                    className={errors.parentPhone ? "border-red-500" : ""}
-                                />
-                                {errors.parentPhone && <p className="text-red-500 text-sm">{errors.parentPhone}</p>}
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="parentPassword">Password (optional)</Label>
-                                <div className="relative">
-                                    <Input
-                                        id="parentPassword"
-                                        type={showPassword ? "text" : "password"}
-                                        value={formData.parentPassword}
-                                        onChange={(e) => setFormData({ ...formData, parentPassword: e.target.value })}
-                                        placeholder="Leave blank to keep current password"
-                                        className={errors.parentPassword ? "border-red-500 pr-10" : "pr-10"}
-                                    />
-                                    <button
-                                        type="button"
-                                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                    >
-                                        {showPassword ? (
-                                            <EyeOff className="h-4 w-4 text-gray-400 hover:text-gray-600" />
-                                        ) : (
-                                            <Eye className="h-4 w-4 text-gray-400 hover:text-gray-600" />
-                                        )}
-                                    </button>
-                                </div>
-                                {errors.parentPassword && <p className="text-red-500 text-sm">{errors.parentPassword}</p>}
-                            </div>
-                        </div>
-                      </div>
-                    )}
-                </div>
-                <div className="flex justify-end gap-2 mt-6">
-                    <Button
-                        variant="outline"
-                        onClick={onClose}
-                        disabled={isLoading}
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        onClick={handleUpdateStudent}
-                        className="bg-blue-600 hover:bg-blue-700"
-                        disabled={isLoading}
-                    >
-                        {isLoading ? "Updating..." : "Update Student"}
-                    </Button>
-                </div>
-            </DialogContent>
-        </Dialog>
-    )
 }

@@ -79,8 +79,6 @@ export function StudentList({
   const [searchError, setSearchError] = useState<string | null>(null);
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
 
-  console.log("Students: ", students[0]);
-
   // Debounced search function
   const debouncedSearch = useCallback(
     debounce(async (searchQuery: string) => {
@@ -356,31 +354,12 @@ export function StudentList({
                   </>
                 )}
                 {user.role === "STORE" && (
-                  <>
-                  <TableHead className="min-w-[100px]">Batch</TableHead>
-                  <TableHead className="min-w-[100px]">Kits</TableHead>
-                  </>
-                  )}
-                {user.role === "FRONTDESK" && (
-                  <>
-                    <TableHead className="min-w-[150px]">Name</TableHead>
-                    <TableHead className="min-w-[120px]">Class</TableHead>
-                    <TableHead className="min-w-[100px]">Batch</TableHead>
-                    <TableHead className="min-w-[150px]">Father Name</TableHead>
-                    {/* <TableHead>Parent Email</TableHead> */}
-                    <TableHead className="min-w-[80px]">Kits</TableHead>
-                  </>
-                )}
-                {user.role === "STORE" && (
                   <TableHead className="min-w-[100px]">Batch</TableHead>
                 )}
                 {user.role === "FRONTDESK" && (
                   <TableHead className="min-w-[100px]">Batch</TableHead>
                 )}
                 {(user.role === "ADMIN" ||
-                  user.role === "FRONTDESK"||
-                  user.role === "ACCOUNTS" ||
-                  user.role === "STORE") && <TableHead className="min-w-[100px]">Actions</TableHead>}
                   user.role === "FRONTDESK" ||
                   user.role === "STORE") && (
                   <TableHead className="min-w-[100px]">Actions</TableHead>
@@ -456,41 +435,21 @@ export function StudentList({
                       </>
                     )}
                     {user.role === "STORE" && (
-                      <>
-                      <TableCell className="min-w-[100px]">{student.batch || "-"}</TableCell>
-                      <TableCell className="min-w-[80px]">
-                          <span className="text-sm text-gray-700">
-                            {student.kit?.length ?? 0} / {(kits ?? []).length}
-                          </span>
-                        </TableCell>
-                      </>
                       <TableCell className="min-w-[100px]">
                         {student.batch || "-"}
                       </TableCell>
                     )}
                     {user.role === "FRONTDESK" && (
-                      <>
-                      <TableCell className="min-w-[100px] uppercase">{student.name || "-"}</TableCell>
-                      <TableCell className="min-w-[100px]">{student.class || "-"}</TableCell>
-                      <TableCell className="min-w-[100px]">{student.batch || "-"}</TableCell>
-                      <TableCell className="min-w-[100px]">{student.parent.fatherName || "-"}</TableCell>
-                      <TableCell className="min-w-[80px]">
-                          <span className="text-sm text-gray-700">
-                            {student.kit?.length ?? 0} / {(kits ?? []).length}
-                          </span>
-                      </TableCell>
-                      </>
                       <TableCell className="min-w-[100px]">
                         {student.batch || "-"}
                       </TableCell>
                     )}
                     {(user.role === "ADMIN" ||
-                      user.role === "FRONTDESK"||
-                      user.role === "ACCOUNTS" ||
+                      user.role === "FRONTDESK" ||
                       user.role === "STORE") && (
                       <TableCell className="min-w-[100px]">
                         <div className="flex gap-2">
-                          {(user.role === "ADMIN" || user.role === "ACCOUNTS" || user.role === "STORE") && (
+                          {user.role === "ADMIN" && (
                             <>
                               <Button
                                 variant="outline"
@@ -509,7 +468,7 @@ export function StudentList({
                               </Button>
                             </>
                           )}
-                          {(user.role === "FRONTDESK") && (
+                          {user.role === "FRONTDESK" && (
                             <Button
                               variant="outline"
                               size="sm"
@@ -519,7 +478,6 @@ export function StudentList({
                             </Button>
                           )}
                           {/* If STORE should have actions, add here */}
-
                         </div>
                       </TableCell>
                     )}
