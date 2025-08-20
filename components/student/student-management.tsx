@@ -19,7 +19,6 @@ export function StudentManagement() {
     kits,
     batches,
     batchNames,
-    isLoading,
     setCurrentPage,
     refreshStudents,
   } = useStudentData();

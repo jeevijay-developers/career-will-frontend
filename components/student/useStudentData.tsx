@@ -24,6 +24,7 @@ export function useStudentData() {
       const kitsResponse = await getAllKits();
       setKits(kitsResponse);
       const batchesResponse = await getAllBatches();
+      console.log("Batches: ", batchesResponse);
       setBatches(batchesResponse);
     } catch (error) {
       setKits([]);

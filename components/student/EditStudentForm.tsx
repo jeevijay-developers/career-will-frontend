@@ -21,6 +21,7 @@ interface Kit {
 }
 
 interface Student {
+  batch: string | null;
   id: string;
   studentId: number;
   name: string;
@@ -29,14 +30,13 @@ interface Student {
   kit: string[];
   parent: {
     id: string;
-    username: string;
-    name: string;
+    fatherName: string;
     email: string;
-    phone: string;
+    parentContact: string;
   };
   joinDate: string;
   phone?: string;
-  address?: string;
+  permanentAddress?: string;
   image?: string;
 }
 
@@ -91,19 +91,31 @@ export function EditStudentForm({
     parentEmail: "",
     parentPhone: "",
   });
-
+  console.log("Student from props: ", student)
   // Populate form with existing student data
   useEffect(() => {
     if (student && isOpen) {
+      console.log("Student batch value:", student.batch);
+      console.log("Available batches:", batches);
+      
+      // Find matching batch in the batches array
+      const matchingBatch = batches.find(batch => 
+        batch.name === student.batch || 
+        batch._id === student.batch || 
+        batch.id === student.batch
+      );
+      
+      console.log("Matching batch found:", matchingBatch);
+      
       setFormData({
         name: student.name || "",
         phone: student.phone || "",
-        address: student.address || "",
-        batch: (student as any).batch || "",
-        parentUsername: student.parent?.username || "",
+        address: student.permanentAddress || "",
+        batch: matchingBatch ? matchingBatch.name : (student.batch || ""),
+        parentUsername: student.parent?.fatherName || "",
         parentPassword: "", // Don't populate password for security
         parentEmail: student.parent?.email || "",
-        parentPhone: student.parent?.phone || "",
+        parentPhone: student.parent?.parentContact || "",
       });
 
       // Set selected kits based on student's current kits
@@ -119,8 +131,8 @@ export function EditStudentForm({
         setSelectedImage(student.image);
         setUploadedImage(student.image);
       }
-    }
-  }, [student, isOpen, kits]);
+    }  
+  }, [student, isOpen, kits, batches]);
 
   const handleKitToggle = (kit: Kit) => {
     setSelectedKits((prev) =>
@@ -170,7 +182,7 @@ export function EditStudentForm({
             // Student validation
             if (!formData.name.trim()) newErrors.name = "Student name is required";
             if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
-            if (!formData.address.trim()) newErrors.address = "Address is required";
+            // if (!formData.address.trim()) newErrors.address = "Address is required";
             if (!formData.batch.trim()) newErrors.batch = "Batch is required";
 
       // Parent validation
@@ -248,16 +260,15 @@ export function EditStudentForm({
                     phone: formData.phone,
                     image: uploadedImage ? uploadedImage : undefined,
                     parent: {
-                        username: formData.parentUsername,
+                        fatherName: formData.parentUsername,
                         email: formData.parentEmail,
-                        phone: formData.parentPhone,
-                        ...(formData.parentPassword.trim() && { password: formData.parentPassword })
+                        parentContact: formData.parentPhone
                     },
                     kit: kitIds,
                     address: formData.address,
                 }
 
-        console.log("Updating student:", updatedStudent);
+        console.log("Updating student id:", updatedStudent.id);
         await updateStudent(updatedStudent);
         toast.success("Student updated successfully!");
       }
@@ -303,6 +314,7 @@ export function EditStudentForm({
       setIsCheckingEmail(false);
     }
   };
+  console.log("Form Data:", formData);
 
     return (
         <Dialog
@@ -419,13 +431,13 @@ export function EditStudentForm({
                          {(user.role !== "STORE") && <div className="space-y-2">
                             <Label htmlFor="batch">Batch</Label>
                             <Select value={formData.batch} onValueChange={(value) => setFormData({ ...formData, batch: value })}>
-                                <SelectTrigger className={errors.batch ? "border-red-500" : ""}>
+                                <SelectTrigger id="batch" className={errors.batch ? "border-red-500" : ""}>
                                     <SelectValue placeholder="Select batch" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="-">No Batch</SelectItem>
                                     {(batches ?? []).map((batch) => (
-                                        <SelectItem key={batch._id || batch.id} value={batch.name}>{batch.name}</SelectItem>
+                                        <SelectItem className="uppercase" key={batch._id || batch.id} value={batch.name}>{batch.name}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
@@ -542,42 +554,6 @@ export function EditStudentForm({
                   />
                   {errors.parentPhone && (
                     <p className="text-red-500 text-sm">{errors.parentPhone}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="parentPassword">Password (optional)</Label>
-                  <div className="relative">
-                    <Input
-                      id="parentPassword"
-                      type={showPassword ? "text" : "password"}
-                      value={formData.parentPassword}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          parentPassword: e.target.value,
-                        })
-                      }
-                      placeholder="Leave blank to keep current password"
-                      className={
-                        errors.parentPassword ? "border-red-500 pr-10" : "pr-10"
-                      }
-                    />
-                    <button
-                      type="button"
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4 text-gray-400 hover:text-gray-600" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-gray-400 hover:text-gray-600" />
-                      )}
-                    </button>
-                  </div>
-                  {errors.parentPassword && (
-                    <p className="text-red-500 text-sm">
-                      {errors.parentPassword}
-                    </p>
                   )}
                 </div>
               </div>

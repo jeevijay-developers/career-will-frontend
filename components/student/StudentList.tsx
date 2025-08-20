@@ -25,14 +25,13 @@ interface Student {
   name: string;
   rollNo: string;
   class: string;
-  batch?: string;
+  batch: string | null;
   kit: string[];
   parent: {
     id: string;
-    username: string;
-    name: string;
+    fatherName: string;
     email: string;
-    phone: string;
+    parentContact: string;
   };
   joinDate: string;
 }

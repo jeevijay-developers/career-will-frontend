@@ -18,14 +18,11 @@ interface Kit {
   updatedAt: string;
 }
 
-interface Parent {
-  id: string
-  username: string
-  password: string
-  role: "ADMIN" | "TEACHER" | "PARENT"
-  name: string
-  email: string
-  phone: string
+ interface Parent {
+  id: string;
+  fatherName: string;
+  email: string;
+  parentContact: string;
 }
 
 interface Batch {
