@@ -451,7 +451,7 @@ export function StudentList({
                       user.role === "STORE") && (
                       <TableCell className="min-w-[100px]">
                         <div className="flex gap-2">
-                          {(user.role === "ADMIN" || user.role === "ACCOUNTS") && (
+                          {(user.role === "ADMIN" || user.role === "ACCOUNTS" || user.role === "STORE") && (
                             <>
                               <Button
                                 variant="outline"
