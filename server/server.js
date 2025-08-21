@@ -185,6 +185,18 @@ export const searchTestScore = async (searchTerm) => {
   }
 };
 
+export const deleteStudentByRollNumber = async (rollNumber) => {
+  try {
+    const response = await apiClient.delete(
+      `/api/student/delete-student/${rollNumber}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting student by roll number:", error);
+    throw new Error("Error deleting student by roll number");
+  }
+};
+
 // Bulk upload APIs
 export const bulkUploadStudents = async (formData) => {
   try {
@@ -404,8 +416,8 @@ export const getAttendanceByDate = async (date) => {
   }
 }
 
-// Marks comparison
 
+// Marks comparison
 export const getMarksComparisonByRollNumber = async (rollNumber) => {
   try {
     const response = await apiClient.get(`api/test-score/get-all-attended-tests/${rollNumber}`);
@@ -421,9 +433,7 @@ export const getMarksComparisonByRollNumber = async (rollNumber) => {
   }
 };
 
-
 // create user or signup
-
 export const createUser = async (userData) => {
   try {
     const response = await apiClient.post("/api/auth/signup", userData);

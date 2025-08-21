@@ -196,11 +196,6 @@ export function EditStudentForm({
             // Parent validation
             if (!formData.parentUsername.trim())
                 newErrors.parentUsername = "Username is required";
-            if (!formData.parentEmail.trim()) {
-                newErrors.parentEmail = "Email is required";
-            } else if (!/\S+@\S+\.\S+/.test(formData.parentEmail)) {
-                newErrors.parentEmail = "Email is invalid";
-            }
             if (!formData.parentPhone.trim())
                 newErrors.parentPhone = "Parent phone number is required";
         }
