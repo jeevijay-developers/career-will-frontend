@@ -338,7 +338,7 @@ export function StudentList({
               <TableRow>
                 <TableHead className="min-w-[60px]">S No.</TableHead>
                 <TableHead className="min-w-[80px]">Roll No.</TableHead>
-                {(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && (
+                {(user.role === "ADMIN" || user.role === "SUPER_ADMIN"|| user.role === "TEACHER") && (
                   <>
                     <TableHead className="min-w-[150px]">Name</TableHead>
                     <TableHead className="min-w-[120px]">Class</TableHead>
@@ -389,7 +389,7 @@ export function StudentList({
                     <TableCell className="font-medium min-w-[80px]">
                       {student.rollNo ?? "-"}
                     </TableCell>
-                    {(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && (
+                    {(user.role === "ADMIN" || user.role === "SUPER_ADMIN"|| user.role === "TEACHER") && (
                       <>
                         <TableCell className="min-w-[150px] uppercase">
                           {student.name}
