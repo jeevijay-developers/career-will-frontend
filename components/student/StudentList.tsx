@@ -338,7 +338,7 @@ export function StudentList({
               <TableRow>
                 <TableHead className="min-w-[60px]">S No.</TableHead>
                 <TableHead className="min-w-[80px]">Roll No.</TableHead>
-                {user.role === "ADMIN" && (
+                {(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && (
                   <>
                     <TableHead className="min-w-[150px]">Name</TableHead>
                     <TableHead className="min-w-[120px]">Class</TableHead>
@@ -371,6 +371,7 @@ export function StudentList({
                   <TableHead className="min-w-[100px]">Batch</TableHead>
                 )}
                 {(user.role === "ADMIN" ||
+                  user.role === "SUPER_ADMIN" ||
                   user.role === "FRONTDESK"||
                   user.role === "ACCOUNTS" ||
                   user.role === "STORE") && (
@@ -388,7 +389,7 @@ export function StudentList({
                     <TableCell className="font-medium min-w-[80px]">
                       {student.rollNo ?? "-"}
                     </TableCell>
-                    {user.role === "ADMIN" && (
+                    {(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && (
                       <>
                         <TableCell className="min-w-[150px] uppercase">
                           {student.name}
@@ -457,12 +458,13 @@ export function StudentList({
                       </TableCell>
                     )}
                     {(user.role === "ADMIN" ||
+                      user.role === "SUPER_ADMIN" ||
                       user.role === "FRONTDESK"||
                       user.role === "ACCOUNTS" ||
                       user.role === "STORE") && (
                       <TableCell className="min-w-[100px]">
                         <div className="flex gap-2">
-                          {(user.role === "ADMIN" || user.role === "ACCOUNTS" || user.role === "STORE") && (
+                          {(user.role === "ADMIN" || user.role === "SUPER_ADMIN" || user.role === "ACCOUNTS" || user.role === "STORE") && (
                             <>
                               <Button
                                 variant="outline"
@@ -500,7 +502,7 @@ export function StudentList({
                 <TableRow>
                   <TableCell
                     colSpan={
-                      user.role === "ADMIN"
+                      (user.role === "ADMIN" || user.role === "SUPER_ADMIN")
                         ? 10
                         : user.role === "ACCOUNTS"
                         ? 8

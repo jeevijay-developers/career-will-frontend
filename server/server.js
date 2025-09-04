@@ -41,8 +41,8 @@ export const loginUser = async (credentials) => {
     const response = await apiClient.post("/api/auth/login", credentials);
     return response.data;
   } catch (error) {
-    console.error("Error logging in:", error);
-    throw new Error("Error logging in");
+    // console.error("Error logging in:", error?.response?.data?.message || "Error in logging in");
+    throw error;
   }
 };
 

@@ -243,8 +243,8 @@ export function EditStudentForm({
                 // console.log("Updating student kit:", { studentId, kit: kitArray });
                 await updateStudentKit(studentId, { kit: kitArray });
                 toast.success("Student kit updated successfully!");
-            } else if (user.role === "ACCOUNTS" || user.role === "ADMIN") {
-                // For other roles (ADMIN, etc.), use the full update method
+            } else if (user.role === "ACCOUNTS" || user.role === "ADMIN" || user.role === "SUPER_ADMIN") {
+                // For other roles (ADMIN, SUPER_ADMIN, etc.), use the full update method
                 const updatedStudent = {
                     id: (student as any)._id || student.id,
                     name: formData.name,
@@ -323,7 +323,7 @@ export function EditStudentForm({
                     {/* Student Information */}
                     <div>
                         {/* Profile Picture - Only for admin */}
-                        {(user.role === "ADMIN" || user.role === "ACCOUNTS") && (
+                        {(user.role === "ADMIN" || user.role === "SUPER_ADMIN" || user.role === "ACCOUNTS") && (
                             <div className="flex flex-col items-center mb-6">
                                 <h3 className="text-lg font-semibold mb-4 text-gray-800">Student Information</h3>
                                 <div className="relative">
@@ -389,7 +389,7 @@ export function EditStudentForm({
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Student Name - Only for admin */}
-                            {(user.role === "ADMIN" || user.role === "ACCOUNTS") && (
+                            {(user.role === "ADMIN" || user.role === "SUPER_ADMIN" || user.role === "ACCOUNTS") && (
                                 <div className="space-y-2">
                                     <Label htmlFor="name">Student Name</Label>
                                     <Input
@@ -403,7 +403,7 @@ export function EditStudentForm({
                                 </div>
                             )}
                             {/* Phone - Only for admin */}
-                            {(user.role === "ADMIN" || user.role === "ACCOUNTS") && (
+                            {(user.role === "ADMIN" || user.role === "SUPER_ADMIN" || user.role === "ACCOUNTS") && (
                                 <div className="space-y-2">
                                     <Label htmlFor="phone">Phone Number</Label>
                                     <Input
@@ -433,7 +433,7 @@ export function EditStudentForm({
                                 {errors.batch && <p className="text-red-500 text-sm">{errors.batch}</p>}
                             </div>}
                             {/* Address - Only for admin */}
-                            {(user.role === "ADMIN" || user.role === "ACCOUNTS") && (
+                            {(user.role === "ADMIN" || user.role === "SUPER_ADMIN" || user.role === "ACCOUNTS") && (
                                 <div className="space-y-2">
                                     <Label htmlFor="address">Address</Label>
                                     <Input
@@ -450,7 +450,7 @@ export function EditStudentForm({
                     </div>
 
                     {/* Kit Selection - For admin, accounts, and store */}
-                    {(user.role === "ADMIN" || user.role === "ACCOUNTS" || user.role === "STORE") && (
+                    {(user.role === "ADMIN" || user.role === "SUPER_ADMIN" || user.role === "ACCOUNTS" || user.role === "STORE") && (
                         <div>
                             <h3 className="text-lg font-semibold mb-4 text-gray-800">Student Kits</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">

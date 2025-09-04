@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { GraduationCap, Eye, EyeOff } from "lucide-react"
+import { Eye, EyeOff } from "lucide-react"
 import { loginUser } from "../server/server"
 import toast from "react-hot-toast"
 import Image from "next/image"
@@ -31,6 +31,8 @@ export function Login({ onLoginSuccess }: LoginProps) {
     }
 
     setIsLoading(true)
+    console.log("Attempting login with:", formData);
+    
     try {
       const response = await loginUser(formData)
       if (response && response.token) {
@@ -42,7 +44,7 @@ export function Login({ onLoginSuccess }: LoginProps) {
         toast.error("Invalid credentials")
       }
     } catch (error: any) {
-      toast.error(error.message || "Login failed")
+      toast.error(error?.response?.data?.message || "Error in logging in")
     } finally {
       setIsLoading(false)
     }

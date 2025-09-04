@@ -29,6 +29,12 @@ export default function AdminPanel() {
   }, []);
 
   const handleLoginSuccess = () => {
+    const userData = localStorage.getItem("user_data");
+      const user = JSON.parse(userData || "{}");
+      if (user.role === "SUPER_ADMIN") {
+        window.location.href = "/super-admin";
+        return;
+      }
     setIsAuthenticated(true);
   };
 

@@ -25,15 +25,15 @@ interface SidebarProps {
 }
 
 const menuItems = [
-  { id: "students", label: "Students", icon: Users, accessTo: ["ADMIN", "FRONTDESK", "ACCOUNTS", "STORE"] },
-  { id: "addStudent", label: "Add Student", icon: User, accessTo: ["ADMIN"] },
-  { id: "teachers", label: "Teachers", icon: Users, accessTo: ["ADMIN"] },
-  { id: "batches", label: "Batches", icon: BookOpen, accessTo: ["ADMIN", "FRONTDESK", "STORE"] },
-  { id: "tests", label: "Test Reports", icon: FileText, accessTo: ["ADMIN", "FRONTDESK"] },
-  { id: "attendance", label: "Attendance", icon: Calendar, accessTo: ["ADMIN", "FRONTDESK"] },
-  { id: "fees", label: "Fee Management", icon: CreditCard, accessTo: ["ADMIN", "ACCOUNTS"] },
-  { id: "kits", label: "Kit Management", icon: Package, accessTo: ["ADMIN", "STORE"] },
-  { id: "marks", label: "Marks Comparison", icon: BarChart3, accessTo: ["ADMIN", "TEACHER"] },
+  { id: "students", label: "Students", icon: Users, accessTo: ["ADMIN", "FRONTDESK", "ACCOUNTS", "STORE", "SUPER_ADMIN"] },
+  { id: "addStudent", label: "Add Student", icon: User, accessTo: ["ADMIN", "SUPER_ADMIN"] },
+  { id: "teachers", label: "Teachers", icon: Users, accessTo: ["ADMIN", "SUPER_ADMIN"] },
+  { id: "batches", label: "Batches", icon: BookOpen, accessTo: ["ADMIN", "FRONTDESK", "STORE", "SUPER_ADMIN"] },
+  { id: "tests", label: "Test Reports", icon: FileText, accessTo: ["ADMIN", "FRONTDESK", "SUPER_ADMIN"] },
+  { id: "attendance", label: "Attendance", icon: Calendar, accessTo: ["ADMIN", "FRONTDESK", "SUPER_ADMIN"] },
+  { id: "fees", label: "Fee Management", icon: CreditCard, accessTo: ["ADMIN", "ACCOUNTS", "SUPER_ADMIN"] },
+  { id: "kits", label: "Kit Management", icon: Package, accessTo: ["ADMIN", "STORE", "SUPER_ADMIN"] },
+  { id: "marks", label: "Marks Comparison", icon: BarChart3, accessTo: ["ADMIN", "TEACHER", "SUPER_ADMIN"] },
   { id: "logout", label: "Logout", icon: LogOut },
 ];
 

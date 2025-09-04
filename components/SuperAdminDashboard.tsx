@@ -16,9 +16,13 @@ import {
   UserCheck,
   UserX,
   BarChart3,
-  PieChart
+  PieChart,
+  ArrowBigLeft,
+//   LogOut
 } from "lucide-react";
 import toast from "react-hot-toast";
+// import { confirmAlert } from "react-confirm-alert";
+// import "react-confirm-alert/src/react-confirm-alert.css";
 import {
   getSummaryStats
 } from "../server/server";
@@ -193,6 +197,10 @@ const SuperAdminDashboard = () => {
     }
   };
 
+  const handleGeneralDashboard = () => {
+    window.location.href = '/';
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -209,6 +217,16 @@ const SuperAdminDashboard = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Super Admin Dashboard</h1>
             <p className="text-gray-600 mt-1">Comprehensive overview of all system metrics</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={handleGeneralDashboard}
+              variant="outline"
+              className="flex items-center gap-2 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-colors duration-200"
+            >
+              <ArrowBigLeft className="h-5 w-5" />
+              General Dashboard
+            </Button>
           </div>
         </div>
 
