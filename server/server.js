@@ -84,9 +84,8 @@ export const getAllStudents = async (params) => {
     const queryParams = new URLSearchParams();
     if (params.page) queryParams.append("page", params.page.toString());
     if (params.limit) queryParams.append("limit", params.limit.toString());
-    const url = `/api/student/get-all-students${
-      queryParams.toString() ? `?${queryParams.toString()}` : ""
-    }`;
+    const url = `/api/student/get-all-students${queryParams.toString() ? `?${queryParams.toString()}` : ""
+      }`;
     const response = await apiClient.get(url);
     return response.data;
   } catch (error) {
@@ -145,11 +144,11 @@ export const updateStudentKit = async (studentId, kitItems) => {
   }
 };
 
-export const updateStudentBatch = async(studentId, newBatchId) => {
+export const updateStudentBatch = async (studentId, newBatchId) => {
   try {
     const response = await apiClient.put(
       `/api/student/update-student-batch`,
-      { 
+      {
         studentId: studentId,
         newBatchId: newBatchId
       }
@@ -433,13 +432,89 @@ export const getMarksComparisonByRollNumber = async (rollNumber) => {
   }
 };
 
-// create user or signup
+// Super Admin Dashboard APIs
+export const getDashboardStats = async () => {
+  try {
+    const response = await apiClient.get("/api/dashboard/stats");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching dashboard stats:", error);
+    throw new Error("Error fetching dashboard stats");
+  }
+};
+
+export const getBatchWiseStats = async () => {
+  try {
+    const response = await apiClient.get("/api/dashboard/batch-wise-stats");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching batch wise stats:", error);
+    throw new Error("Error fetching batch wise stats");
+  }
+};
+
+export const getAttendanceStats = async (startDate, endDate) => {
+  try {
+    const response = await apiClient.get(`/api/dashboard/attendance-stats?startDate=${startDate}&endDate=${endDate}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching attendance stats:", error);
+    throw new Error("Error fetching attendance stats");
+  }
+};
+
+export const getTestAttendanceStats = async () => {
+  try {
+    const response = await apiClient.get("/api/dashboard/test-attendance-stats");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching test attendance stats:", error);
+    throw new Error("Error fetching test attendance stats");
+  }
+};
+
+export const downloadReport = async (reportType, filters = {}) => {
+  try {
+    const queryParams = new URLSearchParams({
+      type: reportType,
+      ...filters
+    });
+    const response = await apiClient.get(`/api/dashboard/download-report?${queryParams.toString()}`, {
+      responseType: 'blob'
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error downloading report:", error);
+    throw new Error("Error downloading report");
+  }
+};
+
+export const getWeeklyAttendanceStats = async (weekStartDate) => {
+  try {
+    const response = await apiClient.get(`/api/dashboard/weekly-attendance?weekStart=${weekStartDate}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching weekly attendance stats:", error);
+    throw new Error("Error fetching weekly attendance stats");
+  }
+};
+
 export const createUser = async (userData) => {
   try {
-    const response = await apiClient.post("/api/auth/signup", userData);
+    const response = await apiClient.post("/api/user-roles/create-user", userData);
     return response.data;
   } catch (error) {
     console.error("Error creating user:", error);
     throw new Error("Error creating user");
   }
 };
+
+export const getSummaryStats = async () => {
+  try {
+    const summaryStats = await apiClient.get("/api/report/summary");
+    return summaryStats.data;
+  } catch (error) {
+    console.error("Error fetching summary stats:", error);
+    throw new Error("Error fetching summary stats");
+  }
+}
