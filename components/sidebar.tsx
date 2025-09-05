@@ -25,22 +25,70 @@ interface SidebarProps {
 }
 
 const menuItems = [
-  { id: "students", label: "Students", icon: Users, accessTo: ["ADMIN", "FRONTDESK", "ACCOUNTS", "STORE"] },
+  {
+    id: "students",
+    label: "Students",
+    icon: Users,
+    accessTo: ["ADMIN", "FRONTDESK", "ACCOUNTS", "STORE"],
+  },
   { id: "addStudent", label: "Add Student", icon: User, accessTo: ["ADMIN"] },
   { id: "teachers", label: "Teachers", icon: Users, accessTo: ["ADMIN"] },
-  { id: "batches", label: "Batches", icon: BookOpen, accessTo: ["ADMIN", "FRONTDESK", "STORE"] },
-  { id: "tests", label: "Test Reports", icon: FileText, accessTo: ["ADMIN", "FRONTDESK"] },
-  { id: "attendance", label: "Attendance", icon: Calendar, accessTo: ["ADMIN", "FRONTDESK"] },
-  { id: "fees", label: "Fee Management", icon: CreditCard, accessTo: ["ADMIN", "ACCOUNTS"] },
-  { id: "kits", label: "Kit Management", icon: Package, accessTo: ["ADMIN", "STORE"] },
-  { id: "marks", label: "Marks Comparison", icon: BarChart3, accessTo: ["ADMIN", "TEACHER"] },
-  { id: "logout", label: "Logout", icon: LogOut },
+  {
+    id: "batches",
+    label: "Batches",
+    icon: BookOpen,
+    accessTo: ["ADMIN", "FRONTDESK", "STORE"],
+  },
+  {
+    id: "tests",
+    label: "Test Reports",
+    icon: FileText,
+    accessTo: ["ADMIN", "FRONTDESK"],
+  },
+  {
+    id: "attendance",
+    label: "Attendance",
+    icon: Calendar,
+    accessTo: ["ADMIN", "FRONTDESK"],
+  },
+  {
+    id: "fees",
+    label: "Fee Management",
+    icon: CreditCard,
+    accessTo: ["ADMIN", "ACCOUNTS"],
+  },
+  {
+    id: "kits",
+    label: "Kit Management",
+    icon: Package,
+    accessTo: ["ADMIN", "STORE"],
+  },
+  {
+    id: "marks",
+    label: "Marks Comparison",
+    icon: BarChart3,
+    accessTo: ["ADMIN", "TEACHER"],
+  },
+  {
+    id: "logout",
+    label: "Logout",
+    icon: LogOut,
+    accessTo: [
+      "ADMIN",
+      "FRONTDESK",
+      "ACCOUNTS",
+      "STORE",
+      "TEACHER",
+      "PARENT",
+      "SUPER_ADMIN",
+    ],
+  },
 ];
 
 export function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarProps) {
   // Use React's useState to store the user data
   const [userData, setUserData] = useState<any>({});
-  
+
   // Use useEffect to fetch user data from localStorage when component mounts
   useEffect(() => {
     // Only run on the client side
@@ -94,9 +142,11 @@ export function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarProps) {
 
       <nav className="flex-1 p-4 overflow-hidden">
         {/* The max-h-[calc(8*2.75rem)] limits height to show approximately 8 menu items */}
-        <div className="space-y-2 overflow-y-auto max-h-[470px] pr-2 custom-scrollbar">
+        <div className="space-y-2 overflow-y-auto max-h-auto pr-2 custom-scrollbar">
           {menuItems
-            .filter(item => !item.accessTo || item.accessTo.includes(userData.role))
+            .filter(
+              (item) => !item.accessTo || item.accessTo.includes(userData.role)
+            )
             .map((item) => {
               const Icon = item.icon;
               return (
