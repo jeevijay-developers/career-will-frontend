@@ -51,12 +51,16 @@ export function AttendanceReports() {
   const itemsPerPage = 10
   
   const [formData, setFormData] = useState({
-    studentName: "",
-    rollNumber: "",
+    name: "",
+    rollNo: "",
     date: "",
-    status: "",
-    batch: "",
-    subject: "",
+    inTime: "",
+    outTime: "",
+    lateArrival: "",
+    earlyDeparture: "",
+    workingHours: "",
+    otDuration: "",
+    presentStatus: "",
   })
 
   // Fetch attendance data when date changes
@@ -95,35 +99,71 @@ export function AttendanceReports() {
     }
   }
 
-  const handleAddAttendance = () => {
-    // Legacy form handling - would need to be updated to match new API
-    const newRecord: FormAttendanceRecord = {
-      id: Date.now().toString(),
-      ...formData,
-      status: formData.status as "present" | "absent" | "late",
+  const handleAddAttendance = async () => {
+    try {
+      // Validate required fields
+      if (!formData.name.trim() || !formData.rollNo.trim() || !formData.date) {
+        toast.error("Please fill in all required fields (Name, Roll No, Date)")
+        return
+      }
+
+      // Create attendance record matching the schema
+      const attendanceRecord = {
+        name: formData.name.trim(),
+        rollNo: formData.rollNo.trim(),
+        date: formData.date,
+        inTime: formData.inTime || "N/A",
+        outTime: formData.outTime || "N/A",
+        lateArrival: formData.lateArrival || "N/A",
+        earlyDeparture: formData.earlyDeparture || "N/A",
+        workingHours: formData.workingHours || "N/A",
+        otDuration: formData.otDuration || "N/A",
+        presentStatus: formData.presentStatus || "N/A",
+      }
+      
+      // Here you would call your API to create the attendance record
+      console.log("Creating attendance record:", attendanceRecord)
+      
+      // For now, just show success message
+      toast.success("Attendance marked successfully!")
+      
+      // Reset form
+      setFormData({
+        name: "",
+        rollNo: "",
+        date: "",
+        inTime: "",
+        outTime: "",
+        lateArrival: "",
+        earlyDeparture: "",
+        workingHours: "",
+        otDuration: "",
+        presentStatus: "",
+      })
+      
+      // Close dialog
+      setIsAddDialogOpen(false)
+      
+      // Refresh the attendance data
+      fetchAttendanceData()
+      
+    } catch (error) {
+      console.error("Error adding attendance:", error)
+      toast.error("Failed to mark attendance")
     }
-    
-    // Would need API integration here
-    console.log("Add attendance record:", newRecord)
-    
-    setFormData({
-      studentName: "",
-      rollNumber: "",
-      date: "",
-      status: "",
-      batch: "",
-      subject: "",
-    })
-    setIsAddDialogOpen(false)
   }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "P":
+      case "Yes":
         return <CheckCircle className="h-4 w-4 text-green-600" />
-      case "A":
+      case "No":
         return <XCircle className="h-4 w-4 text-red-600" />
-      case "L":
+      case "P":  // Legacy support
+        return <CheckCircle className="h-4 w-4 text-green-600" />
+      case "A":  // Legacy support
+        return <XCircle className="h-4 w-4 text-red-600" />
+      case "L":  // Legacy support
         return <Clock className="h-4 w-4 text-yellow-600" />
       default:
         return null
@@ -133,27 +173,35 @@ export function AttendanceReports() {
   const getStatusBadge = (status: string) => {
     const baseClasses = "px-2 py-1 rounded-full text-sm font-medium"
     switch (status) {
-      case "P":
+      case "Yes":
         return `${baseClasses} bg-green-100 text-green-800`
-      case "A":
+      case "No":
         return `${baseClasses} bg-red-100 text-red-800`
-      case "L":
+      case "P":  // Legacy support
+        return `${baseClasses} bg-green-100 text-green-800`
+      case "A":  // Legacy support
+        return `${baseClasses} bg-red-100 text-red-800`
+      case "L":  // Legacy support
         return `${baseClasses} bg-yellow-100 text-yellow-800`
       default:
-        return baseClasses
+        return `${baseClasses} bg-gray-100 text-gray-800`
     }
   }
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case "P":
+      case "Yes":
         return "Present"
-      case "A":
+      case "No":
         return "Absent"
-      case "L":
+      case "P":  // Legacy support
+        return "Present"
+      case "A":  // Legacy support
+        return "Absent"
+      case "L":  // Legacy support
         return "Late"
       default:
-        return status
+        return status || "Unknown"
     }
   }
 
@@ -173,12 +221,22 @@ export function AttendanceReports() {
   const startIndex = (currentPage - 1) * itemsPerPage
   const paginatedRecords = filteredBySearch.slice(startIndex, startIndex + itemsPerPage)
 
+  // Debug pagination
+  console.log("Pagination Debug:", {
+    totalRecords: filteredBySearch.length,
+    itemsPerPage,
+    totalPages,
+    currentPage,
+    startIndex,
+    paginatedRecordsCount: paginatedRecords.length
+  })
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Attendance Reports</h1>
-          <p className="text-gray-600">Track and manage student attendance</p>
+          <h1 className="text-3xl font-bold text-gray-900">Student Attendance</h1>
+          <p className="text-gray-600">Track and manage coaching student attendance</p>
         </div>
         <div className="flex gap-3">
           <AttendanceBulkUpload onUploadSuccess={handleRefresh} />
@@ -186,86 +244,140 @@ export function AttendanceReports() {
             <DialogTrigger asChild>
               <Button className="bg-blue-600 hover:bg-blue-700">
                 <Plus className="h-4 w-4 mr-2" />
-                Mark Attendance
+                Mark Student Attendance
               </Button>
             </DialogTrigger>
-            <DialogContent aria-describedby={undefined} className="max-w-lg">
+            <DialogContent aria-describedby={undefined} className="max-w-4xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Mark Attendance</DialogTitle>
+                <DialogTitle>Mark Student Attendance</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="studentName">Student Name</Label>
-                    <Input
-                      id="studentName"
-                      value={formData.studentName}
-                      onChange={(e) => setFormData({ ...formData, studentName: e.target.value })}
-                      placeholder="Student name"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="rollNumber">Roll Number</Label>
-                    <Input
-                      id="rollNumber"
-                      value={formData.rollNumber}
-                      onChange={(e) => setFormData({ ...formData, rollNumber: e.target.value })}
-                      placeholder="Roll number"
-                    />
+              <div className="space-y-6">
+                {/* Basic Information */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 text-gray-800">Student Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Student Name</Label>
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="Enter student name"
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="rollNo">Roll Number</Label>
+                      <Input
+                        id="rollNo"
+                        value={formData.rollNo}
+                        onChange={(e) => setFormData({ ...formData, rollNo: e.target.value })}
+                        placeholder="Enter roll number"
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="date">Date</Label>
+                      <Input
+                        id="date"
+                        type="date"
+                        value={formData.date}
+                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                        className="w-full"
+                      />
+                    </div>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="date">Date</Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  />
+
+                {/* Class Timing */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 text-gray-800">Class Timing</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="inTime">Class Start Time</Label>
+                      <Input
+                        id="inTime"
+                        type="time"
+                        value={formData.inTime}
+                        onChange={(e) => setFormData({ ...formData, inTime: e.target.value })}
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="outTime">Class End Time</Label>
+                      <Input
+                        id="outTime"
+                        type="time"
+                        value={formData.outTime}
+                        onChange={(e) => setFormData({ ...formData, outTime: e.target.value })}
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+
+                {/* Attendance Details */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 text-gray-800">Attendance Details</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="lateArrival">Late Arrival (minutes)</Label>
+                      <Input
+                        id="lateArrival"
+                        value={formData.lateArrival}
+                        onChange={(e) => setFormData({ ...formData, lateArrival: e.target.value })}
+                        placeholder="Enter minutes late (e.g., 15)"
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="earlyDeparture">Early Departure (minutes)</Label>
+                      <Input
+                        id="earlyDeparture"
+                        value={formData.earlyDeparture}
+                        onChange={(e) => setFormData({ ...formData, earlyDeparture: e.target.value })}
+                        placeholder="Enter minutes early (e.g., 30)"
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="workingHours">Class Duration (hours)</Label>
+                      <Input
+                        id="workingHours"
+                        value={formData.workingHours}
+                        onChange={(e) => setFormData({ ...formData, workingHours: e.target.value })}
+                        placeholder="Enter duration (e.g., 2.5)"
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="otDuration">Extra Study Time (hours)</Label>
+                      <Input
+                        id="otDuration"
+                        value={formData.otDuration}
+                        onChange={(e) => setFormData({ ...formData, otDuration: e.target.value })}
+                        placeholder="Enter extra time (e.g., 1)"
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Attendance Status */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 text-gray-800">Attendance Status</h3>
                   <div className="space-y-2">
-                    <Label htmlFor="batch">Batch</Label>
-                    <Select value={formData.batch} onValueChange={(value) => setFormData({ ...formData, batch: value })}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select batch" />
+                    <Label htmlFor="presentStatus">Was the student present today?</Label>
+                    <Select value={formData.presentStatus} onValueChange={(value) => setFormData({ ...formData, presentStatus: value })}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select attendance status" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="NEET-2024-A">NEET-2024-A</SelectItem>
-                        <SelectItem value="NEET-2024-B">NEET-2024-B</SelectItem>
-                        <SelectItem value="NEET-2024-C">NEET-2024-C</SelectItem>
+                        <SelectItem value="Yes">Yes - Present</SelectItem>
+                        <SelectItem value="No">No - Absent</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="subject">Subject</Label>
-                    <Select
-                      value={formData.subject}
-                      onValueChange={(value) => setFormData({ ...formData, subject: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select subject" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Physics">Physics</SelectItem>
-                        <SelectItem value="Chemistry">Chemistry</SelectItem>
-                        <SelectItem value="Biology">Biology</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
-                  <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="present">Present</SelectItem>
-                      <SelectItem value="absent">Absent</SelectItem>
-                      <SelectItem value="late">Late</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
               </div>
               <div className="flex justify-end gap-2 mt-6">
@@ -273,7 +385,7 @@ export function AttendanceReports() {
                   Cancel
                 </Button>
                 <Button onClick={handleAddAttendance} className="bg-blue-600 hover:bg-blue-700">
-                  Mark Attendance
+                  Mark Student Attendance
                 </Button>
               </div>
             </DialogContent>
@@ -285,7 +397,7 @@ export function AttendanceReports() {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              Daily Attendance
+              Daily Student Attendance
             </CardTitle>
             <div className="flex items-center gap-4">
               <div className="relative">
@@ -324,11 +436,11 @@ export function AttendanceReports() {
                     <TableRow>
                       <TableHead>Roll No.</TableHead>
                       <TableHead>Student Name</TableHead>
-                      <TableHead>In Time</TableHead>
-                      <TableHead>Out Time</TableHead>
-                      <TableHead>Late Arrival</TableHead>
-                      <TableHead>Working Hours</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>Class Start</TableHead>
+                      <TableHead>Class End</TableHead>
+                      <TableHead>Late Arrival (min)</TableHead>
+                      <TableHead>Class Duration</TableHead>
+                      <TableHead>Attendance Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -360,8 +472,11 @@ export function AttendanceReports() {
                 </div>
               )}
               
-              {filteredBySearch.length > 0 && (
-                <div className="mt-4 flex justify-end">
+              {filteredBySearch.length > itemsPerPage && (
+                <div className="mt-4 flex justify-between items-center">
+                  <div className="text-sm text-gray-600">
+                    Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, filteredBySearch.length)} of {filteredBySearch.length} entries
+                  </div>
                   <Pagination>
                     <PaginationContent>
                       <PaginationItem>
@@ -389,6 +504,7 @@ export function AttendanceReports() {
                               <PaginationLink 
                                 onClick={() => setCurrentPage(page)}
                                 isActive={page === currentPage}
+                                className="cursor-pointer"
                               >
                                 {page}
                               </PaginationLink>

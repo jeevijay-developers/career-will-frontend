@@ -337,6 +337,7 @@ export function TestReports() {
   // For server-side pagination, we'll use the filtered reports directly
   // Note: In the future, we should move search and filtering to the backend too
   const currentReports = filteredReports;
+console.log("Current reports to display:", currentReports);
 
   // Reset to first page when date filter changes and refetch data
   useEffect(() => {

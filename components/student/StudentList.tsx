@@ -16,7 +16,7 @@ import { Search, Edit, Trash2 } from "lucide-react";
 import { confirmAlert } from "react-confirm-alert";
 import "react-confirm-alert/src/react-confirm-alert.css";
 import { EditStudentForm } from "./EditStudentForm";
-import { searchStudent } from "../../server/server";
+import { searchStudent, deleteStudentByRollNumber } from "../../server/server";
 import toast from "react-hot-toast";
 
 interface Student {
@@ -228,22 +228,34 @@ export function StudentList({
         );
       });
 
-  const handleDelete = () => {
+  const handleDelete = (student: Student) => {
     confirmAlert({
       title: "Confirm Delete",
-      message: "Are you sure you want to delete this student?",
+      message: `Are you sure you want to delete student "${student.name}" (Roll No: ${student.rollNo})?`,
       buttons: [
         {
           label: "Yes",
-          onClick: () => {
-            alert("Item deleted!");
+          onClick: async () => {
+            try {
+              await deleteStudentByRollNumber(student.rollNo);
+              toast.success(`Student ${student.name} deleted successfully!`);
+              
+              // Refresh the student list after deletion
+              if (searchTerm.trim()) {
+                // If there's a search term, refresh search results
+                debouncedSearch(searchTerm);
+              } else {
+                // If no search, refresh the main student list
+                onStudentUpdated();
+              }
+            } catch (error) {
+              console.error("Error deleting student:", error);
+              toast.error("Failed to delete student. Please try again.");
+            }
           },
         },
         {
           label: "No",
-          onClick: () => {
-            console.log("Deletion cancelled");
-          },
         },
       ],
     });
@@ -326,7 +338,7 @@ export function StudentList({
               <TableRow>
                 <TableHead className="min-w-[60px]">S No.</TableHead>
                 <TableHead className="min-w-[80px]">Roll No.</TableHead>
-                {user.role === "ADMIN" && (
+                {(user.role === "ADMIN" || user.role === "SUPER_ADMIN"|| user.role === "TEACHER") && (
                   <>
                     <TableHead className="min-w-[150px]">Name</TableHead>
                     <TableHead className="min-w-[120px]">Class</TableHead>
@@ -359,6 +371,7 @@ export function StudentList({
                   <TableHead className="min-w-[100px]">Batch</TableHead>
                 )}
                 {(user.role === "ADMIN" ||
+                  user.role === "SUPER_ADMIN" ||
                   user.role === "FRONTDESK"||
                   user.role === "ACCOUNTS" ||
                   user.role === "STORE") && (
@@ -376,7 +389,7 @@ export function StudentList({
                     <TableCell className="font-medium min-w-[80px]">
                       {student.rollNo ?? "-"}
                     </TableCell>
-                    {user.role === "ADMIN" && (
+                    {(user.role === "ADMIN" || user.role === "SUPER_ADMIN"|| user.role === "TEACHER") && (
                       <>
                         <TableCell className="min-w-[150px] uppercase">
                           {student.name}
@@ -386,10 +399,10 @@ export function StudentList({
                             {student.class || "No batch allotted"}
                           </span>
                         </TableCell>
-                        <TableCell className="min-w-[100px]">
+                        <TableCell className="min-w-[100px] uppercase">
                           {student.batch || "-"}
                         </TableCell>
-                        <TableCell className="min-w-[150px]">
+                        <TableCell className="min-w-[150px] uppercase">
                           {student.parent?.fatherName ??
                             student.parent?.fatherName ??
                             "-"}
@@ -415,10 +428,10 @@ export function StudentList({
                             {student.class || "No batch allotted"}
                           </span>
                         </TableCell>
-                        <TableCell className="min-w-[100px]">
+                        <TableCell className="min-w-[100px] uppercase">
                           {student.batch || "-"}
                         </TableCell>
-                        <TableCell className="min-w-[150px]">
+                        <TableCell className="min-w-[150px] uppercase">
                           {student.parent?.fatherName ??
                             student.parent?.fatherName ??
                             "-"}
@@ -435,22 +448,23 @@ export function StudentList({
                       </>
                     )}
                     {user.role === "STORE" && (
-                      <TableCell className="min-w-[100px]">
+                      <TableCell className="min-w-[100px] uppercase">
                         {student.batch || "-"}
                       </TableCell>
                     )}
                     {user.role === "FRONTDESK" && (
-                      <TableCell className="min-w-[100px]">
+                      <TableCell className="min-w-[100px] uppercase">
                         {student.batch || "-"}
                       </TableCell>
                     )}
                     {(user.role === "ADMIN" ||
+                      user.role === "SUPER_ADMIN" ||
                       user.role === "FRONTDESK"||
                       user.role === "ACCOUNTS" ||
                       user.role === "STORE") && (
                       <TableCell className="min-w-[100px]">
                         <div className="flex gap-2">
-                          {(user.role === "ADMIN" || user.role === "ACCOUNTS" || user.role === "STORE") && (
+                          {(user.role === "ADMIN" || user.role === "SUPER_ADMIN" || user.role === "ACCOUNTS" || user.role === "STORE") && (
                             <>
                               <Button
                                 variant="outline"
@@ -463,7 +477,7 @@ export function StudentList({
                                 variant="outline"
                                 size="sm"
                                 className="text-red-600 hover:text-red-700 bg-transparent"
-                                onClick={handleDelete}
+                                onClick={() => handleDelete(student)}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -488,7 +502,7 @@ export function StudentList({
                 <TableRow>
                   <TableCell
                     colSpan={
-                      user.role === "ADMIN"
+                      (user.role === "ADMIN" || user.role === "SUPER_ADMIN")
                         ? 10
                         : user.role === "ACCOUNTS"
                         ? 8
@@ -498,17 +512,17 @@ export function StudentList({
                     }
                     className="text-center py-8 text-gray-500"
                   >
-                    {searchTerm.trim() ? (
-                      searchError ? (
-                        <div>
-                          <p className="text-red-500">{searchError}</p>
-                          <p className="text-sm text-gray-400 mt-1">
-                            Try searching with a different roll number
-                          </p>
-                        </div>
-                      ) : (
-                        "Searching..."
-                      )
+                    {isSearching ? (
+                      "Loading students..."
+                    ) : searchTerm.trim() && searchError ? (
+                      <div>
+                        <p className="text-red-500">{searchError}</p>
+                        <p className="text-sm text-gray-400 mt-1">
+                          Try searching with a different roll number
+                        </p>
+                      </div>
+                    ) : searchTerm.trim() ? (
+                      "No student found"
                     ) : (
                       "Loading students..."
                     )}

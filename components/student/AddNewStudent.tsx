@@ -1,9 +1,7 @@
 "use client";
 import React, { useState, FormEvent, useRef, useEffect } from "react";
-import { MdCheckCircle, MdError, MdInfo, MdClose } from "react-icons/md";
 import { useStudentData } from "./useStudentData";
-import { stat } from "fs";
-import { IoSearchSharp } from "react-icons/io5";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   checkRollNumberExists,
   createStudent,
@@ -98,36 +96,28 @@ const initialFormData: StudentFormData = {
 const AddNewStudent = () => {
   const [formData, setFormData] = useState<StudentFormData>(initialFormData);
   const [uploadingImage, setUploadingImage] = useState<boolean>(false);
+  const rollNumberTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [suggestedRollNumbers, setSuggestedRollNumbers] = useState<string[]>(
     []
   );
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [message, setMessage] = useState<{
-    type: "success" | "error" | "info";
-    text: string;
-  } | null>(null);
+  const [showOtherSource, setShowOtherSource] = useState<boolean>(false);
+  const [otherSourceText, setOtherSourceText] = useState<string>("");
   const [formReset, setFormReset] = useState<boolean>(false);
   const formRef = useRef<HTMLFormElement>(null);
   const {
-    students,
-    currentPage,
-    totalPages,
-    pageSize,
     kits,
     batches,
-    batchNames,
-    setCurrentPage,
-    refreshStudents,
   } = useStudentData();
-  // Clear the message after a few seconds
+
+  // Cleanup timeout on unmount
   useEffect(() => {
-    if (message) {
-      const timer = setTimeout(() => {
-        setMessage(null);
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [message]);
+    return () => {
+      if (rollNumberTimeoutRef.current) {
+        clearTimeout(rollNumberTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -190,6 +180,67 @@ const AddNewStudent = () => {
     }
   };
 
+  // Specialized handler for roll number input with auto-check functionality
+  const handleRollNoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    
+    // Update the form data
+    setFormData((prevData) => ({
+      ...prevData,
+      rollNo: value,
+    }));
+
+    // Clear any existing timeout
+    if (rollNumberTimeoutRef.current) {
+      clearTimeout(rollNumberTimeoutRef.current);
+    }
+
+    // If the roll number has at least 4 characters, check it after a short delay
+    if (value.length >= 4) {
+      rollNumberTimeoutRef.current = setTimeout(() => {
+        checkRollNumberExists(value)
+          .then((res) => {
+            setSuggestedRollNumbers(res.rollNumbers);
+          })
+          .catch((err) => {
+            console.log(err);
+            toast.error("Unable to check roll number");
+          });
+      }, 500); // 500ms delay to avoid too many API calls
+    } else {
+      // Clear suggestions if roll number is less than 4 characters
+      setSuggestedRollNumbers([]);
+    }
+  };
+
+  // Handler for "How did you hear about us?" dropdown
+  const handleSourceChange = (value: string) => {
+    if (value === "Others") {
+      setShowOtherSource(true);
+      setFormData((prevData) => ({
+        ...prevData,
+        howDidYouHearAboutUs: "",
+      }));
+    } else {
+      setShowOtherSource(false);
+      setOtherSourceText("");
+      setFormData((prevData) => ({
+        ...prevData,
+        howDidYouHearAboutUs: value,
+      }));
+    }
+  };
+
+  // Handler for "Others" text input
+  const handleOtherSourceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    setOtherSourceText(value);
+    setFormData((prevData) => ({
+      ...prevData,
+      howDidYouHearAboutUs: value,
+    }));
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -234,47 +285,35 @@ const AddNewStudent = () => {
 
     // Check required fields from the backend logic
     if (!name.trim() || !batch.trim() || !mobileNumber.trim()) {
-      setMessage({
-        type: "error",
-        text: "Name, Batch, and Mobile number are required.",
-      });
+      toast.error("Name, Batch, and Mobile number are required.");
       isValid = false;
     }
 
     // Check parent and emergency contact if parent info is provided
     if (parent.parentContact.trim() || emergencyContact.trim()) {
       if (!parent.parentContact.trim() || !emergencyContact.trim()) {
-        setMessage({
-          type: "error",
-          text: "Both Parent Contact and Emergency Contact are required if any parent details are provided.",
-        });
+        toast.error("Both Parent Contact and Emergency Contact are required if any parent details are provided.");
         isValid = false;
       }
     }
 
     // Check for a valid image URL
-    if (!image.url.trim()) {
-      setMessage({ type: "error", text: "An Image URL is required." });
-      isValid = false;
-    }
+    // if (!image.url.trim()) {
+    //   toast.error("An Image URL is required.");
+    //   isValid = false;
+    // }
 
     // Basic mobile number validation
     const mobileRegex = /^[0-9]{10}$/;
     if (mobileNumber.trim() && !mobileRegex.test(mobileNumber.trim())) {
-      setMessage({
-        type: "error",
-        text: "Please enter a valid 10-digit mobile number.",
-      });
+      toast.error("Please enter a valid 10-digit mobile number.");
       isValid = false;
     }
 
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (formData.email.trim() && !emailRegex.test(formData.email.trim())) {
-      setMessage({
-        type: "error",
-        text: "Please enter a valid email address.",
-      });
+      toast.error("Please enter a valid email address.");
       isValid = false;
     }
 
@@ -311,6 +350,10 @@ const AddNewStudent = () => {
         // Reset form after successful creation - create a fresh copy to ensure complete reset
         setFormData({...initialFormData});
         
+        // Reset additional state variables
+        setShowOtherSource(false);
+        setOtherSourceText("");
+        
         // Reset file input by clearing the form
         if (formRef.current) {
           formRef.current.reset();
@@ -326,10 +369,7 @@ const AddNewStudent = () => {
         setSuggestedRollNumbers([]);
         
         // Show a success message
-        setMessage({
-          type: "success",
-          text: "Student created successfully! Form has been reset."
-        });
+        toast.success("Student created successfully! Form has been reset.");
         
         // Scroll to top of form with animation
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -386,23 +426,9 @@ const AddNewStudent = () => {
     // }, 2000);
   };
 
-  // Function to determine the message box icon
-  const getMessageIcon = (type: string) => {
-    switch (type) {
-      case "success":
-        return <MdCheckCircle className="text-green-500 w-6 h-6" />;
-      case "error":
-        return <MdError className="text-red-500 w-6 h-6" />;
-      case "info":
-        return <MdInfo className="text-blue-500 w-6 h-6" />;
-      default:
-        return <MdInfo className="text-gray-500 w-6 h-6" />;
-    }
-  };
-
   // Style classes - improved for better UI
   const commonInputClasses =
-    "mt-1 block w-full rounded-lg border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition duration-200 ease-in-out p-2.5 bg-white hover:border-indigo-400 outline-none";
+    "mt-1 text-start block w-full rounded-lg border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition duration-200 ease-in-out p-2.5 bg-white hover:border-indigo-400 outline-none";
   const labelClasses = "block text-sm font-medium text-gray-700 mb-1";
   const requiredLabelClasses =
     "after:content-['*'] after:ml-0.5 after:text-red-500";
@@ -432,33 +458,6 @@ const AddNewStudent = () => {
             </h1>
           </div>
         </div>
-
-        {/* Message Box */}
-        {message && (
-          <div
-            className={`flex items-center gap-3 p-4 mb-6 rounded-lg shadow-md border-l-4 animate-fadeIn ${
-              message.type === "success"
-                ? "bg-green-50 border-green-500"
-                : "bg-red-50 border-red-500"
-            }`}
-          >
-            {getMessageIcon(message.type)}
-            <p
-              className={`text-sm font-medium ${
-                message.type === "success" ? "text-green-800" : "text-red-800"
-              }`}
-            >
-              {message.text}
-            </p>
-            <button
-              onClick={() => setMessage(null)}
-              className="ml-auto text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 p-1"
-              aria-label="Close message"
-            >
-              <MdClose className="w-5 h-5" />
-            </button>
-          </div>
-        )}
 
         <form 
           onSubmit={handleSubmit} 
@@ -496,29 +495,18 @@ const AddNewStudent = () => {
                   <label htmlFor="rollNo" className={labelClasses}>
                     Roll Number
                   </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      id="rollNo"
-                      name="rollNo"
-                      value={formData.rollNo}
-                      onChange={handleChange}
-                      placeholder="Enter roll number"
-                      className={commonInputClasses}
-                    />
-                    <button
-                      type="button"
-                      onClick={handleCheckRollNumbers}
-                      className="px-4 h-11 my-auto bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-1"
-                      title="Check if roll number is available"
-                    >
-                      <IoSearchSharp />
-                      Check
-                    </button>
-                  </div>
+                  <input
+                    type="text"
+                    id="rollNo"
+                    name="rollNo"
+                    value={formData.rollNo}
+                    onChange={handleRollNoChange}
+                    placeholder="Enter roll number (auto-check after 4 digits)"
+                    className={commonInputClasses}
+                  />
                   {suggestedRollNumbers && suggestedRollNumbers.length > 0 && (
                     <div className="mt-2 p-2 border border-indigo-100 rounded-lg bg-indigo-50">
-                      <p className="text-sm font-medium text-indigo-700 mb-1">Suggested Roll Numbers:</p>
+                      <p className="text-sm font-medium text-indigo-700 mb-1">Roll number exists already, <br />Suggested Roll Numbers:</p>
                       <div className="flex flex-wrap gap-2">
                         {suggestedRollNumbers.map((rollNo, index) => (
                           <span
@@ -562,7 +550,7 @@ const AddNewStudent = () => {
                           <option key={batch._id} value={batch.name}>
                             {batch.name}
                           </option>
-                        ))}
+                        )).sort((a, b) => a.props.children.localeCompare(b.props.children))}
                       </select>
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                         <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
@@ -581,15 +569,19 @@ const AddNewStudent = () => {
                 <label htmlFor="className" className={labelClasses}>
                   Class Name
                 </label>
-                <input
-                  type="text"
-                  id="className"
-                  name="className"
-                  value={formData.className}
-                  onChange={handleChange}
-                  placeholder="e.g. 11th, 12th"
-                  className={commonInputClasses}
-                />
+                <Select 
+                  value={formData.className} 
+                  onValueChange={(value) => setFormData({...formData, className: value})}
+                >
+                  <SelectTrigger className="text-md font-medium">
+                    <SelectValue placeholder="Select class" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="11th">11th</SelectItem>
+                    <SelectItem value="12th">12th</SelectItem>
+                    <SelectItem value="Dropper">Dropper</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="transition duration-300 ease-in-out hover:bg-gray-50 p-2 rounded-lg">
                 <label
@@ -687,7 +679,7 @@ const AddNewStudent = () => {
                   </div>
                 </div>
               </div>
-              <div className="transition duration-300 ease-in-out hover:bg-gray-50 p-2 rounded-lg">
+              <div className="transition duration-300 ease-in-out hover:bg-gray-50 rounded-lg">
                 <label htmlFor="category" className={labelClasses}>
                   Category
                 </label>
@@ -741,14 +733,18 @@ const AddNewStudent = () => {
                 <label htmlFor="medium" className={labelClasses}>
                   Medium
                 </label>
-                <input
-                  type="text"
-                  id="medium"
-                  name="medium"
-                  value={formData.medium}
-                  onChange={handleChange}
-                  className={commonInputClasses}
-                />
+                <Select 
+                  value={formData.medium} 
+                  onValueChange={(value) => setFormData({...formData, medium: value})}
+                >
+                  <SelectTrigger className="text-md font-medium">
+                    <SelectValue placeholder="Select medium" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Hindi">Hindi</SelectItem>
+                    <SelectItem value="English">English</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <label htmlFor="programmeName" className={labelClasses}>
@@ -767,14 +763,37 @@ const AddNewStudent = () => {
                 <label htmlFor="howDidYouHearAboutUs" className={labelClasses}>
                   How did you hear about us?
                 </label>
-                <input
-                  type="text"
-                  id="howDidYouHearAboutUs"
-                  name="howDidYouHearAboutUs"
-                  value={formData.howDidYouHearAboutUs}
-                  onChange={handleChange}
-                  className={commonInputClasses}
-                />
+                <div className="space-y-3">
+                  <Select 
+                    value={showOtherSource ? "Others" : formData.howDidYouHearAboutUs} 
+                    onValueChange={handleSourceChange}
+                  >
+                    <SelectTrigger className="text-md font-medium">
+                      <SelectValue placeholder="Select source" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Facebook">Facebook</SelectItem>
+                      <SelectItem value="Instagram">Instagram</SelectItem>
+                      <SelectItem value="WhatsApp">WhatsApp</SelectItem>
+                      <SelectItem value="YouTube">YouTube</SelectItem>
+                      <SelectItem value="Google Search">Google Search</SelectItem>
+                      <SelectItem value="Friend/Referral">Friend/Referral</SelectItem>
+                      <SelectItem value="Others">Others</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  {showOtherSource && (
+                    <div className="transition-all duration-300 ease-in-out">
+                      <input
+                        type="text"
+                        placeholder="Please specify..."
+                        value={otherSourceText}
+                        onChange={handleOtherSourceChange}
+                        className={`${commonInputClasses} border-orange-300 focus:border-orange-500 focus:ring-orange-500`}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </fieldset>
@@ -997,7 +1016,7 @@ const AddNewStudent = () => {
               <div className="transition duration-300 ease-in-out hover:bg-gray-50 p-2 rounded-lg">
                 <label
                   htmlFor="image.url"
-                  className={`${labelClasses} ${requiredLabelClasses}`}
+                  className={`${labelClasses}`}
                 >
                   Student Photo
                 </label>
@@ -1028,7 +1047,6 @@ const AddNewStudent = () => {
                       onChange={handleImageUpload}
                       className="hidden"
                       accept="image/*"
-                      required
                     />
                     <p className="text-xs text-gray-500 mt-1">
                       Upload a clear photo (JPG, PNG)
