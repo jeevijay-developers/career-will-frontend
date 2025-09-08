@@ -11,6 +11,7 @@ import {
   BarChart3,
   LogOut,
   User,
+  ShieldPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -23,8 +24,16 @@ interface SidebarProps {
   setActiveTab: (tab: string) => void;
   onLogout: () => void;
 }
-
+{
+  /* <ShieldPlus />; */
+}
 const menuItems = [
+  {
+    id: "super-dsb",
+    label: "Dashboard",
+    icon: ShieldPlus,
+    accessTo: ["SUPER_ADMIN"],
+  },
   {
     id: "students",
     label: "Students",
@@ -131,20 +140,20 @@ const menuItems = [
     icon: BarChart3,
     accessTo: ["ADMIN", "TEACHER"],
   },
-  {
-    id: "logout",
-    label: "Logout",
-    icon: LogOut,
-    accessTo: [
-      "ADMIN",
-      "FRONTDESK",
-      "ACCOUNTS",
-      "STORE",
-      "TEACHER",
-      "PARENT",
-      "SUPER_ADMIN",
-    ],
-  },
+  // {
+  //   id: "logout",
+  //   label: "Logout",
+  //   icon: LogOut,
+  //   accessTo: [
+  //     "ADMIN",
+  //     "FRONTDESK",
+  //     "ACCOUNTS",
+  //     "STORE",
+  //     "TEACHER",
+  //     "PARENT",
+  //     "SUPER_ADMIN",
+  //   ],
+  // },
 ];
 
 export function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarProps) {

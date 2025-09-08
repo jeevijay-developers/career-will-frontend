@@ -6,8 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Users,
   DollarSign,
@@ -18,14 +31,14 @@ import {
   BarChart3,
   PieChart,
   ArrowBigLeft,
-//   LogOut
+  //   LogOut
 } from "lucide-react";
 import toast from "react-hot-toast";
 // import { confirmAlert } from "react-confirm-alert";
 // import "react-confirm-alert/src/react-confirm-alert.css";
-import {
-  getSummaryStats
-} from "../server/server";
+import { getSummaryStats } from "../server/server";
+import StatsCharts from "./StatsCharts";
+import BatchCharts from "./BatchCharts";
 
 interface DashboardStats {
   totalStudents: number;
@@ -52,7 +65,7 @@ interface FeeStatus {
   totalFees: number;
   collected: number;
   pending: number;
-  status: 'paid' | 'partial' | 'pending';
+  status: "paid" | "partial" | "pending";
 }
 
 interface TestAttendance {
@@ -77,7 +90,7 @@ const SuperAdminDashboard = () => {
     totalStudents: 0,
     totalRevenue: 0,
     totalCollected: 0,
-    totalPending: 0
+    totalPending: 0,
   });
   const [batchWiseStats, setBatchWiseStats] = useState<BatchWiseStats[]>([]);
   const [attendanceStats, setAttendanceStats] = useState<AttendanceStats[]>([]);
@@ -95,31 +108,38 @@ const SuperAdminDashboard = () => {
 
         // Fetch summary stats from the new API
         const summaryData = await getSummaryStats();
-        
+
         // Transform the data to match our component state
         setStats({
           totalStudents: summaryData.totalStudents,
           totalRevenue: summaryData.totalRevenue,
           totalCollected: summaryData.totalCollected,
-          totalPending: summaryData.totalRevenue - summaryData.totalCollected
+          totalPending: summaryData.totalRevenue - summaryData.totalCollected,
         });
 
         setBatchWiseStats(summaryData.batchWise);
 
         // Transform attendance data from attendanceByDate
-        const attendanceArray: AttendanceStats[] = Object.entries(summaryData.attendanceByDate).map(([date, data]) => ({
+        const attendanceArray: AttendanceStats[] = Object.entries(
+          summaryData.attendanceByDate
+        ).map(([date, data]) => ({
           date,
           present: (data as { present: number; absent: number }).present,
           absent: (data as { present: number; absent: number }).absent,
-          total: (data as { present: number; absent: number }).present + (data as { present: number; absent: number }).absent
+          total:
+            (data as { present: number; absent: number }).present +
+            (data as { present: number; absent: number }).absent,
         }));
         setAttendanceStats(attendanceArray);
 
         // Transform test attendance data
-        const testAttendanceArray: TestAttendance[] = summaryData.testAttendance.map((test: { date: string; present: number; absent: number }) => ({
-          ...test,
-          total: test.present + test.absent
-        }));
+        const testAttendanceArray: TestAttendance[] =
+          summaryData.testAttendance.map(
+            (test: { date: string; present: number; absent: number }) => ({
+              ...test,
+              total: test.present + test.absent,
+            })
+          );
         setTestAttendance(testAttendanceArray);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
@@ -138,18 +158,26 @@ const SuperAdminDashboard = () => {
       try {
         // For now, we'll filter existing data by the selected date
         // In a real implementation, you might want to fetch fresh data for the specific date
-        const dateStr = date.toISOString().split('T')[0];
-        const filteredAttendance = attendanceStats.filter(day => day.date === dateStr);
+        const dateStr = date.toISOString().split("T")[0];
+        const filteredAttendance = attendanceStats.filter(
+          (day) => day.date === dateStr
+        );
         if (filteredAttendance.length === 0) {
           // If no data for the selected date, fetch from API
           const summaryData = await getSummaryStats();
-          const attendanceArray: AttendanceStats[] = Object.entries(summaryData.attendanceByDate).map(([date, data]) => ({
+          const attendanceArray: AttendanceStats[] = Object.entries(
+            summaryData.attendanceByDate
+          ).map(([date, data]) => ({
             date,
             present: (data as { present: number; absent: number }).present,
             absent: (data as { present: number; absent: number }).absent,
-            total: (data as { present: number; absent: number }).present + (data as { present: number; absent: number }).absent
+            total:
+              (data as { present: number; absent: number }).present +
+              (data as { present: number; absent: number }).absent,
           }));
-          setAttendanceStats(attendanceArray.filter(day => day.date === dateStr));
+          setAttendanceStats(
+            attendanceArray.filter((day) => day.date === dateStr)
+          );
         } else {
           setAttendanceStats(filteredAttendance);
         }
@@ -168,12 +196,14 @@ const SuperAdminDashboard = () => {
       const summaryData = await getSummaryStats();
       const weekData = summaryData.weekAttendance[week];
       if (weekData) {
-        const weekAttendance: AttendanceStats[] = [{
-          date: week,
-          present: weekData.present,
-          absent: weekData.absent,
-          total: weekData.present + weekData.absent
-        }];
+        const weekAttendance: AttendanceStats[] = [
+          {
+            date: week,
+            present: weekData.present,
+            absent: weekData.absent,
+            total: weekData.present + weekData.absent,
+          },
+        ];
         setAttendanceStats(weekAttendance);
       } else {
         toast.error("No data available for selected week");
@@ -186,11 +216,11 @@ const SuperAdminDashboard = () => {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'paid':
+      case "paid":
         return <Badge className="bg-green-100 text-green-800">Paid</Badge>;
-      case 'partial':
+      case "partial":
         return <Badge className="bg-yellow-100 text-yellow-800">Partial</Badge>;
-      case 'pending':
+      case "pending":
         return <Badge className="bg-red-100 text-red-800">Pending</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
@@ -198,7 +228,7 @@ const SuperAdminDashboard = () => {
   };
 
   const handleGeneralDashboard = () => {
-    window.location.href = '/';
+    window.location.href = "/";
   };
 
   if (loading) {
@@ -215,10 +245,14 @@ const SuperAdminDashboard = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Super Admin Dashboard</h1>
-            <p className="text-gray-600 mt-1">Comprehensive overview of all system metrics</p>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Super Admin Dashboard
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Comprehensive overview of all system metrics
+            </p>
           </div>
-          <div className="flex items-center gap-3">
+          {/* <div className="flex items-center gap-3">
             <Button
               onClick={handleGeneralDashboard}
               variant="outline"
@@ -227,53 +261,72 @@ const SuperAdminDashboard = () => {
               <ArrowBigLeft className="h-5 w-5" />
               General Dashboard
             </Button>
-          </div>
+          </div> */}
         </div>
 
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Students</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Total Students
+              </CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalStudents.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">Active enrollments</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">₹{stats.totalRevenue.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">Expected revenue</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Collected</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">₹{stats.totalCollected.toLocaleString()}</div>
+              <div className="text-2xl font-bold">
+                {stats.totalStudents.toLocaleString()}
+              </div>
               <p className="text-xs text-muted-foreground">
-                {((stats.totalCollected / stats.totalRevenue) * 100).toFixed(1)}% of total
+                Active enrollments
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending Amount</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Total Revenue
+              </CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                ₹{stats.totalRevenue.toLocaleString()}
+              </div>
+              <p className="text-xs text-muted-foreground">Expected revenue</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Total Collected
+              </CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                ₹{stats.totalCollected.toLocaleString()}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {((stats.totalCollected / stats.totalRevenue) * 100).toFixed(1)}
+                % of total
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Pending Amount
+              </CardTitle>
               <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">₹{(stats.totalPending || 0).toLocaleString()}</div>
+              <div className="text-2xl font-bold">
+                ₹{(stats.totalPending || 0).toLocaleString()}
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -289,6 +342,29 @@ const SuperAdminDashboard = () => {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
+            {/* Stats Charts */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Revenue & Students Overview</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <StatsCharts
+                  totalStudents={stats.totalStudents ?? 0}
+                  totalRevenue={stats.totalRevenue ?? 0}
+                  totalCollected={stats.totalCollected ?? 0}
+                  totalPending={stats.totalPending ?? 0}
+                />
+              </CardContent>
+            </Card>
+            {/* Active Batches Charts */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Active Batches (Charts)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <BatchCharts data={batchWiseStats} />
+              </CardContent>
+            </Card>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Batch-wise Statistics */}
               <Card>
@@ -301,14 +377,25 @@ const SuperAdminDashboard = () => {
                 <CardContent className="max-h-96 overflow-y-auto">
                   <div className="space-y-4">
                     {batchWiseStats.map((batch, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                      >
                         <div>
-                          <p className="font-medium">{batch._id || "Unassigned"}</p>
-                          <p className="text-sm text-gray-600">{batch.count} students</p>
+                          <p className="font-medium">
+                            {batch._id || "Unassigned"}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {batch.count} students
+                          </p>
                         </div>
                         <div className="text-right">
-                          <p className="font-medium">Batch: {batch._id || "N/A"}</p>
-                          <p className="text-sm text-gray-600">{batch.count} enrolled</p>
+                          <p className="font-medium">
+                            Batch: {batch._id || "N/A"}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {batch.count} enrolled
+                          </p>
                         </div>
                       </div>
                     ))}
@@ -327,17 +414,30 @@ const SuperAdminDashboard = () => {
                 <CardContent className="max-h-96 overflow-y-auto">
                   <div className="space-y-3">
                     {attendanceStats.slice(0, 5).map((day, index) => (
-                      <div key={index} className="flex items-center justify-between">
+                      <div
+                        key={index}
+                        className="flex items-center justify-between"
+                      >
                         <div>
-                          <p className="font-medium">{new Date(day.date).toLocaleDateString()}</p>
-                          <p className="text-sm text-gray-600">{day.present}/{day.total} present</p>
+                          <p className="font-medium">
+                            {new Date(day.date).toLocaleDateString()}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {day.present}/{day.total} present
+                          </p>
                         </div>
                         <div className="flex gap-2">
-                          <Badge variant="secondary" className="bg-green-100 text-green-800">
+                          <Badge
+                            variant="secondary"
+                            className="bg-green-100 text-green-800"
+                          >
                             <UserCheck className="h-3 w-3 mr-1" />
                             {day.present}
                           </Badge>
-                          <Badge variant="secondary" className="bg-red-100 text-red-800">
+                          <Badge
+                            variant="secondary"
+                            className="bg-red-100 text-red-800"
+                          >
                             <UserX className="h-3 w-3 mr-1" />
                             {day.absent}
                           </Badge>
@@ -359,7 +459,9 @@ const SuperAdminDashboard = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium mb-2 block">Select Date</label>
+                    <label className="text-sm font-medium mb-2 block">
+                      Select Date
+                    </label>
                     <Calendar
                       mode="single"
                       selected={selectedDate}
@@ -368,8 +470,13 @@ const SuperAdminDashboard = () => {
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium mb-2 block">Select Week</label>
-                    <Select value={selectedWeek} onValueChange={handleWeekChange}>
+                    <label className="text-sm font-medium mb-2 block">
+                      Select Week
+                    </label>
+                    <Select
+                      value={selectedWeek}
+                      onValueChange={handleWeekChange}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select week" />
                       </SelectTrigger>
@@ -401,11 +508,27 @@ const SuperAdminDashboard = () => {
                     <TableBody>
                       {attendanceStats.map((day, index) => (
                         <TableRow key={index}>
-                          <TableCell>{new Date(day.date).toLocaleDateString()}</TableCell>
-                          <TableCell className="text-green-600 font-medium">{day.present}</TableCell>
-                          <TableCell className="text-red-600 font-medium">{day.absent}</TableCell>
-                          <TableCell>{day.total || (day.present + day.absent)}</TableCell>
-                          <TableCell>{day.total ? ((day.present / day.total) * 100).toFixed(1) : ((day.present / (day.present + day.absent)) * 100).toFixed(1)}%</TableCell>
+                          <TableCell>
+                            {new Date(day.date).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell className="text-green-600 font-medium">
+                            {day.present}
+                          </TableCell>
+                          <TableCell className="text-red-600 font-medium">
+                            {day.absent}
+                          </TableCell>
+                          <TableCell>
+                            {day.total || day.present + day.absent}
+                          </TableCell>
+                          <TableCell>
+                            {day.total
+                              ? ((day.present / day.total) * 100).toFixed(1)
+                              : (
+                                  (day.present / (day.present + day.absent)) *
+                                  100
+                                ).toFixed(1)}
+                            %
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -471,12 +594,30 @@ const SuperAdminDashboard = () => {
                   <TableBody>
                     {testAttendance.map((test, index) => (
                       <TableRow key={index}>
-                        <TableCell className="font-medium">Test {index + 1}</TableCell>
-                        <TableCell>{new Date(test.date).toLocaleDateString()}</TableCell>
-                        <TableCell className="text-green-600 font-medium">{test.present}</TableCell>
-                        <TableCell className="text-red-600 font-medium">{test.absent}</TableCell>
-                        <TableCell>{test.total || (test.present + test.absent)}</TableCell>
-                        <TableCell>{test.total ? ((test.present / test.total) * 100).toFixed(1) : ((test.present / (test.present + test.absent)) * 100).toFixed(1)}%</TableCell>
+                        <TableCell className="font-medium">
+                          Test {index + 1}
+                        </TableCell>
+                        <TableCell>
+                          {new Date(test.date).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-green-600 font-medium">
+                          {test.present}
+                        </TableCell>
+                        <TableCell className="text-red-600 font-medium">
+                          {test.absent}
+                        </TableCell>
+                        <TableCell>
+                          {test.total || test.present + test.absent}
+                        </TableCell>
+                        <TableCell>
+                          {test.total
+                            ? ((test.present / test.total) * 100).toFixed(1)
+                            : (
+                                (test.present / (test.present + test.absent)) *
+                                100
+                              ).toFixed(1)}
+                          %
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

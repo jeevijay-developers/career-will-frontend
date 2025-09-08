@@ -13,6 +13,7 @@ import { MarksComparison } from "@/components/marks-comparison";
 import toast from "react-hot-toast";
 import AddNewStudent from "@/components/student/AddNewStudent";
 import { AddTeacher } from "@/components/teacher/AddTeacher";
+import SuperAdminDashboard from "@/components/SuperAdminDashboard";
 
 export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState("students");
@@ -30,11 +31,11 @@ export default function AdminPanel() {
 
   const handleLoginSuccess = () => {
     const userData = localStorage.getItem("user_data");
-      const user = JSON.parse(userData || "{}");
-      if (user.role === "SUPER_ADMIN") {
-        window.location.href = "/super-admin";
-        return;
-      }
+    const user = JSON.parse(userData || "{}");
+    // if (user.role === "SUPER_ADMIN") {
+    //   window.location.href = "/super-admin";
+    //   return;
+    // }
     setIsAuthenticated(true);
   };
 
@@ -56,11 +57,15 @@ export default function AdminPanel() {
         return (
           <div className="space-y-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Teacher Management</h1>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Teacher Management
+              </h1>
               <p className="text-gray-600">Add new teachers to the system</p>
             </div>
             <div className="max-w-3xl">
-              <AddTeacher onComplete={() => toast.success("Teacher added successfully")} />
+              <AddTeacher
+                onComplete={() => toast.success("Teacher added successfully")}
+              />
             </div>
           </div>
         );
@@ -76,6 +81,8 @@ export default function AdminPanel() {
         return <KitManagement />;
       case "marks":
         return <MarksComparison />;
+      case "super-dsb":
+        return <SuperAdminDashboard />;
       default:
         return <StudentManagement />;
     }
