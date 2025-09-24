@@ -6,12 +6,14 @@ import { StudentList } from "./StudentList";
 import { useStudentData } from "./useStudentData";
 import BulkUploadButton from "./BulkUpload";
 import BulkKitUploadButton from "./BulkKitUpload";
+import BulkFeeUploadButton from "./BulkFeeUpload";
 
 export function StudentManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [isBulkKitUploadOpen, setIsBulkKitUploadOpen] = useState(false);
+  const [isBulkFeeUploadOpen, setIsBulkFeeUploadOpen] = useState(false);
 
   const {
     students,
@@ -54,6 +56,11 @@ export function StudentManagement() {
           <BulkKitUploadButton
             viewModal={isBulkKitUploadOpen}
             setModal={setIsBulkKitUploadOpen}
+            onUploadSuccess={handleStudentAdded}
+          />
+          <BulkFeeUploadButton
+            viewModal={isBulkFeeUploadOpen}
+            setModal={setIsBulkFeeUploadOpen}
             onUploadSuccess={handleStudentAdded}
           />
           {/* <button
