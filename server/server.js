@@ -84,8 +84,9 @@ export const getAllStudents = async (params) => {
     const queryParams = new URLSearchParams();
     if (params.page) queryParams.append("page", params.page.toString());
     if (params.limit) queryParams.append("limit", params.limit.toString());
-    const url = `/api/student/get-all-students${queryParams.toString() ? `?${queryParams.toString()}` : ""
-      }`;
+    const url = `/api/student/get-all-students${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
     const response = await apiClient.get(url);
     return response.data;
   } catch (error) {
@@ -146,19 +147,16 @@ export const updateStudentKit = async (studentId, kitItems) => {
 
 export const updateStudentBatch = async (studentId, newBatchId) => {
   try {
-    const response = await apiClient.put(
-      `/api/student/update-student-batch`,
-      {
-        studentId: studentId,
-        newBatchId: newBatchId
-      }
-    );
+    const response = await apiClient.put(`/api/student/update-student-batch`, {
+      studentId: studentId,
+      newBatchId: newBatchId,
+    });
     return response.data;
   } catch (error) {
     console.error("Error updating student batch:", error);
     throw new Error("Error updating student batch");
   }
-}
+};
 
 export const searchStudent = async (searchTerm) => {
   try {
@@ -249,7 +247,9 @@ export async function bulkUploadTestReports(formData) {
 
 export const getAllTestScores = async (page, limit) => {
   try {
-    const response = await apiClient.get(`/api/test-score/get-all-test-scores?page=${page}&limit=${limit}`);
+    const response = await apiClient.get(
+      `/api/test-score/get-all-test-scores?page=${page}&limit=${limit}`
+    );
     console.log("Fetched test scores:", response.data);
     return response.data;
   } catch (error) {
@@ -402,29 +402,62 @@ export const getFeeByRollNumber = async (rollNo) => {
     console.error("Error fetching fee by roll number:", error);
     throw new Error("Error fetching fee by roll number");
   }
-}
+};
 
 // Attendance APIs
 export const getAttendanceByDate = async (date) => {
   try {
-    const response = await apiClient.get(`/api/student/get-attendence-by-date?date=${date}`);
+    const response = await apiClient.get(
+      `/api/student/get-attendence-by-date?date=${date}`
+    );
     return response.data;
   } catch (error) {
     console.error("Error fetching attendance by date:", error);
     throw new Error("Error fetching attendance by date");
   }
-}
+};
 
+export const addAttendance = async (attendanceData) => {
+  try {
+    const response = await apiClient.post(
+      "/api/student/add-attendance",
+      attendanceData
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error adding attendance:", error);
+    throw new Error("Error adding attendance");
+  }
+};
+
+export const getAttendanceByRollNumber = async (
+  rollNumber,
+  page = 1,
+  limit = 10
+) => {
+  try {
+    const response = await apiClient.get(
+      `/api/student/get-attendence-by-rollnumber/${rollNumber}?page=${page}&limit=${limit}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching attendance by roll number:", error);
+    throw new Error("Error fetching attendance by roll number");
+  }
+};
 
 // Marks comparison
 export const getMarksComparisonByRollNumber = async (rollNumber) => {
   try {
-    const response = await apiClient.get(`api/test-score/get-all-attended-tests/${rollNumber}`);
+    const response = await apiClient.get(
+      `api/test-score/get-all-attended-tests/${rollNumber}`
+    );
     return response?.data;
   } catch (error) {
     // If it's a 404, throw the specific error message from the server
     if (error.response && error.response.status === 404) {
-      const errorMessage = error.response.data?.message || "No scores found for this roll number";
+      const errorMessage =
+        error.response.data?.message || "No scores found for this roll number";
       throw error; // Re-throw the error so the component can access the response
     }
     console.error("Error fetching marks comparison by roll number:", error);
@@ -455,7 +488,9 @@ export const getBatchWiseStats = async () => {
 
 export const getAttendanceStats = async (startDate, endDate) => {
   try {
-    const response = await apiClient.get(`/api/dashboard/attendance-stats?startDate=${startDate}&endDate=${endDate}`);
+    const response = await apiClient.get(
+      `/api/dashboard/attendance-stats?startDate=${startDate}&endDate=${endDate}`
+    );
     return response.data;
   } catch (error) {
     console.error("Error fetching attendance stats:", error);
@@ -465,7 +500,9 @@ export const getAttendanceStats = async (startDate, endDate) => {
 
 export const getTestAttendanceStats = async () => {
   try {
-    const response = await apiClient.get("/api/dashboard/test-attendance-stats");
+    const response = await apiClient.get(
+      "/api/dashboard/test-attendance-stats"
+    );
     return response.data;
   } catch (error) {
     console.error("Error fetching test attendance stats:", error);
@@ -477,11 +514,14 @@ export const downloadReport = async (reportType, filters = {}) => {
   try {
     const queryParams = new URLSearchParams({
       type: reportType,
-      ...filters
+      ...filters,
     });
-    const response = await apiClient.get(`/api/dashboard/download-report?${queryParams.toString()}`, {
-      responseType: 'blob'
-    });
+    const response = await apiClient.get(
+      `/api/dashboard/download-report?${queryParams.toString()}`,
+      {
+        responseType: "blob",
+      }
+    );
     return response.data;
   } catch (error) {
     console.error("Error downloading report:", error);
@@ -491,7 +531,9 @@ export const downloadReport = async (reportType, filters = {}) => {
 
 export const getWeeklyAttendanceStats = async (weekStartDate) => {
   try {
-    const response = await apiClient.get(`/api/dashboard/weekly-attendance?weekStart=${weekStartDate}`);
+    const response = await apiClient.get(
+      `/api/dashboard/weekly-attendance?weekStart=${weekStartDate}`
+    );
     return response.data;
   } catch (error) {
     console.error("Error fetching weekly attendance stats:", error);
@@ -501,7 +543,10 @@ export const getWeeklyAttendanceStats = async (weekStartDate) => {
 
 export const createUser = async (userData) => {
   try {
-    const response = await apiClient.post("/api/user-roles/create-user", userData);
+    const response = await apiClient.post(
+      "/api/user-roles/create-user",
+      userData
+    );
     return response.data;
   } catch (error) {
     console.error("Error creating user:", error);
@@ -517,4 +562,17 @@ export const getSummaryStats = async () => {
     console.error("Error fetching summary stats:", error);
     throw new Error("Error fetching summary stats");
   }
-}
+};
+
+export const addSingleTestReport = async (apiData) => {
+  try {
+    const summaryStats = await apiClient.post(
+      "/api/test-score/create-test-score",
+      apiData
+    );
+    return summaryStats;
+  } catch (error) {
+    console.error("Error fetching summary stats:", error);
+    throw new Error("Error fetching summary stats");
+  }
+};

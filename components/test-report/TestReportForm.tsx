@@ -27,6 +27,7 @@ import { Calendar as CalendarIcon, Plus, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
+import { addSingleTestReport } from "../../server/server";
 
 interface Subject {
   name: string;
@@ -222,27 +223,9 @@ export function TestReportForm({
 
       console.log("Submitting test report:", apiData);
 
-      // Call the API
-      const response = await fetch(
-        "http://localhost:5000/api/test-score/create-test-score",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(apiData),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || `HTTP error! status: ${response.status}`
-        );
-      }
-
-      const result = await response.json();
-      console.log("Test report created successfully:", result);
+      // Call the API using the server function
+      const response = await addSingleTestReport(apiData);
+      console.log("Test report created successfully:", response.data);
 
       // Call the onSubmit callback if provided (for refreshing the list)
       if (onSubmit) {
