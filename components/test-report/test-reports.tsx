@@ -38,6 +38,7 @@ import {
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import TestReportBulkUpload from "./TestReportBulkUpload";
+import { TestReportForm } from "./TestReportForm";
 import toast from "react-hot-toast";
 import { getAllTestScores, searchTestScore } from "../../server/server";
 
@@ -49,16 +50,16 @@ interface Subject {
 
 interface TestReport {
   _id: string;
+  rollNumber: number;
   student: string;
-  studentName?: string;
-  studentRollNo?: number;
-  rollNumber?: number; // For compatibility with form data
-  batch?: string;
-  date: string;
+  father?: string;
+  batch: string;
+  name?: string; // Test name
   subjects: Subject[];
+  percentile?: number;
   total: number;
   rank?: number;
-  percentile?: number;
+  date: string;
   createdAt?: string;
   updatedAt?: string;
   // Calculated fields for display
@@ -95,16 +96,10 @@ export function TestReports() {
   const [totalReports, setTotalReports] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
-  const [formData, setFormData] = useState({
-    studentName: "",
-    rollNumber: "",
-    testName: "",
-    testDate: "",
-    physicsMarks: "",
-    chemistryMarks: "",
-    biologyMarks: "",
-    maxMarks: "400",
-  });
+  // Get batches for the form (you might need to fetch this from your API)
+  const [batches, setBatches] = useState<Array<{ _id: string; name: string }>>(
+    []
+  );
 
   // Function to fetch test scores with pagination
   const fetchTestScores = async (page = currentPage) => {
@@ -156,12 +151,11 @@ export function TestReports() {
           physicsMarks: physicsSubject ? physicsSubject.marks : 0,
           chemistryMarks: chemistrySubject ? chemistrySubject.marks : 0,
           biologyMarks: biologySubject ? biologySubject.marks : 0,
-          testName: "Test Report", // Default test name if not available
+          testName: score.name || "Test Report", // Use the name field from schema
           testDate: score.date, // Use the date from the backend
           totalMarks: score.total || totalSubjectMarks,
           maxMarks: maxMarks,
           percentage: percentage,
-          studentRollNo: score.rollNumber,
         };
       });
 
@@ -187,25 +181,37 @@ export function TestReports() {
     fetchTestScores(currentPage);
   }, [currentPage]);
 
-  const handleAddReport = async () => {
-    // Currently, we're not implementing the create test score endpoint
-    // This would be replaced with an API call to create a test score
-    // For now, just show a toast message
-    toast.success("Test report added successfully");
-    setFormData({
-      studentName: "",
-      rollNumber: "",
-      testName: "",
-      testDate: "",
-      physicsMarks: "",
-      chemistryMarks: "",
-      biologyMarks: "",
-      maxMarks: "400",
-    });
-    setIsAddDialogOpen(false);
+  const handleAddReport = async (formData: any) => {
+    try {
+      // Transform form data to match the schema
+      const testScoreData = {
+        rollNumber: parseInt(formData.rollNumber),
+        student: formData.student.toLowerCase().trim(),
+        father: formData.father.toLowerCase().trim(),
+        batch: formData.batch.toLowerCase().trim(),
+        name: formData.name.toLowerCase().trim(),
+        subjects: formData.subjects.map((subject: any) => ({
+          name: subject.name.toLowerCase().trim(),
+          marks: subject.marks,
+        })),
+        percentile: formData.percentile
+          ? parseFloat(formData.percentile)
+          : undefined,
+        total: formData.total ? parseInt(formData.total) : undefined,
+        rank: formData.rank ? parseInt(formData.rank) : undefined,
+        date: formData.date,
+      };
 
-    // Refresh the data
-    await fetchTestScores();
+      // TODO: Replace with actual API call to create test score
+      // const response = await createTestScore(testScoreData);
+      console.log("Test score data to be submitted:", testScoreData);
+
+      // For now, just refresh the data
+      await fetchTestScores();
+    } catch (error) {
+      console.error("Error adding test report:", error);
+      throw error; // Re-throw to let the form handle the error
+    }
   };
 
   // Handle search functionality with Enter key
@@ -337,7 +343,7 @@ export function TestReports() {
   // For server-side pagination, we'll use the filtered reports directly
   // Note: In the future, we should move search and filtering to the backend too
   const currentReports = filteredReports;
-console.log("Current reports to display:", currentReports);
+  console.log("Current reports to display:", currentReports);
 
   // Reset to first page when date filter changes and refetch data
   useEffect(() => {
@@ -368,146 +374,22 @@ console.log("Current reports to display:", currentReports);
         </div>
         <div className="flex gap-2">
           <TestReportBulkUpload onUploadSuccess={fetchTestScores} />
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Test Report
-              </Button>
-            </DialogTrigger>
-            <DialogContent aria-describedby={undefined} className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Add Test Report</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="studentName">Student Name</Label>
-                    <Input
-                      id="studentName"
-                      value={formData.studentName}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          studentName: e.target.value,
-                        })
-                      }
-                      placeholder="Student name"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="rollNumber">Roll Number</Label>
-                    <Input
-                      id="rollNumber"
-                      value={formData.rollNumber}
-                      onChange={(e) =>
-                        setFormData({ ...formData, rollNumber: e.target.value })
-                      }
-                      placeholder="Roll number"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="testName">Test Name</Label>
-                    <Input
-                      id="testName"
-                      value={formData.testName}
-                      onChange={(e) =>
-                        setFormData({ ...formData, testName: e.target.value })
-                      }
-                      placeholder="e.g., Mock Test 1"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="testDate">Test Date</Label>
-                    <Input
-                      id="testDate"
-                      type="date"
-                      value={formData.testDate}
-                      onChange={(e) =>
-                        setFormData({ ...formData, testDate: e.target.value })
-                      }
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="physicsMarks">Physics</Label>
-                    <Input
-                      id="physicsMarks"
-                      type="number"
-                      value={formData.physicsMarks}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          physicsMarks: e.target.value,
-                        })
-                      }
-                      placeholder="Marks"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="chemistryMarks">Chemistry</Label>
-                    <Input
-                      id="chemistryMarks"
-                      type="number"
-                      value={formData.chemistryMarks}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          chemistryMarks: e.target.value,
-                        })
-                      }
-                      placeholder="Marks"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="biologyMarks">Biology</Label>
-                    <Input
-                      id="biologyMarks"
-                      type="number"
-                      value={formData.biologyMarks}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          biologyMarks: e.target.value,
-                        })
-                      }
-                      placeholder="Marks"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="maxMarks">Maximum Marks</Label>
-                  <Input
-                    id="maxMarks"
-                    type="number"
-                    value={formData.maxMarks}
-                    onChange={(e) =>
-                      setFormData({ ...formData, maxMarks: e.target.value })
-                    }
-                    placeholder="Total marks"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end gap-2 mt-6">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsAddDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleAddReport}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  Add Report
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Button
+            className="bg-blue-600 hover:bg-blue-700"
+            onClick={() => setIsAddDialogOpen(true)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Test Report
+          </Button>
         </div>
+
+        {/* Test Report Form Component */}
+        <TestReportForm
+          isOpen={isAddDialogOpen}
+          onClose={() => setIsAddDialogOpen(false)}
+          onSubmit={handleAddReport}
+          batches={batches}
+        />
       </div>
 
       <Card>
@@ -681,13 +563,13 @@ console.log("Current reports to display:", currentReports);
                     return (
                       <TableRow key={report._id}>
                         <TableCell className="font-medium min-w-[80px]">
-                          {report.studentRollNo || report.rollNumber || "N/A"}
+                          {report.rollNumber || "N/A"}
                         </TableCell>
                         <TableCell className="min-w-[150px]">
                           {report.student?.toUpperCase() || "N/A"}
                         </TableCell>
                         <TableCell className="min-w-[120px]">
-                          {report.name || "Test Report"}
+                          {report.name || report.testName || "Test Report"}
                         </TableCell>
                         <TableCell className="min-w-[100px]">
                           {format(new Date(report.date), "dd/MM/yy")}
@@ -819,19 +701,19 @@ console.log("Current reports to display:", currentReports);
                   {selectedReport.student || "Student"}
                 </h3>
                 <p className="text-sm text-gray-600">
-                  Roll No:{" "}
-                  {selectedReport.studentRollNo ||
-                    selectedReport.rollNumber ||
-                    "N/A"}
+                  Roll No: {selectedReport.rollNumber || "N/A"}
                 </p>
                 <p className="text-sm text-gray-600">
                   Date: {new Date(selectedReport.date).toLocaleDateString()}
                 </p>
-                {selectedReport.batch && (
+                {selectedReport.father && (
                   <p className="text-sm text-gray-600">
-                    Batch: {selectedReport.batch}
+                    Father: {selectedReport.father.toUpperCase()}
                   </p>
                 )}
+                <p className="text-sm text-gray-600">
+                  Batch: {selectedReport.batch?.toUpperCase() || "N/A"}
+                </p>
                 {selectedReport.rank && (
                   <p className="text-sm text-gray-600">
                     Rank: {selectedReport.rank}
@@ -839,7 +721,7 @@ console.log("Current reports to display:", currentReports);
                 )}
                 {selectedReport.percentile && (
                   <p className="text-sm text-gray-600">
-                    Percentile: {selectedReport.percentile}
+                    Percentile: {selectedReport.percentile}%
                   </p>
                 )}
               </div>
