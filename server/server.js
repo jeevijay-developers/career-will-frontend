@@ -576,3 +576,30 @@ export const addSingleTestReport = async (apiData) => {
     throw new Error("Error fetching summary stats");
   }
 };
+
+// Export APIs
+export const exportStudentData = async (
+  rollStart,
+  rollEnd,
+  feeRequired = false
+) => {
+  try {
+    const queryParams = new URLSearchParams({
+      rollstart: rollStart.toString(),
+      rollend: rollEnd.toString(),
+      "fee-required": feeRequired.toString(),
+    });
+
+    const response = await apiClient.get(
+      `/api/data/export-data?${queryParams.toString()}`,
+      {
+        responseType: "blob", // Important for file downloads
+      }
+    );
+
+    return response.data; // This will be a blob
+  } catch (error) {
+    console.error("Error exporting student data:", error);
+    throw new Error("Error exporting student data");
+  }
+};

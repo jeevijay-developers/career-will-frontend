@@ -7,6 +7,7 @@ import { useStudentData } from "./useStudentData";
 import BulkUploadButton from "./BulkUpload";
 import BulkKitUploadButton from "./BulkKitUpload";
 import BulkFeeUploadButton from "./BulkFeeUpload";
+import { ExportDetailsButton } from "./ExportDetailsButton";
 
 export function StudentManagement() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,6 +36,11 @@ export function StudentManagement() {
     setCurrentPage(page);
   };
 
+  const handleExportSuccess = () => {
+    // Optional: You can add any post-export logic here
+    console.log("Export completed successfully");
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -47,7 +53,7 @@ export function StudentManagement() {
           </p>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap">
           <BulkUploadButton
             viewModal={isBulkUploadOpen}
             setModal={setIsBulkUploadOpen}
@@ -63,6 +69,7 @@ export function StudentManagement() {
             setModal={setIsBulkFeeUploadOpen}
             onUploadSuccess={handleStudentAdded}
           />
+          <ExportDetailsButton onExportSuccess={handleExportSuccess} />
           {/* <button
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center"
             onClick={() => setIsAddDialogOpen(true)}
