@@ -56,6 +56,8 @@ interface StudentListProps {
   kits: Kit[];
   batches: any[];
   onStudentUpdated: () => void;
+  isFiltered?: boolean;
+  totalRecords?: number;
 }
 
 export function StudentList({
@@ -70,6 +72,8 @@ export function StudentList({
   kits,
   batches,
   onStudentUpdated,
+  isFiltered = false,
+  totalRecords,
 }: StudentListProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -239,7 +243,7 @@ export function StudentList({
             try {
               await deleteStudentByRollNumber(student.rollNo);
               toast.success(`Student ${student.name} deleted successfully!`);
-              
+
               // Refresh the student list after deletion
               if (searchTerm.trim()) {
                 // If there's a search term, refresh search results
@@ -338,7 +342,9 @@ export function StudentList({
               <TableRow>
                 <TableHead className="min-w-[60px]">S No.</TableHead>
                 <TableHead className="min-w-[80px]">Roll No.</TableHead>
-                {(user.role === "ADMIN" || user.role === "SUPER_ADMIN"|| user.role === "TEACHER") && (
+                {(user.role === "ADMIN" ||
+                  user.role === "SUPER_ADMIN" ||
+                  user.role === "TEACHER") && (
                   <>
                     <TableHead className="min-w-[150px]">Name</TableHead>
                     <TableHead className="min-w-[120px]">Class</TableHead>
@@ -372,7 +378,7 @@ export function StudentList({
                 )}
                 {(user.role === "ADMIN" ||
                   user.role === "SUPER_ADMIN" ||
-                  user.role === "FRONTDESK"||
+                  user.role === "FRONTDESK" ||
                   user.role === "ACCOUNTS" ||
                   user.role === "STORE") && (
                   <TableHead className="min-w-[100px]">Actions</TableHead>
@@ -389,7 +395,9 @@ export function StudentList({
                     <TableCell className="font-medium min-w-[80px]">
                       {student.rollNo ?? "-"}
                     </TableCell>
-                    {(user.role === "ADMIN" || user.role === "SUPER_ADMIN"|| user.role === "TEACHER") && (
+                    {(user.role === "ADMIN" ||
+                      user.role === "SUPER_ADMIN" ||
+                      user.role === "TEACHER") && (
                       <>
                         <TableCell className="min-w-[150px] uppercase">
                           {student.name}
@@ -459,12 +467,15 @@ export function StudentList({
                     )}
                     {(user.role === "ADMIN" ||
                       user.role === "SUPER_ADMIN" ||
-                      user.role === "FRONTDESK"||
+                      user.role === "FRONTDESK" ||
                       user.role === "ACCOUNTS" ||
                       user.role === "STORE") && (
                       <TableCell className="min-w-[100px]">
                         <div className="flex gap-2">
-                          {(user.role === "ADMIN" || user.role === "SUPER_ADMIN" || user.role === "ACCOUNTS" || user.role === "STORE") && (
+                          {(user.role === "ADMIN" ||
+                            user.role === "SUPER_ADMIN" ||
+                            user.role === "ACCOUNTS" ||
+                            user.role === "STORE") && (
                             <>
                               <Button
                                 variant="outline"
@@ -502,7 +513,7 @@ export function StudentList({
                 <TableRow>
                   <TableCell
                     colSpan={
-                      (user.role === "ADMIN" || user.role === "SUPER_ADMIN")
+                      user.role === "ADMIN" || user.role === "SUPER_ADMIN"
                         ? 10
                         : user.role === "ACCOUNTS"
                         ? 8

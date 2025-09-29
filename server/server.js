@@ -603,3 +603,49 @@ export const exportStudentData = async (
     throw new Error("Error exporting student data");
   }
 };
+
+// Sync Batches API
+export const syncBatches = async () => {
+  try {
+    const response = await apiClient.post("/api/batch/sync-batches");
+    return response.data;
+  } catch (error) {
+    console.error("Error syncing batches:", error);
+    throw new Error("Error syncing batches");
+  }
+};
+
+// Get all batch names
+export const getAllBatchNames = async () => {
+  try {
+    const response = await apiClient.get("/api/batch/get-all-batches-names");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching batch names:", error);
+    throw new Error("Error fetching batch names");
+  }
+};
+
+// Filter students API
+export const filterStudents = async (filters) => {
+  try {
+    const queryParams = new URLSearchParams();
+
+    if (filters.batch) queryParams.append("batch", filters.batch);
+    if (filters.rollStart)
+      queryParams.append("rollStart", filters.rollStart.toString());
+    if (filters.rollEnd)
+      queryParams.append("rollEnd", filters.rollEnd.toString());
+    if (filters.page) queryParams.append("page", filters.page.toString());
+    if (filters.limit) queryParams.append("limit", filters.limit.toString());
+
+    const url = `/api/student/filter${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+    const response = await apiClient.get(url);
+    return response.data;
+  } catch (error) {
+    console.error("Error filtering students:", error);
+    throw new Error("Error filtering students");
+  }
+};
