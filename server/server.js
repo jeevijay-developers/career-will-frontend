@@ -276,6 +276,64 @@ export const bulkUploadAttendance = async (formData) => {
   }
 };
 
+// Bulk Kit Upload API
+export const bulkUploadKits = async (formData) => {
+  try {
+    const response = await apiClient.post(
+      "/api/bulk/upload-bulk-kits",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error uploading kits file:", error);
+    // Extract error message from response if available
+    if (error.response && error.response.data) {
+      if (error.response.data.error) {
+        throw new Error(error.response.data.error);
+      } else if (error.response.data.message) {
+        throw new Error(error.response.data.message);
+      }
+    }
+    throw new Error(
+      "Error uploading kits. Please check your file and try again."
+    );
+  }
+};
+
+// Bulk Fee Upload API
+export const bulkUploadFeeSubmissions = async (formData) => {
+  try {
+    const response = await apiClient.post(
+      "/api/bulk/upload-bulk-submissions",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error uploading fee submissions file:", error);
+    // Extract error message from response if available
+    if (error.response && error.response.data) {
+      if (error.response.data.error) {
+        throw new Error(error.response.data.error);
+      } else if (error.response.data.message) {
+        throw new Error(error.response.data.message);
+      }
+    }
+    throw new Error(
+      "Error uploading fee submissions. Please check your file and try again."
+    );
+  }
+};
+
 // Batch APIs
 export const getAllBatches = async () => {
   try {

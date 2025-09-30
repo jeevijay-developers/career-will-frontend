@@ -8,7 +8,6 @@ import BulkUploadButton from "./BulkUpload";
 import BulkKitUploadButton from "./BulkKitUpload";
 import BulkFeeUploadButton from "./BulkFeeUpload";
 import { ExportDetailsButton } from "./ExportDetailsButton";
-import { StudentFilter } from "./StudentFilter";
 
 export function StudentManagement() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -16,8 +15,6 @@ export function StudentManagement() {
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [isBulkKitUploadOpen, setIsBulkKitUploadOpen] = useState(false);
   const [isBulkFeeUploadOpen, setIsBulkFeeUploadOpen] = useState(false);
-  const [filteredData, setFilteredData] = useState<any>(null);
-  const [isFiltered, setIsFiltered] = useState(false);
 
   const {
     students,
@@ -42,17 +39,6 @@ export function StudentManagement() {
   const handleExportSuccess = () => {
     // Optional: You can add any post-export logic here
     console.log("Export completed successfully");
-  };
-
-  const handleFilterResults = (results: any) => {
-    setFilteredData(results);
-    setIsFiltered(true);
-  };
-
-  const handleClearFilter = () => {
-    setFilteredData(null);
-    setIsFiltered(false);
-    refreshStudents(); // Refresh the original student data
   };
 
   return (
@@ -101,33 +87,18 @@ export function StudentManagement() {
         </div>
       </div>
 
-      <StudentFilter
-        onFilterResults={handleFilterResults}
-        onClearFilter={handleClearFilter}
-        currentPage={currentPage}
-        pageSize={pageSize}
-      />
-
       <StudentList
-        students={isFiltered ? filteredData?.data || [] : students}
+        students={students}
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
-        currentPage={
-          isFiltered ? filteredData?.pagination?.page || 1 : currentPage
-        }
-        totalPages={
-          isFiltered ? filteredData?.pagination?.totalPages || 1 : totalPages
-        }
+        currentPage={currentPage}
+        totalPages={totalPages}
         pageSize={pageSize}
         onPageChange={handlePageChange}
         batchNames={batchNames}
         kits={kits}
         batches={batches}
         onStudentUpdated={handleStudentAdded}
-        isFiltered={isFiltered}
-        totalRecords={
-          isFiltered ? filteredData?.pagination?.total || 0 : undefined
-        }
       />
     </div>
   );

@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Package, Upload } from "lucide-react";
 import toast from "react-hot-toast";
+import { bulkUploadKits } from "../../server/server.js";
 import {
   FileUploadSection,
   UploadWarning,
@@ -75,19 +76,7 @@ const BulkKitUploadButton: React.FC<Props> = ({
       const formData = new FormData();
       formData.append("kitFile", selectedFile);
 
-      const response = await fetch(
-        "http://localhost:5000/api/bulk/upload-bulk-kits",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Upload failed: ${response.statusText}`);
-      }
-
-      const result: BulkKitUploadResponse = await response.json();
+      const result = await bulkUploadKits(formData);
       setUploadResult(result);
 
       toast.success(result.message);

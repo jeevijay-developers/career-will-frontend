@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { CreditCard, Upload } from "lucide-react";
 import toast from "react-hot-toast";
+import { bulkUploadFeeSubmissions } from "../../server/server.js";
 import {
   FileUploadSection,
   UploadWarning,
@@ -75,19 +76,7 @@ const BulkFeeUploadButton: React.FC<Props> = ({
       const formData = new FormData();
       formData.append("feeFile", selectedFile);
 
-      const response = await fetch(
-        "http://localhost:5000/api/bulk/upload-bulk-submissions",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Upload failed: ${response.statusText}`);
-      }
-
-      const result: BulkFeeUploadResponse = await response.json();
+      const result = await bulkUploadFeeSubmissions(formData);
       setUploadResult(result);
 
       toast.success(

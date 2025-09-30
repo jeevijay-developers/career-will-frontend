@@ -4,6 +4,19 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Table,
   TableBody,
@@ -12,11 +25,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Edit, Trash2 } from "lucide-react";
+import {
+  Search,
+  Edit,
+  Trash2,
+  ChevronUp,
+  ChevronDown,
+  ChevronsUpDown,
+  Filter,
+} from "lucide-react";
 import { confirmAlert } from "react-confirm-alert";
 import "react-confirm-alert/src/react-confirm-alert.css";
 import { EditStudentForm } from "./EditStudentForm";
-import { searchStudent, deleteStudentByRollNumber } from "../../server/server";
+import {
+  searchStudent,
+  deleteStudentByRollNumber,
+  filterStudents,
+  getAllBatchNames,
+} from "../../server/server";
 import toast from "react-hot-toast";
 
 interface Student {
@@ -56,8 +82,6 @@ interface StudentListProps {
   kits: Kit[];
   batches: any[];
   onStudentUpdated: () => void;
-  isFiltered?: boolean;
-  totalRecords?: number;
 }
 
 export function StudentList({
@@ -72,8 +96,6 @@ export function StudentList({
   kits,
   batches,
   onStudentUpdated,
-  isFiltered = false,
-  totalRecords,
 }: StudentListProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -81,6 +103,44 @@ export function StudentList({
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
+
+  // Filter states
+  const [batchFilter, setBatchFilter] = useState("");
+  const [rollStartFilter, setRollStartFilter] = useState("");
+  const [rollEndFilter, setRollEndFilter] = useState("");
+  const [apiFilteredStudents, setApiFilteredStudents] = useState<Student[]>([]);
+  const [isFilterActive, setIsFilterActive] = useState(false);
+  const [availableBatches, setAvailableBatches] = useState<string[]>([]);
+  const [isLoadingFilter, setIsLoadingFilter] = useState(false);
+
+  // Reset sort when students data changes (like when filters are applied)
+  useEffect(() => {
+    setSortOrder(null);
+  }, [students]);
+
+  // Fetch available batches on component mount
+  useEffect(() => {
+    const fetchBatches = async () => {
+      try {
+        const batchNames = await getAllBatchNames();
+        setAvailableBatches(batchNames);
+      } catch (error) {
+        console.error("Error fetching batch names:", error);
+        toast.error("Failed to load batches");
+      }
+    };
+    fetchBatches();
+  }, []);
+
+  // Sort function for roll numbers
+  const handleSortByRollNo = () => {
+    if (sortOrder === null || sortOrder === "desc") {
+      setSortOrder("asc");
+    } else {
+      setSortOrder("desc");
+    }
+  };
 
   // Debounced search function
   const debouncedSearch = useCallback(
@@ -132,6 +192,9 @@ export function StudentList({
       debouncedSearch.cancel(); // Cancel pending search
       return;
     }
+
+    // Reset sort when performing new search
+    setSortOrder(null);
 
     // Start debounced search
     debouncedSearch(value);
@@ -195,14 +258,79 @@ export function StudentList({
     };
   }, [debouncedSearch]);
 
-  // Determine which student list to use
-  const studentsToDisplay = searchTerm.trim() ? searchResults : students;
+  // Filter functions
+  const handleApplyFilter = async () => {
+    if (!batchFilter && !rollStartFilter && !rollEndFilter) {
+      toast.error("Please select at least one filter criteria");
+      return;
+    }
 
-  // Sort students in ascending order by name before filtering
+    const rollStart = rollStartFilter ? parseInt(rollStartFilter) : undefined;
+    const rollEnd = rollEndFilter ? parseInt(rollEndFilter) : undefined;
+
+    if (rollStart && rollEnd && rollStart > rollEnd) {
+      toast.error("Roll number start should be less than roll number end");
+      return;
+    }
+
+    setIsLoadingFilter(true);
+    try {
+      const result = await filterStudents({
+        batch: batchFilter || undefined,
+        rollStart,
+        rollEnd,
+        page: 1,
+        limit: 1000, // Get a large number for now
+      });
+
+      setApiFilteredStudents(result.data);
+      setIsFilterActive(true);
+      toast.success(
+        `Found ${result.data.length} students matching filter criteria`
+      );
+    } catch (error) {
+      console.error("Error applying filter:", error);
+      toast.error("Failed to apply filter");
+    } finally {
+      setIsLoadingFilter(false);
+    }
+  };
+
+  const handleClearFilter = () => {
+    setBatchFilter("");
+    setRollStartFilter("");
+    setRollEndFilter("");
+    setApiFilteredStudents([]);
+    setIsFilterActive(false);
+    setSortOrder(null);
+    toast.success("Filters cleared");
+  };
+
+  // Determine which student list to use
+  const studentsToDisplay = isFilterActive
+    ? apiFilteredStudents
+    : searchTerm.trim()
+    ? searchResults
+    : students;
+
+  // Apply sorting based on sortOrder state
   const sortedStudents = [...studentsToDisplay].sort((a, b) => {
-    const nameA = (a.name || "").toLowerCase();
-    const nameB = (b.name || "").toLowerCase();
-    return nameA.localeCompare(nameB);
+    if (sortOrder) {
+      // Sort by roll number when sort is active
+      const rollNoA = parseInt(a.rollNo) || 0;
+      const rollNoB = parseInt(b.rollNo) || 0;
+
+      if (sortOrder === "asc") {
+        return rollNoA - rollNoB;
+      } else {
+        return rollNoB - rollNoA;
+      }
+    } else {
+      // Default sort by name when no roll number sort is active
+      const nameA = (a.name || "").toLowerCase();
+      const nameB = (b.name || "").toLowerCase();
+      return nameA.localeCompare(nameB);
+    }
   });
 
   const lowerSearch = searchTerm.toLowerCase();
@@ -341,14 +469,123 @@ export function StudentList({
             <TableHeader>
               <TableRow>
                 <TableHead className="min-w-[60px]">S No.</TableHead>
-                <TableHead className="min-w-[80px]">Roll No.</TableHead>
+                <TableHead className="min-w-[80px]">
+                  <button
+                    onClick={handleSortByRollNo}
+                    className="flex items-center gap-1 hover:text-blue-600 transition-colors font-medium"
+                  >
+                    Roll No.
+                    {sortOrder === null && (
+                      <ChevronsUpDown className="h-4 w-4 text-gray-400" />
+                    )}
+                    {sortOrder === "asc" && (
+                      <ChevronUp className="h-4 w-4 text-blue-600" />
+                    )}
+                    {sortOrder === "desc" && (
+                      <ChevronDown className="h-4 w-4 text-blue-600" />
+                    )}
+                  </button>
+                </TableHead>
                 {(user.role === "ADMIN" ||
                   user.role === "SUPER_ADMIN" ||
                   user.role === "TEACHER") && (
                   <>
+                    <TableHead className="min-w-[100px]">
+                      <div className="flex items-center gap-1">
+                        Batch
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className={`h-6 w-6 p-0 hover:bg-blue-100 ${
+                                batchFilter ? "text-blue-600" : "text-gray-400"
+                              }`}
+                            >
+                              <Filter className="h-3 w-3" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-80" align="start">
+                            <div className="space-y-3">
+                              <h4 className="font-medium text-sm">
+                                Filter Students
+                              </h4>
+                              <div className="space-y-2">
+                                <Label htmlFor="batch-filter">Batch</Label>
+                                <Select
+                                  value={batchFilter}
+                                  onValueChange={setBatchFilter}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select batch" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {availableBatches.map((batch) => (
+                                      <SelectItem key={batch} value={batch}>
+                                        {batch}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-2">
+                                  <Label htmlFor="roll-start">Roll Start</Label>
+                                  <Input
+                                    id="roll-start"
+                                    type="number"
+                                    value={rollStartFilter}
+                                    onChange={(e) =>
+                                      setRollStartFilter(e.target.value)
+                                    }
+                                    placeholder="e.g., 1000"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor="roll-end">Roll End</Label>
+                                  <Input
+                                    id="roll-end"
+                                    type="number"
+                                    value={rollEndFilter}
+                                    onChange={(e) =>
+                                      setRollEndFilter(e.target.value)
+                                    }
+                                    placeholder="e.g., 2000"
+                                  />
+                                </div>
+                              </div>
+                              <div className="flex gap-2 pt-2">
+                                <Button
+                                  onClick={handleApplyFilter}
+                                  disabled={isLoadingFilter}
+                                  size="sm"
+                                  className="flex-1"
+                                >
+                                  {isLoadingFilter
+                                    ? "Applying..."
+                                    : "Apply Filter"}
+                                </Button>
+                                <Button
+                                  onClick={handleClearFilter}
+                                  variant="outline"
+                                  size="sm"
+                                >
+                                  Clear
+                                </Button>
+                              </div>
+                              {isFilterActive && (
+                                <div className="text-xs text-green-600 bg-green-50 p-2 rounded">
+                                  Filter active: {apiFilteredStudents.length}{" "}
+                                  results
+                                </div>
+                              )}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    </TableHead>
                     <TableHead className="min-w-[150px]">Name</TableHead>
                     <TableHead className="min-w-[120px]">Class</TableHead>
-                    <TableHead className="min-w-[100px]">Batch</TableHead>
                     <TableHead className="min-w-[150px]">Father Name</TableHead>
                     {/* <TableHead>Parent Email</TableHead> */}
                     <TableHead className="min-w-[120px]">
@@ -361,7 +598,106 @@ export function StudentList({
                   <>
                     <TableHead className="min-w-[150px]">Name</TableHead>
                     <TableHead className="min-w-[120px]">Class</TableHead>
-                    <TableHead className="min-w-[100px]">Batch</TableHead>
+                    <TableHead className="min-w-[100px]">
+                      <div className="flex items-center gap-1">
+                        Batch
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className={`h-6 w-6 p-0 hover:bg-blue-100 ${
+                                batchFilter ? "text-blue-600" : "text-gray-400"
+                              }`}
+                            >
+                              <Filter className="h-3 w-3" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-80" align="start">
+                            <div className="space-y-3">
+                              <h4 className="font-medium text-sm">
+                                Filter Students
+                              </h4>
+                              <div className="space-y-2">
+                                <Label htmlFor="batch-filter-accounts">
+                                  Batch
+                                </Label>
+                                <Select
+                                  value={batchFilter}
+                                  onValueChange={setBatchFilter}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select batch" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {availableBatches.map((batch) => (
+                                      <SelectItem key={batch} value={batch}>
+                                        {batch}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-2">
+                                  <Label htmlFor="roll-start-accounts">
+                                    Roll Start
+                                  </Label>
+                                  <Input
+                                    id="roll-start-accounts"
+                                    type="number"
+                                    value={rollStartFilter}
+                                    onChange={(e) =>
+                                      setRollStartFilter(e.target.value)
+                                    }
+                                    placeholder="e.g., 1000"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor="roll-end-accounts">
+                                    Roll End
+                                  </Label>
+                                  <Input
+                                    id="roll-end-accounts"
+                                    type="number"
+                                    value={rollEndFilter}
+                                    onChange={(e) =>
+                                      setRollEndFilter(e.target.value)
+                                    }
+                                    placeholder="e.g., 2000"
+                                  />
+                                </div>
+                              </div>
+                              <div className="flex gap-2 pt-2">
+                                <Button
+                                  onClick={handleApplyFilter}
+                                  disabled={isLoadingFilter}
+                                  size="sm"
+                                  className="flex-1"
+                                >
+                                  {isLoadingFilter
+                                    ? "Applying..."
+                                    : "Apply Filter"}
+                                </Button>
+                                <Button
+                                  onClick={handleClearFilter}
+                                  variant="outline"
+                                  size="sm"
+                                >
+                                  Clear
+                                </Button>
+                              </div>
+                              {isFilterActive && (
+                                <div className="text-xs text-green-600 bg-green-50 p-2 rounded">
+                                  Filter active: {apiFilteredStudents.length}{" "}
+                                  results
+                                </div>
+                              )}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    </TableHead>
                     <TableHead className="min-w-[150px]">Father Name</TableHead>
                     {/* <TableHead>Parent Email</TableHead> */}
                     <TableHead className="min-w-[120px]">
@@ -371,10 +707,204 @@ export function StudentList({
                   </>
                 )}
                 {user.role === "STORE" && (
-                  <TableHead className="min-w-[100px]">Batch</TableHead>
+                  <TableHead className="min-w-[100px]">
+                    <div className="flex items-center gap-1">
+                      Batch
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className={`h-6 w-6 p-0 hover:bg-blue-100 ${
+                              batchFilter ? "text-blue-600" : "text-gray-400"
+                            }`}
+                          >
+                            <Filter className="h-3 w-3" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80" align="start">
+                          <div className="space-y-3">
+                            <h4 className="font-medium text-sm">
+                              Filter Students
+                            </h4>
+                            <div className="space-y-2">
+                              <Label htmlFor="batch-filter-store">Batch</Label>
+                              <Select
+                                value={batchFilter}
+                                onValueChange={setBatchFilter}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select batch" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {availableBatches.map((batch) => (
+                                    <SelectItem key={batch} value={batch}>
+                                      {batch}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="space-y-2">
+                                <Label htmlFor="roll-start-store">
+                                  Roll Start
+                                </Label>
+                                <Input
+                                  id="roll-start-store"
+                                  type="number"
+                                  value={rollStartFilter}
+                                  onChange={(e) =>
+                                    setRollStartFilter(e.target.value)
+                                  }
+                                  placeholder="e.g., 1000"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="roll-end-store">Roll End</Label>
+                                <Input
+                                  id="roll-end-store"
+                                  type="number"
+                                  value={rollEndFilter}
+                                  onChange={(e) =>
+                                    setRollEndFilter(e.target.value)
+                                  }
+                                  placeholder="e.g., 2000"
+                                />
+                              </div>
+                            </div>
+                            <div className="flex gap-2 pt-2">
+                              <Button
+                                onClick={handleApplyFilter}
+                                disabled={isLoadingFilter}
+                                size="sm"
+                                className="flex-1"
+                              >
+                                {isLoadingFilter
+                                  ? "Applying..."
+                                  : "Apply Filter"}
+                              </Button>
+                              <Button
+                                onClick={handleClearFilter}
+                                variant="outline"
+                                size="sm"
+                              >
+                                Clear
+                              </Button>
+                            </div>
+                            {isFilterActive && (
+                              <div className="text-xs text-green-600 bg-green-50 p-2 rounded">
+                                Filter active: {apiFilteredStudents.length}{" "}
+                                results
+                              </div>
+                            )}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </TableHead>
                 )}
                 {user.role === "FRONTDESK" && (
-                  <TableHead className="min-w-[100px]">Batch</TableHead>
+                  <TableHead className="min-w-[100px]">
+                    <div className="flex items-center gap-1">
+                      Batch
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className={`h-6 w-6 p-0 hover:bg-blue-100 ${
+                              batchFilter ? "text-blue-600" : "text-gray-400"
+                            }`}
+                          >
+                            <Filter className="h-3 w-3" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80" align="start">
+                          <div className="space-y-3">
+                            <h4 className="font-medium text-sm">
+                              Filter Students
+                            </h4>
+                            <div className="space-y-2">
+                              <Label htmlFor="batch-filter-frontdesk">
+                                Batch
+                              </Label>
+                              <Select
+                                value={batchFilter}
+                                onValueChange={setBatchFilter}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select batch" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {availableBatches.map((batch) => (
+                                    <SelectItem key={batch} value={batch}>
+                                      {batch}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="space-y-2">
+                                <Label htmlFor="roll-start-frontdesk">
+                                  Roll Start
+                                </Label>
+                                <Input
+                                  id="roll-start-frontdesk"
+                                  type="number"
+                                  value={rollStartFilter}
+                                  onChange={(e) =>
+                                    setRollStartFilter(e.target.value)
+                                  }
+                                  placeholder="e.g., 1000"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="roll-end-frontdesk">
+                                  Roll End
+                                </Label>
+                                <Input
+                                  id="roll-end-frontdesk"
+                                  type="number"
+                                  value={rollEndFilter}
+                                  onChange={(e) =>
+                                    setRollEndFilter(e.target.value)
+                                  }
+                                  placeholder="e.g., 2000"
+                                />
+                              </div>
+                            </div>
+                            <div className="flex gap-2 pt-2">
+                              <Button
+                                onClick={handleApplyFilter}
+                                disabled={isLoadingFilter}
+                                size="sm"
+                                className="flex-1"
+                              >
+                                {isLoadingFilter
+                                  ? "Applying..."
+                                  : "Apply Filter"}
+                              </Button>
+                              <Button
+                                onClick={handleClearFilter}
+                                variant="outline"
+                                size="sm"
+                              >
+                                Clear
+                              </Button>
+                            </div>
+                            {isFilterActive && (
+                              <div className="text-xs text-green-600 bg-green-50 p-2 rounded">
+                                Filter active: {apiFilteredStudents.length}{" "}
+                                results
+                              </div>
+                            )}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </TableHead>
                 )}
                 {(user.role === "ADMIN" ||
                   user.role === "SUPER_ADMIN" ||
@@ -399,6 +929,9 @@ export function StudentList({
                       user.role === "SUPER_ADMIN" ||
                       user.role === "TEACHER") && (
                       <>
+                        <TableCell className="min-w-[100px] uppercase">
+                          {student.batch || "-"}
+                        </TableCell>
                         <TableCell className="min-w-[150px] uppercase">
                           {student.name}
                         </TableCell>
@@ -407,9 +940,7 @@ export function StudentList({
                             {student.class || "No batch allotted"}
                           </span>
                         </TableCell>
-                        <TableCell className="min-w-[100px] uppercase">
-                          {student.batch || "-"}
-                        </TableCell>
+
                         <TableCell className="min-w-[150px] uppercase">
                           {student.parent?.fatherName ??
                             student.parent?.fatherName ??
