@@ -47,23 +47,16 @@ export const FeeUploadResult: React.FC<FeeUploadResultProps> = ({ result }) => {
                 The following roll numbers were not found in the system and
                 their fee data was not updated:
               </p>
-              <div className="max-h-32 overflow-y-auto bg-white rounded p-2 border border-orange-300">
+              <div className="max-h-48 overflow-y-auto bg-white rounded p-2 border border-orange-300">
                 <div className="flex flex-wrap gap-1">
-                  {result.NOT_FOUND_ROLL_NUMBERS.slice(0, 50).map(
-                    (rollNo, index) => (
-                      <span
-                        key={index}
-                        className="px-1.5 py-0.5 bg-orange-100 text-orange-800 rounded text-xs"
-                      >
-                        {rollNo}
-                      </span>
-                    )
-                  )}
-                  {result.NOT_FOUND_ROLL_NUMBERS.length > 50 && (
-                    <span className="px-1.5 py-0.5 bg-orange-100 text-orange-800 rounded text-xs">
-                      +{result.NOT_FOUND_ROLL_NUMBERS.length - 50} more
+                  {result.NOT_FOUND_ROLL_NUMBERS.map((rollNo, index) => (
+                    <span
+                      key={index}
+                      className="px-1.5 py-0.5 bg-orange-100 text-orange-800 rounded text-xs"
+                    >
+                      {rollNo}
                     </span>
-                  )}
+                  ))}
                 </div>
               </div>
               <p className="text-xs text-orange-600 mt-2">

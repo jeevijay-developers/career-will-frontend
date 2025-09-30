@@ -73,9 +73,9 @@ export const KitUploadResult: React.FC<KitUploadResultProps> = ({ result }) => {
               <p className="text-sm text-orange-700">
                 The following roll numbers were not found in the system:
               </p>
-              <div className="max-h-32 overflow-y-auto">
+              <div className="max-h-48 overflow-y-auto">
                 <div className="flex flex-wrap gap-1 mt-2">
-                  {result.NOT_FOUND_ROLL_NUMBERS.slice(0, 20).map((rollNo) => (
+                  {result.NOT_FOUND_ROLL_NUMBERS.map((rollNo) => (
                     <span
                       key={rollNo}
                       className="px-1.5 py-0.5 bg-orange-100 text-orange-800 rounded text-xs"
@@ -83,11 +83,6 @@ export const KitUploadResult: React.FC<KitUploadResultProps> = ({ result }) => {
                       {rollNo}
                     </span>
                   ))}
-                  {result.NOT_FOUND_ROLL_NUMBERS.length > 20 && (
-                    <span className="px-1.5 py-0.5 bg-orange-100 text-orange-800 rounded text-xs">
-                      +{result.NOT_FOUND_ROLL_NUMBERS.length - 20} more
-                    </span>
-                  )}
                 </div>
               </div>
               <p className="text-xs text-orange-600 mt-2">
