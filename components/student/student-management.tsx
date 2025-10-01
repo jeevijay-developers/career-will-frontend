@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { StudentForm } from "./StudentForm";
 import { StudentList } from "./StudentList";
 import { useStudentData } from "./useStudentData";
@@ -8,6 +8,9 @@ import BulkUploadButton from "./BulkUpload";
 import BulkKitUploadButton from "./BulkKitUpload";
 import BulkFeeUploadButton from "./BulkFeeUpload";
 import { ExportDetailsButton } from "./ExportDetailsButton";
+import { set } from "date-fns";
+import { ALL } from "dns";
+const ALLOWED_MAILS = ["careerwillneet@gmail.com", "cwparasjain@gmail.com"];
 
 export function StudentManagement() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -41,6 +44,13 @@ export function StudentManagement() {
     console.log("Export completed successfully");
   };
 
+  const [email, setEmail] = useState("");
+
+  useEffect(() => {
+    const DATA = localStorage.getItem("cw-user-data");
+    setEmail(DATA ? JSON.parse(DATA).email : "");
+  }, [email]);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -53,38 +63,40 @@ export function StudentManagement() {
           </p>
         </div>
 
-        <div className="flex gap-3 flex-wrap">
-          <BulkUploadButton
-            viewModal={isBulkUploadOpen}
-            setModal={setIsBulkUploadOpen}
-            onUploadSuccess={handleStudentAdded}
-          />
-          <BulkKitUploadButton
-            viewModal={isBulkKitUploadOpen}
-            setModal={setIsBulkKitUploadOpen}
-            onUploadSuccess={handleStudentAdded}
-          />
-          <BulkFeeUploadButton
-            viewModal={isBulkFeeUploadOpen}
-            setModal={setIsBulkFeeUploadOpen}
-            onUploadSuccess={handleStudentAdded}
-          />
-          <ExportDetailsButton onExportSuccess={handleExportSuccess} />
-          {/* <button
+        {ALLOWED_MAILS.includes(email) && (
+          <div className="flex gap-3 flex-wrap">
+            <BulkUploadButton
+              viewModal={isBulkUploadOpen}
+              setModal={setIsBulkUploadOpen}
+              onUploadSuccess={handleStudentAdded}
+            />
+            <BulkKitUploadButton
+              viewModal={isBulkKitUploadOpen}
+              setModal={setIsBulkKitUploadOpen}
+              onUploadSuccess={handleStudentAdded}
+            />
+            <BulkFeeUploadButton
+              viewModal={isBulkFeeUploadOpen}
+              setModal={setIsBulkFeeUploadOpen}
+              onUploadSuccess={handleStudentAdded}
+            />
+            <ExportDetailsButton onExportSuccess={handleExportSuccess} />
+            {/* <button
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center"
             onClick={() => setIsAddDialogOpen(true)}
             type="button"
           >
             <span className="mr-2">+</span> Add Student
           </button> */}
-          <StudentForm
-            isOpen={isAddDialogOpen}
-            onClose={() => setIsAddDialogOpen(false)}
-            kits={kits}
-            batches={batches}
-            onStudentAdded={handleStudentAdded}
-          />
-        </div>
+            <StudentForm
+              isOpen={isAddDialogOpen}
+              onClose={() => setIsAddDialogOpen(false)}
+              kits={kits}
+              batches={batches}
+              onStudentAdded={handleStudentAdded}
+            />
+          </div>
+        )}
       </div>
 
       <StudentList

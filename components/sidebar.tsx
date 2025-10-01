@@ -164,7 +164,7 @@ export function Sidebar({ activeTab, setActiveTab, onLogout }: SidebarProps) {
   useEffect(() => {
     // Only run on the client side
     if (typeof window !== "undefined") {
-      const storedUser = localStorage.getItem("user_data");
+      const storedUser = localStorage.getItem("cw-user-data");
       if (storedUser) {
         try {
           const parsedUser = JSON.parse(storedUser);

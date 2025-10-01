@@ -30,7 +30,7 @@ export default function AdminPanel() {
   }, []);
 
   const handleLoginSuccess = () => {
-    const userData = localStorage.getItem("user_data");
+    const userData = localStorage.getItem("cw-user-data");
     const user = JSON.parse(userData || "{}");
     // if (user.role === "SUPER_ADMIN") {
     //   window.location.href = "/super-admin";
@@ -41,7 +41,7 @@ export default function AdminPanel() {
 
   const handleLogout = () => {
     localStorage.removeItem("auth_token");
-    localStorage.removeItem("user_data");
+    localStorage.removeItem("cw-user-data");
     setIsAuthenticated(false);
     setActiveTab("students"); // Reset to default tab
     toast.success("Logged out successfully");

@@ -1,54 +1,57 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Eye, EyeOff } from "lucide-react"
-import { loginUser } from "../server/server"
-import toast from "react-hot-toast"
-import Image from "next/image"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Eye, EyeOff } from "lucide-react";
+import { loginUser } from "../server/server";
+import toast from "react-hot-toast";
+import Image from "next/image";
 
 interface LoginProps {
-  onLoginSuccess: () => void
+  onLoginSuccess: () => void;
 }
 
 export function Login({ onLoginSuccess }: LoginProps) {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-  })
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
+    e.preventDefault();
+
     if (!formData.email || !formData.password) {
-      toast.error("Please fill in all fields")
-      return
+      toast.error("Please fill in all fields");
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
     console.log("Attempting login with:", formData);
-    
+
     try {
-      const response = await loginUser(formData)
+      const response = await loginUser(formData);
       if (response && response.token) {
-        localStorage.setItem("auth_token", response.token)
-        localStorage.setItem("user_data", JSON.stringify(response.user || {}))
+        localStorage.setItem("auth_token", response.token);
+        localStorage.setItem(
+          "cw-user-data",
+          JSON.stringify(response.user || {})
+        );
         toast.success("Login successful");
         onLoginSuccess();
       } else {
-        toast.error("Invalid credentials")
+        toast.error("Invalid credentials");
       }
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Error in logging in")
+      toast.error(error?.response?.data?.message || "Error in logging in");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -57,7 +60,9 @@ export function Login({ onLoginSuccess }: LoginProps) {
           <div className="flex items-center flex-col justify-center gap-2 mb-4">
             <Image src="/logo/logo.svg" alt="Logo" width={100} height={100} />
             <div>
-              <CardTitle className="text-2xl font-bold text-gray-900">Career Will</CardTitle>
+              <CardTitle className="text-2xl font-bold text-gray-900">
+                Career Will
+              </CardTitle>
               <p className="text-sm text-gray-500">Student Management System</p>
             </div>
           </div>
@@ -70,7 +75,9 @@ export function Login({ onLoginSuccess }: LoginProps) {
                 id="email"
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
                 placeholder="Enter your email"
                 required
               />
@@ -82,7 +89,9 @@ export function Login({ onLoginSuccess }: LoginProps) {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
                   placeholder="Enter your password"
                   required
                 />
@@ -101,8 +110,8 @@ export function Login({ onLoginSuccess }: LoginProps) {
                 </Button>
               </div>
             </div>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full bg-blue-600 hover:bg-blue-700"
               disabled={isLoading}
             >
@@ -112,5 +121,5 @@ export function Login({ onLoginSuccess }: LoginProps) {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

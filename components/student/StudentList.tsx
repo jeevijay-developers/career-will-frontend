@@ -771,7 +771,7 @@ export function StudentList({
 
   const user =
     typeof window !== "undefined"
-      ? JSON.parse(localStorage.getItem("user_data") || "{}")
+      ? JSON.parse(localStorage.getItem("cw-user-data") || "{}")
       : {};
 
   return (
