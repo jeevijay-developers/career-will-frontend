@@ -94,6 +94,62 @@ export const getAllStudents = async (params) => {
   }
 };
 
+export const searchStudentsByName = async (name, page = 1, limit = 25) => {
+  try {
+    const response = await apiClient.post("/api/student/search-by-name", {
+      name,
+      page,
+      limit,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error searching students by name:", error);
+    throw new Error("Error searching students by name");
+  }
+};
+
+export const searchStudentsByFatherName = async (
+  fatherName,
+  page = 1,
+  limit = 25
+) => {
+  try {
+    const response = await apiClient.post(
+      "/api/student/search-by-father-name",
+      {
+        fatherName,
+        page,
+        limit,
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error searching students by father name:", error);
+    throw new Error("Error searching students by father name");
+  }
+};
+
+export const searchStudentsByParentContact = async (
+  parentContact,
+  page = 1,
+  limit = 25
+) => {
+  try {
+    const response = await apiClient.post(
+      "/api/student/search-by-parent-contact",
+      {
+        parentContact,
+        page,
+        limit,
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error searching students by parent contact:", error);
+    throw new Error("Error searching students by parent contact");
+  }
+};
+
 export const findParentByEmail = async (email) => {
   try {
     const response = await apiClient.get(

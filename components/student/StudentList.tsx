@@ -18,6 +18,13 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   Table,
   TableBody,
   TableCell,
@@ -33,6 +40,7 @@ import {
   ChevronDown,
   ChevronsUpDown,
   Filter,
+  X,
 } from "lucide-react";
 import { confirmAlert } from "react-confirm-alert";
 import "react-confirm-alert/src/react-confirm-alert.css";
@@ -42,6 +50,9 @@ import {
   deleteStudentByRollNumber,
   filterStudents,
   getAllBatchNames,
+  searchStudentsByName,
+  searchStudentsByFatherName,
+  searchStudentsByParentContact,
 } from "../../server/server";
 import toast from "react-hot-toast";
 
@@ -104,6 +115,74 @@ export function StudentList({
   const [searchError, setSearchError] = useState<string | null>(null);
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
+
+  // Name search modal state
+  const [isNameSearchModalOpen, setIsNameSearchModalOpen] = useState(false);
+
+  // Name search states
+  const [nameSearchTerm, setNameSearchTerm] = useState("");
+  const [nameSearchResults, setNameSearchResults] = useState<any[]>([]);
+  const [isNameSearching, setIsNameSearching] = useState(false);
+  const [nameSearchError, setNameSearchError] = useState<string | null>(null);
+  const [nameSearchPagination, setNameSearchPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 25,
+    totalPages: 0,
+    hasNext: false,
+    hasPrev: false,
+  });
+  const [isNameSearchActive, setIsNameSearchActive] = useState(false);
+
+  // Father name search modal state
+  const [isFatherNameSearchModalOpen, setIsFatherNameSearchModalOpen] =
+    useState(false);
+
+  // Father name search states
+  const [fatherNameSearchTerm, setFatherNameSearchTerm] = useState("");
+  const [fatherNameSearchResults, setFatherNameSearchResults] = useState<any[]>(
+    []
+  );
+  const [isFatherNameSearching, setIsFatherNameSearching] = useState(false);
+  const [fatherNameSearchError, setFatherNameSearchError] = useState<
+    string | null
+  >(null);
+  const [fatherNameSearchPagination, setFatherNameSearchPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 25,
+    totalPages: 0,
+    hasNext: false,
+    hasPrev: false,
+  });
+  const [isFatherNameSearchActive, setIsFatherNameSearchActive] =
+    useState(false);
+
+  // Parent contact search modal state
+  const [isParentContactSearchModalOpen, setIsParentContactSearchModalOpen] =
+    useState(false);
+
+  // Parent contact search states
+  const [parentContactSearchTerm, setParentContactSearchTerm] = useState("");
+  const [parentContactSearchResults, setParentContactSearchResults] = useState<
+    any[]
+  >([]);
+  const [isParentContactSearching, setIsParentContactSearching] =
+    useState(false);
+  const [parentContactSearchError, setParentContactSearchError] = useState<
+    string | null
+  >(null);
+  const [parentContactSearchPagination, setParentContactSearchPagination] =
+    useState({
+      total: 0,
+      page: 1,
+      limit: 25,
+      totalPages: 0,
+      hasNext: false,
+      hasPrev: false,
+    });
+  const [isParentContactSearchActive, setIsParentContactSearchActive] =
+    useState(false);
 
   // Filter states
   const [batchFilter, setBatchFilter] = useState("");
@@ -243,6 +322,279 @@ export function StudentList({
     }
   };
 
+  // Name search functionality
+  const handleNameSearch = async (name: string, page: number = 1) => {
+    if (!name.trim()) {
+      setNameSearchResults([]);
+      setNameSearchError(null);
+      setIsNameSearchActive(false);
+      return;
+    }
+
+    setIsNameSearching(true);
+    setNameSearchError(null);
+
+    try {
+      const result = await searchStudentsByName(name.trim(), page, 25);
+
+      if (result && result.success) {
+        setNameSearchResults(result.data || []);
+        setNameSearchPagination({
+          total: result.pagination?.total || 0,
+          page: result.pagination?.page || 1,
+          limit: result.pagination?.limit || 25,
+          totalPages: result.pagination?.totalPages || 0,
+          hasNext: result.pagination?.hasNext || false,
+          hasPrev: result.pagination?.hasPrev || false,
+        });
+        setIsNameSearchActive(true);
+
+        if (!result.data || result.data.length === 0) {
+          setNameSearchError("No students found with this name");
+        }
+      } else {
+        setNameSearchResults([]);
+        setNameSearchError("No students found with this name");
+        setIsNameSearchActive(false);
+      }
+    } catch (error) {
+      console.error("Name search error:", error);
+      setNameSearchResults([]);
+      setNameSearchError("Search failed. Please try again.");
+      setIsNameSearchActive(false);
+      toast.error("Failed to search students by name");
+    } finally {
+      setIsNameSearching(false);
+    }
+  };
+
+  // Debounced name search
+  const debouncedNameSearch = useCallback(
+    debounce((name: string) => {
+      handleNameSearch(name, 1);
+    }, 800),
+    []
+  );
+
+  // Handle name search input change
+  const handleNameSearchInputChange = (value: string) => {
+    setNameSearchTerm(value);
+
+    if (!value.trim()) {
+      setNameSearchResults([]);
+      setNameSearchError(null);
+      setIsNameSearchActive(false);
+      debouncedNameSearch.cancel();
+      return;
+    }
+
+    debouncedNameSearch(value);
+  };
+
+  // Clear name search
+  const clearNameSearch = () => {
+    setNameSearchTerm("");
+    setNameSearchResults([]);
+    setNameSearchError(null);
+    setIsNameSearchActive(false);
+    debouncedNameSearch.cancel();
+  };
+
+  // Handle name search pagination
+  const handleNameSearchPageChange = (page: number) => {
+    if (nameSearchTerm.trim()) {
+      handleNameSearch(nameSearchTerm.trim(), page);
+    }
+  };
+
+  // Father name search functionality
+  const handleFatherNameSearch = async (
+    fatherName: string,
+    page: number = 1
+  ) => {
+    if (!fatherName.trim()) {
+      setFatherNameSearchResults([]);
+      setFatherNameSearchError(null);
+      setIsFatherNameSearchActive(false);
+      return;
+    }
+
+    setIsFatherNameSearching(true);
+    setFatherNameSearchError(null);
+
+    try {
+      const result = await searchStudentsByFatherName(
+        fatherName.trim(),
+        page,
+        25
+      );
+
+      if (result && result.success) {
+        setFatherNameSearchResults(result.data || []);
+        setFatherNameSearchPagination({
+          total: result.pagination?.total || 0,
+          page: result.pagination?.page || 1,
+          limit: result.pagination?.limit || 25,
+          totalPages: result.pagination?.totalPages || 0,
+          hasNext: result.pagination?.hasNext || false,
+          hasPrev: result.pagination?.hasPrev || false,
+        });
+        setIsFatherNameSearchActive(true);
+
+        if (!result.data || result.data.length === 0) {
+          setFatherNameSearchError("No students found with this father name");
+        }
+      } else {
+        setFatherNameSearchResults([]);
+        setFatherNameSearchError("No students found with this father name");
+        setIsFatherNameSearchActive(false);
+      }
+    } catch (error) {
+      console.error("Father name search error:", error);
+      setFatherNameSearchResults([]);
+      setFatherNameSearchError("Search failed. Please try again.");
+      setIsFatherNameSearchActive(false);
+      toast.error("Failed to search students by father name");
+    } finally {
+      setIsFatherNameSearching(false);
+    }
+  };
+
+  // Debounced father name search
+  const debouncedFatherNameSearch = useCallback(
+    debounce((fatherName: string) => {
+      handleFatherNameSearch(fatherName, 1);
+    }, 800),
+    []
+  );
+
+  // Handle father name search input change
+  const handleFatherNameSearchInputChange = (value: string) => {
+    setFatherNameSearchTerm(value);
+
+    if (!value.trim()) {
+      setFatherNameSearchResults([]);
+      setFatherNameSearchError(null);
+      setIsFatherNameSearchActive(false);
+      debouncedFatherNameSearch.cancel();
+      return;
+    }
+
+    debouncedFatherNameSearch(value);
+  };
+
+  // Clear father name search
+  const clearFatherNameSearch = () => {
+    setFatherNameSearchTerm("");
+    setFatherNameSearchResults([]);
+    setFatherNameSearchError(null);
+    setIsFatherNameSearchActive(false);
+    debouncedFatherNameSearch.cancel();
+  };
+
+  // Handle father name search pagination
+  const handleFatherNameSearchPageChange = (page: number) => {
+    if (fatherNameSearchTerm.trim()) {
+      handleFatherNameSearch(fatherNameSearchTerm.trim(), page);
+    }
+  };
+
+  // Parent contact search functionality
+  const handleParentContactSearch = async (
+    parentContact: string,
+    page: number = 1
+  ) => {
+    if (!parentContact.trim()) {
+      setParentContactSearchResults([]);
+      setParentContactSearchError(null);
+      setIsParentContactSearchActive(false);
+      return;
+    }
+
+    setIsParentContactSearching(true);
+    setParentContactSearchError(null);
+
+    try {
+      const result = await searchStudentsByParentContact(
+        parentContact.trim(),
+        page,
+        25
+      );
+
+      if (result && result.success) {
+        setParentContactSearchResults(result.data || []);
+        setParentContactSearchPagination({
+          total: result.pagination?.total || 0,
+          page: result.pagination?.page || 1,
+          limit: result.pagination?.limit || 25,
+          totalPages: result.pagination?.totalPages || 0,
+          hasNext: result.pagination?.hasNext || false,
+          hasPrev: result.pagination?.hasPrev || false,
+        });
+        setIsParentContactSearchActive(true);
+
+        if (!result.data || result.data.length === 0) {
+          setParentContactSearchError(
+            "No students found with this parent contact"
+          );
+        }
+      } else {
+        setParentContactSearchResults([]);
+        setParentContactSearchError(
+          "No students found with this parent contact"
+        );
+        setIsParentContactSearchActive(false);
+      }
+    } catch (error) {
+      console.error("Parent contact search error:", error);
+      setParentContactSearchResults([]);
+      setParentContactSearchError("Search failed. Please try again.");
+      setIsParentContactSearchActive(false);
+      toast.error("Failed to search students by parent contact");
+    } finally {
+      setIsParentContactSearching(false);
+    }
+  };
+
+  // Debounced parent contact search
+  const debouncedParentContactSearch = useCallback(
+    debounce((parentContact: string) => {
+      handleParentContactSearch(parentContact, 1);
+    }, 800),
+    []
+  );
+
+  // Handle parent contact search input change
+  const handleParentContactSearchInputChange = (value: string) => {
+    setParentContactSearchTerm(value);
+
+    if (!value.trim()) {
+      setParentContactSearchResults([]);
+      setParentContactSearchError(null);
+      setIsParentContactSearchActive(false);
+      debouncedParentContactSearch.cancel();
+      return;
+    }
+
+    debouncedParentContactSearch(value);
+  };
+
+  // Clear parent contact search
+  const clearParentContactSearch = () => {
+    setParentContactSearchTerm("");
+    setParentContactSearchResults([]);
+    setParentContactSearchError(null);
+    setIsParentContactSearchActive(false);
+    debouncedParentContactSearch.cancel();
+  };
+
+  // Handle parent contact search pagination
+  const handleParentContactSearchPageChange = (page: number) => {
+    if (parentContactSearchTerm.trim()) {
+      handleParentContactSearch(parentContactSearchTerm.trim(), page);
+    }
+  };
+
   // Clear search results when search term is cleared
   useEffect(() => {
     if (!searchTerm.trim()) {
@@ -255,8 +607,16 @@ export function StudentList({
   useEffect(() => {
     return () => {
       debouncedSearch.cancel();
+      debouncedNameSearch.cancel();
+      debouncedFatherNameSearch.cancel();
+      debouncedParentContactSearch.cancel();
     };
-  }, [debouncedSearch]);
+  }, [
+    debouncedSearch,
+    debouncedNameSearch,
+    debouncedFatherNameSearch,
+    debouncedParentContactSearch,
+  ]);
 
   // Filter functions
   const handleApplyFilter = async () => {
@@ -307,7 +667,13 @@ export function StudentList({
   };
 
   // Determine which student list to use
-  const studentsToDisplay = isFilterActive
+  const studentsToDisplay = isParentContactSearchActive
+    ? parentContactSearchResults
+    : isFatherNameSearchActive
+    ? fatherNameSearchResults
+    : isNameSearchActive
+    ? nameSearchResults
+    : isFilterActive
     ? apiFilteredStudents
     : searchTerm.trim()
     ? searchResults
@@ -415,28 +781,130 @@ export function StudentList({
           <CardTitle>Students List</CardTitle>
           {/* Pagination Controls */}
           <div className="flex justify-end items-center gap-2 mt-4">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={currentPage === 1}
-              onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-            >
-              Previous
-            </Button>
-            <span className="text-sm">
-              Page {currentPage} of {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={currentPage === totalPages}
-              onClick={() =>
-                onPageChange(Math.min(totalPages, currentPage + 1))
-              }
-            >
-              Next
-            </Button>
+            {isParentContactSearchActive ? (
+              // Parent contact search pagination
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!parentContactSearchPagination.hasPrev}
+                  onClick={() =>
+                    handleParentContactSearchPageChange(
+                      parentContactSearchPagination.page - 1
+                    )
+                  }
+                >
+                  Previous
+                </Button>
+                <span className="text-sm">
+                  Page {parentContactSearchPagination.page} of{" "}
+                  {parentContactSearchPagination.totalPages} (
+                  {parentContactSearchPagination.total} total)
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!parentContactSearchPagination.hasNext}
+                  onClick={() =>
+                    handleParentContactSearchPageChange(
+                      parentContactSearchPagination.page + 1
+                    )
+                  }
+                >
+                  Next
+                </Button>
+              </>
+            ) : isFatherNameSearchActive ? (
+              // Father name search pagination
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!fatherNameSearchPagination.hasPrev}
+                  onClick={() =>
+                    handleFatherNameSearchPageChange(
+                      fatherNameSearchPagination.page - 1
+                    )
+                  }
+                >
+                  Previous
+                </Button>
+                <span className="text-sm">
+                  Page {fatherNameSearchPagination.page} of{" "}
+                  {fatherNameSearchPagination.totalPages} (
+                  {fatherNameSearchPagination.total} total)
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!fatherNameSearchPagination.hasNext}
+                  onClick={() =>
+                    handleFatherNameSearchPageChange(
+                      fatherNameSearchPagination.page + 1
+                    )
+                  }
+                >
+                  Next
+                </Button>
+              </>
+            ) : isNameSearchActive ? (
+              // Name search pagination
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!nameSearchPagination.hasPrev}
+                  onClick={() =>
+                    handleNameSearchPageChange(nameSearchPagination.page - 1)
+                  }
+                >
+                  Previous
+                </Button>
+                <span className="text-sm">
+                  Page {nameSearchPagination.page} of{" "}
+                  {nameSearchPagination.totalPages} (
+                  {nameSearchPagination.total} total)
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!nameSearchPagination.hasNext}
+                  onClick={() =>
+                    handleNameSearchPageChange(nameSearchPagination.page + 1)
+                  }
+                >
+                  Next
+                </Button>
+              </>
+            ) : (
+              // Regular pagination
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === 1}
+                  onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === totalPages}
+                  onClick={() =>
+                    onPageChange(Math.min(totalPages, currentPage + 1))
+                  }
+                >
+                  Next
+                </Button>
+              </>
+            )}
           </div>
+
+          {/* Roll Number Search Input */}
           <div className="relative w-72">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
@@ -584,19 +1052,496 @@ export function StudentList({
                         </Popover>
                       </div>
                     </TableHead>
-                    <TableHead className="min-w-[150px]">Name</TableHead>
+                    <TableHead className="min-w-[150px]">
+                      <div className="flex items-center gap-2">
+                        Name
+                        <Dialog
+                          open={isNameSearchModalOpen}
+                          onOpenChange={setIsNameSearchModalOpen}
+                        >
+                          <DialogTrigger asChild>
+                            <button className="hover:bg-gray-100 p-1 rounded">
+                              <Filter className="h-4 w-4 text-gray-500 hover:text-gray-700" />
+                            </button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-md">
+                            <DialogHeader>
+                              <DialogTitle>Search Students by Name</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-green-400 h-4 w-4" />
+                                <Input
+                                  placeholder="Enter student name to search"
+                                  value={nameSearchTerm}
+                                  onChange={(e) =>
+                                    handleNameSearchInputChange(e.target.value)
+                                  }
+                                  className="pl-10 pr-10 border-green-200 focus:border-green-400"
+                                />
+                                {nameSearchTerm.trim() && (
+                                  <button
+                                    onClick={clearNameSearch}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </button>
+                                )}
+                              </div>
+
+                              {isNameSearching && (
+                                <div className="flex justify-center py-4">
+                                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-green-600 border-t-transparent"></div>
+                                </div>
+                              )}
+
+                              {nameSearchError && (
+                                <div className="text-sm text-red-500 text-center py-2">
+                                  {nameSearchError}
+                                </div>
+                              )}
+
+                              {nameSearchResults.length > 0 && (
+                                <div className="space-y-3">
+                                  <div className="text-sm text-green-600">
+                                    Found {nameSearchResults.length} student(s)
+                                    - Page {nameSearchPagination.page} of{" "}
+                                    {nameSearchPagination.totalPages} (
+                                    {nameSearchPagination.total} total)
+                                  </div>
+
+                                  {/* Pagination Controls */}
+                                  <div className="flex justify-center items-center gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      disabled={!nameSearchPagination.hasPrev}
+                                      onClick={() =>
+                                        handleNameSearchPageChange(
+                                          nameSearchPagination.page - 1
+                                        )
+                                      }
+                                    >
+                                      Previous
+                                    </Button>
+                                    <span className="text-sm">
+                                      {nameSearchPagination.page} /{" "}
+                                      {nameSearchPagination.totalPages}
+                                    </span>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      disabled={!nameSearchPagination.hasNext}
+                                      onClick={() =>
+                                        handleNameSearchPageChange(
+                                          nameSearchPagination.page + 1
+                                        )
+                                      }
+                                    >
+                                      Next
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+
+                              <div className="flex justify-end gap-2 pt-4">
+                                <Button
+                                  variant="outline"
+                                  onClick={() => {
+                                    clearNameSearch();
+                                    setIsNameSearchModalOpen(false);
+                                  }}
+                                >
+                                  Clear & Close
+                                </Button>
+                                <Button
+                                  onClick={() =>
+                                    setIsNameSearchModalOpen(false)
+                                  }
+                                  className="bg-green-600 hover:bg-green-700"
+                                >
+                                  Apply Filter
+                                </Button>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                    </TableHead>
                     <TableHead className="min-w-[120px]">Class</TableHead>
-                    <TableHead className="min-w-[150px]">Father Name</TableHead>
+                    <TableHead className="min-w-[150px]">
+                      <div className="flex items-center gap-2">
+                        Father Name
+                        <Dialog
+                          open={isFatherNameSearchModalOpen}
+                          onOpenChange={setIsFatherNameSearchModalOpen}
+                        >
+                          <DialogTrigger asChild>
+                            <button className="hover:bg-gray-100 p-1 rounded">
+                              <Filter className="h-4 w-4 text-gray-500 hover:text-gray-700" />
+                            </button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-md">
+                            <DialogHeader>
+                              <DialogTitle>
+                                Search Students by Father Name
+                              </DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 h-4 w-4" />
+                                <Input
+                                  placeholder="Enter father name to search"
+                                  value={fatherNameSearchTerm}
+                                  onChange={(e) =>
+                                    handleFatherNameSearchInputChange(
+                                      e.target.value
+                                    )
+                                  }
+                                  className="pl-10 pr-10 border-blue-200 focus:border-blue-400"
+                                />
+                                {fatherNameSearchTerm.trim() && (
+                                  <button
+                                    onClick={clearFatherNameSearch}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </button>
+                                )}
+                              </div>
+
+                              {isFatherNameSearching && (
+                                <div className="flex justify-center py-4">
+                                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent"></div>
+                                </div>
+                              )}
+
+                              {fatherNameSearchError && (
+                                <div className="text-sm text-red-500 text-center py-2">
+                                  {fatherNameSearchError}
+                                </div>
+                              )}
+
+                              {fatherNameSearchResults.length > 0 && (
+                                <div className="space-y-3">
+                                  <div className="text-sm text-blue-600">
+                                    Found {fatherNameSearchResults.length}{" "}
+                                    student(s) - Page{" "}
+                                    {fatherNameSearchPagination.page} of{" "}
+                                    {fatherNameSearchPagination.totalPages} (
+                                    {fatherNameSearchPagination.total} total)
+                                  </div>
+
+                                  {/* Pagination Controls */}
+                                  <div className="flex justify-center items-center gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      disabled={
+                                        !fatherNameSearchPagination.hasPrev
+                                      }
+                                      onClick={() =>
+                                        handleFatherNameSearchPageChange(
+                                          fatherNameSearchPagination.page - 1
+                                        )
+                                      }
+                                    >
+                                      Previous
+                                    </Button>
+                                    <span className="text-sm">
+                                      {fatherNameSearchPagination.page} /{" "}
+                                      {fatherNameSearchPagination.totalPages}
+                                    </span>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      disabled={
+                                        !fatherNameSearchPagination.hasNext
+                                      }
+                                      onClick={() =>
+                                        handleFatherNameSearchPageChange(
+                                          fatherNameSearchPagination.page + 1
+                                        )
+                                      }
+                                    >
+                                      Next
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+
+                              <div className="flex justify-end gap-2 pt-4">
+                                <Button
+                                  variant="outline"
+                                  onClick={() => {
+                                    clearFatherNameSearch();
+                                    setIsFatherNameSearchModalOpen(false);
+                                  }}
+                                >
+                                  Clear & Close
+                                </Button>
+                                <Button
+                                  onClick={() =>
+                                    setIsFatherNameSearchModalOpen(false)
+                                  }
+                                  className="bg-blue-600 hover:bg-blue-700"
+                                >
+                                  Apply Filter
+                                </Button>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                    </TableHead>
                     {/* <TableHead>Parent Email</TableHead> */}
                     <TableHead className="min-w-[120px]">
-                      Parent Phone
+                      <div className="flex items-center gap-2">
+                        Parent Phone
+                        <Dialog
+                          open={isParentContactSearchModalOpen}
+                          onOpenChange={setIsParentContactSearchModalOpen}
+                        >
+                          <DialogTrigger asChild>
+                            <button className="hover:bg-gray-100 p-1 rounded">
+                              <Filter className="h-4 w-4 text-gray-500 hover:text-gray-700" />
+                            </button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-md">
+                            <DialogHeader>
+                              <DialogTitle>
+                                Search Students by Parent Contact
+                              </DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 h-4 w-4" />
+                                <Input
+                                  placeholder="Enter parent phone number to search"
+                                  value={parentContactSearchTerm}
+                                  onChange={(e) =>
+                                    handleParentContactSearchInputChange(
+                                      e.target.value
+                                    )
+                                  }
+                                  className="pl-10 pr-10 border-blue-200 focus:border-blue-400"
+                                />
+                                {parentContactSearchTerm.trim() && (
+                                  <button
+                                    onClick={clearParentContactSearch}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </button>
+                                )}
+                              </div>
+
+                              {isParentContactSearching && (
+                                <div className="flex justify-center py-4">
+                                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent"></div>
+                                </div>
+                              )}
+
+                              {parentContactSearchError && (
+                                <div className="text-sm text-red-500 text-center py-2">
+                                  {parentContactSearchError}
+                                </div>
+                              )}
+
+                              {parentContactSearchResults.length > 0 && (
+                                <div className="space-y-3">
+                                  <div className="text-sm text-blue-600">
+                                    Found {parentContactSearchResults.length}{" "}
+                                    student(s) - Page{" "}
+                                    {parentContactSearchPagination.page} of{" "}
+                                    {parentContactSearchPagination.totalPages} (
+                                    {parentContactSearchPagination.total} total)
+                                  </div>
+
+                                  {/* Pagination Controls */}
+                                  <div className="flex justify-center items-center gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      disabled={
+                                        !parentContactSearchPagination.hasPrev
+                                      }
+                                      onClick={() =>
+                                        handleParentContactSearchPageChange(
+                                          parentContactSearchPagination.page - 1
+                                        )
+                                      }
+                                    >
+                                      Previous
+                                    </Button>
+                                    <span className="text-sm">
+                                      {parentContactSearchPagination.page} /{" "}
+                                      {parentContactSearchPagination.totalPages}
+                                    </span>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      disabled={
+                                        !parentContactSearchPagination.hasNext
+                                      }
+                                      onClick={() =>
+                                        handleParentContactSearchPageChange(
+                                          parentContactSearchPagination.page + 1
+                                        )
+                                      }
+                                    >
+                                      Next
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+
+                              <div className="flex gap-2 pt-4 border-t">
+                                <Button
+                                  variant="outline"
+                                  className="flex-1"
+                                  onClick={() => {
+                                    clearParentContactSearch();
+                                    setIsParentContactSearchModalOpen(false);
+                                  }}
+                                >
+                                  Clear & Close
+                                </Button>
+                                <Button
+                                  onClick={() =>
+                                    setIsParentContactSearchModalOpen(false)
+                                  }
+                                  className="bg-blue-600 hover:bg-blue-700"
+                                >
+                                  Apply Filter
+                                </Button>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
                     </TableHead>
                     <TableHead className="min-w-[80px]">Kits</TableHead>
                   </>
                 )}
                 {user.role === "ACCOUNTS" && (
                   <>
-                    <TableHead className="min-w-[150px]">Name</TableHead>
+                    <TableHead className="min-w-[150px]">
+                      <div className="flex items-center gap-2">
+                        Name
+                        <Dialog
+                          open={isNameSearchModalOpen}
+                          onOpenChange={setIsNameSearchModalOpen}
+                        >
+                          <DialogTrigger asChild>
+                            <button className="hover:bg-gray-100 p-1 rounded">
+                              <Filter className="h-4 w-4 text-gray-500 hover:text-gray-700" />
+                            </button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-md">
+                            <DialogHeader>
+                              <DialogTitle>Search Students by Name</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-green-400 h-4 w-4" />
+                                <Input
+                                  placeholder="Enter student name to search"
+                                  value={nameSearchTerm}
+                                  onChange={(e) =>
+                                    handleNameSearchInputChange(e.target.value)
+                                  }
+                                  className="pl-10 pr-10 border-green-200 focus:border-green-400"
+                                />
+                                {nameSearchTerm.trim() && (
+                                  <button
+                                    onClick={clearNameSearch}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </button>
+                                )}
+                              </div>
+
+                              {isNameSearching && (
+                                <div className="flex justify-center py-4">
+                                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-green-600 border-t-transparent"></div>
+                                </div>
+                              )}
+
+                              {nameSearchError && (
+                                <div className="text-sm text-red-500 text-center py-2">
+                                  {nameSearchError}
+                                </div>
+                              )}
+
+                              {nameSearchResults.length > 0 && (
+                                <div className="space-y-3">
+                                  <div className="text-sm text-green-600">
+                                    Found {nameSearchResults.length} student(s)
+                                    - Page {nameSearchPagination.page} of{" "}
+                                    {nameSearchPagination.totalPages} (
+                                    {nameSearchPagination.total} total)
+                                  </div>
+
+                                  {/* Pagination Controls */}
+                                  <div className="flex justify-center items-center gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      disabled={!nameSearchPagination.hasPrev}
+                                      onClick={() =>
+                                        handleNameSearchPageChange(
+                                          nameSearchPagination.page - 1
+                                        )
+                                      }
+                                    >
+                                      Previous
+                                    </Button>
+                                    <span className="text-sm">
+                                      {nameSearchPagination.page} /{" "}
+                                      {nameSearchPagination.totalPages}
+                                    </span>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      disabled={!nameSearchPagination.hasNext}
+                                      onClick={() =>
+                                        handleNameSearchPageChange(
+                                          nameSearchPagination.page + 1
+                                        )
+                                      }
+                                    >
+                                      Next
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+
+                              <div className="flex justify-end gap-2 pt-4">
+                                <Button
+                                  variant="outline"
+                                  onClick={() => {
+                                    clearNameSearch();
+                                    setIsNameSearchModalOpen(false);
+                                  }}
+                                >
+                                  Clear & Close
+                                </Button>
+                                <Button
+                                  onClick={() =>
+                                    setIsNameSearchModalOpen(false)
+                                  }
+                                  className="bg-green-600 hover:bg-green-700"
+                                >
+                                  Apply Filter
+                                </Button>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                    </TableHead>
                     <TableHead className="min-w-[120px]">Class</TableHead>
                     <TableHead className="min-w-[100px]">
                       <div className="flex items-center gap-1">
@@ -698,10 +1643,257 @@ export function StudentList({
                         </Popover>
                       </div>
                     </TableHead>
-                    <TableHead className="min-w-[150px]">Father Name</TableHead>
+                    <TableHead className="min-w-[150px]">
+                      <div className="flex items-center gap-2">
+                        Father Name
+                        <Dialog
+                          open={isFatherNameSearchModalOpen}
+                          onOpenChange={setIsFatherNameSearchModalOpen}
+                        >
+                          <DialogTrigger asChild>
+                            <button className="hover:bg-gray-100 p-1 rounded">
+                              <Filter className="h-4 w-4 text-gray-500 hover:text-gray-700" />
+                            </button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-md">
+                            <DialogHeader>
+                              <DialogTitle>
+                                Search Students by Father Name
+                              </DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 h-4 w-4" />
+                                <Input
+                                  placeholder="Enter father name to search"
+                                  value={fatherNameSearchTerm}
+                                  onChange={(e) =>
+                                    handleFatherNameSearchInputChange(
+                                      e.target.value
+                                    )
+                                  }
+                                  className="pl-10 pr-10 border-blue-200 focus:border-blue-400"
+                                />
+                                {fatherNameSearchTerm.trim() && (
+                                  <button
+                                    onClick={clearFatherNameSearch}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </button>
+                                )}
+                              </div>
+
+                              {isFatherNameSearching && (
+                                <div className="flex justify-center py-4">
+                                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent"></div>
+                                </div>
+                              )}
+
+                              {fatherNameSearchError && (
+                                <div className="text-sm text-red-500 text-center py-2">
+                                  {fatherNameSearchError}
+                                </div>
+                              )}
+
+                              {fatherNameSearchResults.length > 0 && (
+                                <div className="space-y-3">
+                                  <div className="text-sm text-blue-600">
+                                    Found {fatherNameSearchResults.length}{" "}
+                                    student(s) - Page{" "}
+                                    {fatherNameSearchPagination.page} of{" "}
+                                    {fatherNameSearchPagination.totalPages} (
+                                    {fatherNameSearchPagination.total} total)
+                                  </div>
+
+                                  {/* Pagination Controls */}
+                                  <div className="flex justify-center items-center gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      disabled={
+                                        !fatherNameSearchPagination.hasPrev
+                                      }
+                                      onClick={() =>
+                                        handleFatherNameSearchPageChange(
+                                          fatherNameSearchPagination.page - 1
+                                        )
+                                      }
+                                    >
+                                      Previous
+                                    </Button>
+                                    <span className="text-sm">
+                                      {fatherNameSearchPagination.page} /{" "}
+                                      {fatherNameSearchPagination.totalPages}
+                                    </span>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      disabled={
+                                        !fatherNameSearchPagination.hasNext
+                                      }
+                                      onClick={() =>
+                                        handleFatherNameSearchPageChange(
+                                          fatherNameSearchPagination.page + 1
+                                        )
+                                      }
+                                    >
+                                      Next
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+
+                              <div className="flex justify-end gap-2 pt-4">
+                                <Button
+                                  variant="outline"
+                                  onClick={() => {
+                                    clearFatherNameSearch();
+                                    setIsFatherNameSearchModalOpen(false);
+                                  }}
+                                >
+                                  Clear & Close
+                                </Button>
+                                <Button
+                                  onClick={() =>
+                                    setIsFatherNameSearchModalOpen(false)
+                                  }
+                                  className="bg-blue-600 hover:bg-blue-700"
+                                >
+                                  Apply Filter
+                                </Button>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                    </TableHead>
                     {/* <TableHead>Parent Email</TableHead> */}
                     <TableHead className="min-w-[120px]">
-                      Parent Phone
+                      <div className="flex items-center gap-2">
+                        Parent Phone
+                        <Dialog
+                          open={isParentContactSearchModalOpen}
+                          onOpenChange={setIsParentContactSearchModalOpen}
+                        >
+                          <DialogTrigger asChild>
+                            <button className="hover:bg-gray-100 p-1 rounded">
+                              <Filter className="h-4 w-4 text-gray-500 hover:text-gray-700" />
+                            </button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-md">
+                            <DialogHeader>
+                              <DialogTitle>
+                                Search Students by Parent Contact
+                              </DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 h-4 w-4" />
+                                <Input
+                                  placeholder="Enter parent phone number to search"
+                                  value={parentContactSearchTerm}
+                                  onChange={(e) =>
+                                    handleParentContactSearchInputChange(
+                                      e.target.value
+                                    )
+                                  }
+                                  className="pl-10 pr-10 border-blue-200 focus:border-blue-400"
+                                />
+                                {parentContactSearchTerm.trim() && (
+                                  <button
+                                    onClick={clearParentContactSearch}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </button>
+                                )}
+                              </div>
+
+                              {isParentContactSearching && (
+                                <div className="flex justify-center py-4">
+                                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent"></div>
+                                </div>
+                              )}
+
+                              {parentContactSearchError && (
+                                <div className="text-sm text-red-500 text-center py-2">
+                                  {parentContactSearchError}
+                                </div>
+                              )}
+
+                              {parentContactSearchResults.length > 0 && (
+                                <div className="space-y-3">
+                                  <div className="text-sm text-blue-600">
+                                    Found {parentContactSearchResults.length}{" "}
+                                    student(s) - Page{" "}
+                                    {parentContactSearchPagination.page} of{" "}
+                                    {parentContactSearchPagination.totalPages} (
+                                    {parentContactSearchPagination.total} total)
+                                  </div>
+
+                                  {/* Pagination Controls */}
+                                  <div className="flex justify-center items-center gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      disabled={
+                                        !parentContactSearchPagination.hasPrev
+                                      }
+                                      onClick={() =>
+                                        handleParentContactSearchPageChange(
+                                          parentContactSearchPagination.page - 1
+                                        )
+                                      }
+                                    >
+                                      Previous
+                                    </Button>
+                                    <span className="text-sm">
+                                      {parentContactSearchPagination.page} /{" "}
+                                      {parentContactSearchPagination.totalPages}
+                                    </span>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      disabled={
+                                        !parentContactSearchPagination.hasNext
+                                      }
+                                      onClick={() =>
+                                        handleParentContactSearchPageChange(
+                                          parentContactSearchPagination.page + 1
+                                        )
+                                      }
+                                    >
+                                      Next
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+
+                              <div className="flex gap-2 pt-4 border-t">
+                                <Button
+                                  variant="outline"
+                                  className="flex-1"
+                                  onClick={() => {
+                                    clearParentContactSearch();
+                                    setIsParentContactSearchModalOpen(false);
+                                  }}
+                                >
+                                  Clear & Close
+                                </Button>
+                                <Button
+                                  onClick={() =>
+                                    setIsParentContactSearchModalOpen(false)
+                                  }
+                                  className="bg-blue-600 hover:bg-blue-700"
+                                >
+                                  Apply Filter
+                                </Button>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
                     </TableHead>
                     <TableHead className="min-w-[80px]">Kits</TableHead>
                   </>
